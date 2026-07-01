@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { BannerSetting } from "@/lib/db/settings";
 
 /**
  * Primary navigation — a curated 7-item menu mirroring the storefront prototype.
@@ -19,27 +20,50 @@ const NAV_LINKS = [
  * a gradient announcement bar that scrolls away, over a sticky brand row
  * (left logo · centre search · account/cart) and a centred nav strip.
  *
- * Announcement + cart count are static stubs for now — the banner is wired to
- * `setting.banner` in Phase 1.3 and the count to the cart store in Phase 2.
+ * The announcement bar is driven by `setting.banner`; the cart count is a
+ * static stub until the cart store lands in Phase 2.
  */
-export function Header() {
+export function Header({ banner }: { banner: BannerSetting }) {
+  const showBanner = banner.enabled && Boolean(banner.msg1);
+
   return (
     <header>
       {/* Announcement bar — scrolls with the page (not sticky), per prototype. */}
-      <div className="bg-[linear-gradient(90deg,#4A0E1C,#71182B_50%,#4A0E1C)] px-4 py-[9px] text-center text-[12px] font-medium leading-normal tracking-[0.06em] text-[#F0DCBE]">
-        <span>Free shipping over ₹999</span>
-        <span className="mx-1.5" aria-hidden>
-          ·
-        </span>
-        <span>Cash on Delivery available</span>
-        <span className="mx-1.5" aria-hidden>
-          ·
-        </span>
-        <span>
-          Festive offer: <span className="font-semibold text-gold-300">FLAT 20% OFF</span>{" "}
-          with code <span className="font-semibold text-gold-300">BRIDE20</span>
-        </span>
-      </div>
+      {showBanner && (
+        <div className="bg-[linear-gradient(90deg,#4A0E1C,#71182B_50%,#4A0E1C)] px-4 py-[9px] text-center text-[12px] font-medium leading-normal tracking-[0.06em] text-[#F0DCBE]">
+          <span>{banner.msg1}</span>
+          {banner.msg2 && (
+            <>
+              <span className="mx-1.5" aria-hidden>
+                ·
+              </span>
+              <span>{banner.msg2}</span>
+            </>
+          )}
+          {banner.offerText && (
+            <>
+              <span className="mx-1.5" aria-hidden>
+                ·
+              </span>
+              <span>
+                {banner.offerLabel}{" "}
+                <span className="font-semibold text-gold-300">
+                  {banner.offerText}
+                </span>
+                {banner.code && (
+                  <>
+                    {" "}
+                    with code{" "}
+                    <span className="font-semibold text-gold-300">
+                      {banner.code}
+                    </span>
+                  </>
+                )}
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="sticky top-0 z-40 border-b border-[#E7D9C2] bg-cream-100/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-[22px] gap-y-3 px-6 py-3.5">

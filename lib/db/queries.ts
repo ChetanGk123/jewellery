@@ -39,6 +39,7 @@ export type ProductFilters = {
   maxPaise?: number;
   search?: string;
   featured?: boolean;
+  fresh?: boolean;
   sort?: ProductSort;
   limit?: number;
   offset?: number;
@@ -138,6 +139,9 @@ export async function getProducts(
   if (filters.featured) {
     query = query.eq("is_featured", true);
   }
+  if (filters.fresh) {
+    query = query.eq("is_fresh", true);
+  }
   if (typeof filters.minPaise === "number") {
     query = query.gte("price_paise", filters.minPaise);
   }
@@ -201,11 +205,52 @@ function applySort<
   }
 }
 
-/** Featured products for the home page, newest first. */
+/** Featured ("Most Loved") products for the home page, newest first. */
 export async function getFeaturedProducts(
   limit = 8,
 ): Promise<ProductListItem[]> {
   return getProducts({ featured: true, sort: "newest", limit });
+}
+
+/** Freshly-added ("New Arrivals") products for the home page, newest first. */
+export async function getFreshProducts(limit = 8): Promise<ProductListItem[]> {
+  return getProducts({ fresh: true, sort: "newest", limit });
+}
+
+/** A category plus its count of storefront-visible products (for home tiles). */
+export type CategoryTile = Category & { productCount: number };
+
+/**
+ * Categories in display order, each with a visible-product count for the
+ * "{n} styles" label on the home page tiles. Counts are tallied from a slim
+ * `category_id` scan (fine at catalog scale; revisit if products grow large).
+ */
+export async function getCategoryTiles(): Promise<CategoryTile[]> {
+  const supabase = createServerClient();
+  const [cats, counts] = await Promise.all([
+    supabase.from("category").select("*").order("sort_order", { ascending: true }),
+    supabase
+      .from("product")
+      .select("category_id")
+      .in("status", STOREFRONT_VISIBLE_STATUSES),
+  ]);
+
+  if (cats.error) {
+    throw new Error(`getCategoryTiles failed: ${cats.error.message}`);
+  }
+  if (counts.error) {
+    throw new Error(`getCategoryTiles counts failed: ${counts.error.message}`);
+  }
+
+  const tally = new Map<string, number>();
+  for (const row of counts.data ?? []) {
+    tally.set(row.category_id, (tally.get(row.category_id) ?? 0) + 1);
+  }
+
+  return (cats.data ?? []).map((category) => ({
+    ...category,
+    productCount: tally.get(category.id) ?? 0,
+  }));
 }
 
 /** Full product by slug, or null if not found / not storefront-visible. */
