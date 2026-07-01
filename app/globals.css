@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  JR Jewellers design tokens — luxe Indian bridal jewellery.
+  Palette + type from ARCHITECTURE_PLAN.md §5 / CLAUDE.md. Storefront uses
+  sharp 2–4px radii. No dark mode (deliberate: light luxury direction).
+*/
+@theme {
+  /* Maroon (brand primary / ink) */
+  --color-maroon-950: #2a0a12;
+  --color-maroon-900: #2a1115;
+  --color-maroon-800: #4a0e1c;
+  --color-maroon-700: #71182b;
+
+  /* Gold (accent) */
+  --color-gold-300: #e6ca7e;
+  --color-gold-400: #c9a24b;
+  --color-gold-500: #b58a3c;
+  --color-gold-600: #a87a1e;
+
+  /* Cream (surfaces) */
+  --color-cream-50: #fffdf8;
+  --color-cream-100: #fbf6ee;
+  --color-cream-200: #f3e3c7;
+
+  /* Semantic aliases */
+  --color-background: var(--color-cream-100);
+  --color-surface: var(--color-cream-50);
+  --color-foreground: var(--color-maroon-950);
+  --color-muted: #6f5a52;
+  --color-accent: var(--color-gold-500);
+  --color-border: var(--color-cream-200);
+
+  /* Type — Marcellus (display), Cormorant Garamond (headings), Jost (UI/body) */
+  --font-display: var(--font-marcellus), serif;
+  --font-heading: var(--font-cormorant), serif;
+  --font-body: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
+
+  /* Sharp luxe radii */
+  --radius-sm: 2px;
+  --radius: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
 }

@@ -29,16 +29,11 @@ Migration `storefront_scale_hardening` applied & verified. Production-readiness 
 ## Phase 0 — Foundation & cleanup
 Goal: a clean, branded shell wired to Supabase. No product pages yet.
 
-- ⬜ **0.1 — Strip scaffold leftovers.** Rename `package.json` `name` `toothdesk` → `jr-jewellers`;
-  delete `CLAUDE copy.md` and committed `.DS_Store`; remove default `app/page.tsx` body and the
-  Next.js logo/`public` sample SVGs.
-- ⬜ **0.2 — Confirm folder convention.** Keep root `app/` + sibling `lib/`, `components/`,
-  `components/ui/`, `lib/db/`, `lib/utils/` (alias `@/*`). *(Plan §5 mentions `src/`; we adapt to the actual scaffold.)*
-- ⬜ **0.3 — `git init` + baseline commit.** Verify `.gitignore` covers `.env.local`/`node_modules`/`.next`; first commit = scaffolded state.
-- ⬜ **0.4 — Brand design tokens.** Replace `app/globals.css` boilerplate (drop forced dark mode) with the
-  maroon/gold/cream palette + storefront radii via Tailwind v4 `@theme` (tokens in `CLAUDE.md` / Plan §5).
-- ⬜ **0.5 — Fonts.** Load **Marcellus**, **Cormorant Garamond**, **Jost** via `next/font/google`
-  (replace Geist) and expose as CSS vars; wire into `app/layout.tsx`.
+- ✅ **0.1 — Strip scaffold leftovers.** Renamed package → `jr-jewellers`; deleted `CLAUDE copy.md`, `.DS_Store`, 5 sample SVGs; minimal placeholder `app/page.tsx`. *(Default `layout.tsx` metadata handled in 0.5.)*
+- ✅ **0.2 — Folder convention.** Root `app/` + `lib/db`, `lib/utils`, `components/{ui,product,layout}` (alias `@/*`).
+- ✅ **0.3 — `git init` + baseline commit.** On `main`; `.env.local`/`node_modules`/`.next` confirmed excluded. Commit `3ce9c46`.
+- ✅ **0.4 — Brand design tokens.** `app/globals.css` rewritten: maroon/gold/cream palette, `--font-*`, sharp radii via Tailwind v4 `@theme`; forced dark mode removed.
+- ✅ **0.5 — Fonts.** Marcellus/Cormorant Garamond/Jost via `next/font/google`, CSS vars wired; real metadata set. **Build verified green** (Next 16 + Turbopack).
 - ⬜ **0.6 — Supabase client.** `lib/db/client.ts` (browser, anon/publishable) + `lib/db/server.ts`
   (server components). Add `lib/env.ts` with zod validation of the two `NEXT_PUBLIC_SUPABASE_*` vars.
 - ⬜ **0.7 — Generated DB types.** Generate TypeScript types from the live schema → `lib/db/types.ts`; re-export typed client.
