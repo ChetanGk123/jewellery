@@ -232,6 +232,30 @@ export async function getFreshProducts(limit = 8): Promise<ProductListItem[]> {
   return getProducts({ fresh: true, sort: "newest", limit });
 }
 
+/**
+ * Distinct materials across storefront-visible products, alphabetically. Powers
+ * the Material facet on the listing pages. Small catalog, so a slim scan is
+ * fine; revisit with a dedicated view if the product table grows large.
+ */
+export async function getMaterials(): Promise<string[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("product")
+    .select("material")
+    .in("status", STOREFRONT_VISIBLE_STATUSES)
+    .not("material", "is", null);
+
+  if (error) {
+    throw new Error(`getMaterials failed: ${error.message}`);
+  }
+
+  const materials = new Set<string>();
+  for (const row of data ?? []) {
+    if (row.material) materials.add(row.material);
+  }
+  return [...materials].sort((a, b) => a.localeCompare(b));
+}
+
 /** A category plus its count of storefront-visible products (for home tiles). */
 export type CategoryTile = Category & { productCount: number };
 
