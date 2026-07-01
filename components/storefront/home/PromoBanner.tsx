@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { PromoSetting } from "@/lib/db/settings";
+import { ROUTES } from "@/lib/routes";
 
 /**
  * Home offer banner, driven by `setting.homepage_promo`. Renders nothing when
@@ -43,7 +44,7 @@ export function PromoBanner({ promo }: { promo: PromoSetting }) {
         </div>
 
         <Link
-          href="/shop"
+          href={ROUTES.shop}
           className="relative inline-flex items-center rounded-sm bg-[linear-gradient(135deg,#E6CA7E,#C9A24B_55%,#A87A1E)] px-[34px] py-4 text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-[#3A0E18] shadow-[0_12px_28px_rgba(0,0,0,0.28)] transition-transform duration-200 hover:-translate-y-0.5"
         >
           {promo.button}

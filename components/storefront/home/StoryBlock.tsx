@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 
 /**
  * Closing editorial section — matched to the prototype: a centred gold divider,
@@ -31,7 +32,7 @@ export function StoryBlock() {
           look in one place.
         </p>
         <Link
-          href="/shop"
+          href={ROUTES.shop}
           className="mt-2 rounded-sm bg-maroon-700 px-8 py-3.5 text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-cream-200 transition-colors hover:bg-maroon-800"
         >
           Discover the Collection

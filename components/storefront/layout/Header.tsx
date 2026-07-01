@@ -1,19 +1,7 @@
 import Link from "next/link";
 import type { BannerSetting } from "@/lib/db/settings";
-
-/**
- * Primary navigation — a curated 7-item menu mirroring the storefront prototype.
- * All hrefs resolve to real storefront routes (built out across Phase 1).
- */
-const NAV_LINKS = [
-  { href: "/shop", label: "All Jewellery" },
-  { href: "/bridal-sets", label: "Bridal Sets" },
-  { href: "/necklaces", label: "Necklaces" },
-  { href: "/earrings", label: "Earrings" },
-  { href: "/bangles-bracelets", label: "Bangles & Bracelets" },
-  { href: "/maang-tikka", label: "Maang Tikka" },
-  { href: "/hand-jewellery", label: "Hand Jewellery" },
-] as const;
+import { ROUTES } from "@/lib/routes";
+import { PRIMARY_NAV } from "@/lib/navigation";
 
 /**
  * Storefront header, matched to `refereces/JR Jewellers Storefront.html`:
@@ -67,7 +55,7 @@ export function Header({ banner }: { banner: BannerSetting }) {
 
       <div className="sticky top-0 z-40 border-b border-[#E7D9C2] bg-cream-100/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-[22px] gap-y-3 px-6 py-3.5">
-          <Link href="/" className="flex flex-none flex-col leading-none">
+          <Link href={ROUTES.home} className="flex flex-none flex-col leading-none">
             <span className="font-display text-[clamp(20px,5.5vw,26px)] leading-none tracking-[0.14em] text-maroon-700">
               JR JEWELLERS
             </span>
@@ -77,7 +65,7 @@ export function Header({ banner }: { banner: BannerSetting }) {
           </Link>
 
           <form
-            action="/shop"
+            action={ROUTES.shop}
             role="search"
             className="flex min-w-[200px] flex-1 basis-[300px] items-center rounded-sm border border-[#E7D9C2] bg-white px-3.5 transition-colors focus-within:border-gold-400"
           >
@@ -95,13 +83,13 @@ export function Header({ banner }: { banner: BannerSetting }) {
 
           <div className="flex flex-none items-center gap-[18px]">
             <Link
-              href="/account"
+              href={ROUTES.account}
               className="whitespace-nowrap text-[13px] text-[#5E4A44] transition-colors hover:text-maroon-700"
             >
               Account
             </Link>
             <Link
-              href="/cart"
+              href={ROUTES.cart}
               aria-label="Cart"
               className="group flex items-center gap-[7px]"
             >
@@ -117,7 +105,7 @@ export function Header({ banner }: { banner: BannerSetting }) {
 
         <nav aria-label="Primary" className="border-t border-[#EFE3D0] bg-cream-50/60">
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-center gap-x-[26px] gap-y-1 px-6">
-            {NAV_LINKS.map((link) => (
+            {PRIMARY_NAV.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

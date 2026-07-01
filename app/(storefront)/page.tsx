@@ -10,6 +10,7 @@ import {
   getFreshProducts,
 } from "@/lib/db/queries";
 import { getStoreSettings } from "@/lib/db/settings";
+import { ROUTES } from "@/lib/routes";
 
 /**
  * Storefront home page (TASKS 1.3) — mirrors the prototype's home route:
@@ -33,7 +34,7 @@ export default async function HomePage() {
         eyebrow="Most Loved"
         title="Bestselling Bridal Pieces"
         products={featured}
-        viewAllHref="/shop"
+        viewAllHref={ROUTES.shop}
       />
       <PromoBanner promo={settings.promo} />
       <ProductSection eyebrow="Just In" title="New Arrivals" products={fresh} />

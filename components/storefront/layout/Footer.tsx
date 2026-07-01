@@ -1,18 +1,5 @@
 import Link from "next/link";
-
-const SHOP_LINKS = [
-  { href: "/shop", label: "All Jewellery" },
-  { href: "/bridal-sets", label: "Bridal Sets" },
-  { href: "/necklaces", label: "Necklaces" },
-  { href: "/earrings", label: "Earrings" },
-];
-
-const HELP_LINKS = [
-  { href: "/shipping", label: "Shipping & Returns" },
-  { href: "/track", label: "Track Order" },
-  { href: "/care", label: "Care Guide" },
-  { href: "/contact", label: "Contact Us" },
-];
+import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation";
 
 const SOCIALS = [
   { glyph: "f", label: "Facebook" },
@@ -50,8 +37,8 @@ export function Footer() {
           </div>
         </div>
 
-        <FooterColumn title="Shop" links={SHOP_LINKS} />
-        <FooterColumn title="Help" links={HELP_LINKS} />
+        <FooterColumn title="Shop" links={FOOTER_SHOP_LINKS} />
+        <FooterColumn title="Help" links={FOOTER_HELP_LINKS} />
 
         <div className="flex min-w-[200px] flex-col gap-3">
           <span className="text-xs font-semibold uppercase leading-none tracking-[0.16em] text-gold-300">

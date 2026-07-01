@@ -8,6 +8,7 @@ and `CLAUDE.md` (repo guide). We take these **one at a time, top to bottom**.
 ## Ground truth (as scaffolded)
 - **Stack:** Next.js `16.2.9` (App Router) · React `19` · Tailwind `v4` · TypeScript · **Bun** (`bun.lock`).
 - **Layout:** app lives at **root `app/`** (not `src/` — decided override of plan §4). Path alias `@/*` → `./*`.
+  **Single-source-of-truth registries** (no per-file link/value duplication): `lib/routes.ts` (`ROUTES` — every URL + `category(slug)`/`product(slug)` builders; change a scheme here only), `lib/navigation.ts` (`PRIMARY_NAV`, `FOOTER_SHOP_LINKS`, `FOOTER_HELP_LINKS` built from `ROUTES`), `lib/theme.ts` (`PLACEHOLDER_GRADIENT`). All link/href usages go through these.
   Follows ARCHITECTURE_PLAN §4 otherwise: routes under **`app/(storefront)/`** (group scopes the customer Header/Footer + settings fetch via `(storefront)/layout.tsx`; admin gets its own group in Phase 3); category is the **bare `[category]` segment** → `/{slug}` URLs (plan §4; note: bare slugs share the root namespace with static routes like `/shop`, `/cart` — Next resolves static before dynamic). Components grouped **by surface**: `components/storefront/{layout,product,home}` (+ `ui/`, `admin/` when needed). `stores/`, `styles/` split deferred (YAGNI); `db/` is Supabase (`lib/db`), not Prisma.
 - **Backend:** Supabase project `jr-jewellers` (`naolegptozpaiojozzcy`, ap-south-1). Schema + seed
   already applied; storefront tables are **RLS public-read**. Env in `.env.local`.

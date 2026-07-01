@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CategoryTile } from "@/lib/db/queries";
-
-const FALLBACK_BG = "linear-gradient(150deg,#F3EEE0,#E3D6BA 55%,#D2BE90)";
+import { ROUTES } from "@/lib/routes";
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
 
 /**
  * "Shop by Category" tile grid — matched to the prototype: each category is a
@@ -24,8 +24,8 @@ export function CategoryTiles({ categories }: { categories: CategoryTile[] }) {
         {categories.map((category) => (
           <Link
             key={category.id}
-            href={`/${category.slug}`}
-            style={{ background: category.hero_bg ?? FALLBACK_BG }}
+            href={ROUTES.category(category.slug)}
+            style={{ background: category.hero_bg ?? PLACEHOLDER_GRADIENT }}
             className="group flex aspect-[1/1.12] flex-col items-center justify-center rounded-[3px] border border-[#EFE3D0] px-2.5 text-center transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(74,14,28,0.15)]"
           >
             <svg

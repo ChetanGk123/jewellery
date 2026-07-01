@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/storefront/product/ProductCard";
 import { getCategoryBySlug, getProducts } from "@/lib/db/queries";
+import { ROUTES } from "@/lib/routes";
 
 type CategoryPageProps = {
   params: Promise<{ category: string }>;
@@ -41,7 +42,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <nav aria-label="Breadcrumb" className="mb-[22px]">
         <ol className="flex items-center gap-2 text-[12px] leading-none text-[#9C8A84]">
           <li>
-            <Link href="/" className="text-maroon-700 hover:underline">
+            <Link href={ROUTES.home} className="text-maroon-700 hover:underline">
               Home
             </Link>
           </li>
@@ -79,7 +80,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             Check back soon, or explore the rest of the range.
           </p>
           <Link
-            href="/shop"
+            href={ROUTES.shop}
             className="mt-1.5 rounded-sm bg-maroon-700 px-[26px] py-3 text-[12px] font-semibold uppercase leading-none tracking-[0.12em] text-cream-200 transition-colors hover:bg-maroon-800"
           >
             Browse all jewellery

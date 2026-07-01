@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
 
 /**
  * Home hero — matched to the storefront prototype: a deep-maroon gradient panel
@@ -25,13 +26,13 @@ export function Hero() {
           </p>
           <div className="mt-1.5 flex flex-wrap gap-3.5">
             <Link
-              href="/bridal-sets"
+              href={ROUTES.category("bridal-sets")}
               className="inline-flex items-center justify-center rounded-sm bg-[linear-gradient(135deg,#E6CA7E,#C9A24B_55%,#A87A1E)] px-8 py-[15px] text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-[#3A0E18] shadow-[0_10px_26px_rgba(168,122,30,0.3)] transition-transform duration-200 hover:-translate-y-0.5"
             >
               Shop Bridal Sets
             </Link>
             <Link
-              href="/shop"
+              href={ROUTES.shop}
               className="inline-flex items-center justify-center rounded-sm border border-gold-300/55 px-8 py-[15px] text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-cream-200 transition-colors duration-200 hover:border-gold-300 hover:bg-white/5"
             >
               View All Jewellery

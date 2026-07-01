@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ProductListItem } from "@/lib/db/queries";
 import { discountPercent, formatPaise } from "@/lib/utils/money";
-
-const FALLBACK_BG = "linear-gradient(150deg,#F3EEE0,#E3D6BA 55%,#D2BE90)";
+import { ROUTES } from "@/lib/routes";
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
 
 /**
  * Storefront product card, matched to the prototype's `ProductCard` component:
@@ -17,7 +17,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   const off = discountPercent(product.price_paise, product.mrp_paise);
   const hasSale = off > 0;
   const hasBadge = Boolean(badge) && badge !== "None";
-  const background = image?.bg ?? FALLBACK_BG;
+  const background = image?.bg ?? PLACEHOLDER_GRADIENT;
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-[3px] border border-[#EFE3D0] bg-white transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(74,14,28,0.15)]">
@@ -56,7 +56,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
 
         <h3 className="font-heading text-[20px] font-semibold leading-[1.2] text-maroon-900">
           <Link
-            href={`/product/${slug}`}
+            href={ROUTES.product(slug)}
             className="outline-none after:absolute after:inset-0 after:content-[''] focus-visible:underline"
           >
             {name}
