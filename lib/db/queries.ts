@@ -114,6 +114,21 @@ export async function getCategories(): Promise<Category[]> {
   return data ?? [];
 }
 
+/** A single category by slug, or null if it doesn't exist. */
+export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("category")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`getCategoryBySlug failed: ${error.message}`);
+  }
+  return data;
+}
+
 /**
  * Storefront product listing with optional filters, sort, and pagination.
  * Only returns storefront-visible products (excludes `Draft`).
