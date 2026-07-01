@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ProductCard } from "@/components/product/ProductCard";
+import { ProductCard } from "@/components/storefront/product/ProductCard";
 import type { ProductListItem } from "@/lib/db/queries";
 
 type ProductSectionProps = {

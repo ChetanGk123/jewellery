@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import { Marcellus, Cormorant_Garamond, Jost } from "next/font/google";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { getStoreSettings } from "@/lib/db/settings";
 import "./globals.css";
 
 const marcellus = Marcellus({
@@ -34,23 +31,17 @@ export const metadata: Metadata = {
     "Handcrafted Kundan, Polki and temple jewellery for the Indian bride. Cash on delivery across India.",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const settings = await getStoreSettings();
-
   return (
     <html
       lang="en"
       className={`${marcellus.variable} ${cormorant.variable} ${jost.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col">
-        <Header banner={settings.banner} />
-        {children}
-        <Footer />
-      </body>
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }

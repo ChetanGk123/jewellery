@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ProductCard } from "@/components/product/ProductCard";
+import { ProductCard } from "@/components/storefront/product/ProductCard";
 import { getCategoryBySlug, getProducts } from "@/lib/db/queries";
 
 type CategoryPageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ category: string }>;
 };
 
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { category: slug } = await params;
   const category = await getCategoryBySlug(slug);
   if (!category) return { title: "Category not found" };
   return {
@@ -28,7 +28,7 @@ export async function generateMetadata({
  * sort control and filter sidebar are added in 1.6 (URL search-param state).
  */
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const { slug } = await params;
+  const { category: slug } = await params;
   const [category, products] = await Promise.all([
     getCategoryBySlug(slug),
     getProducts({ categorySlug: slug, sort: "featured" }),

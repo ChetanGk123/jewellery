@@ -24,7 +24,7 @@ export function CategoryTiles({ categories }: { categories: CategoryTile[] }) {
         {categories.map((category) => (
           <Link
             key={category.id}
-            href={`/category/${category.slug}`}
+            href={`/${category.slug}`}
             style={{ background: category.hero_bg ?? FALLBACK_BG }}
             className="group flex aspect-[1/1.12] flex-col items-center justify-center rounded-[3px] border border-[#EFE3D0] px-2.5 text-center transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(74,14,28,0.15)]"
           >

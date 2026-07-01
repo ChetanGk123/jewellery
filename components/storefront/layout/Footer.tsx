@@ -2,9 +2,9 @@ import Link from "next/link";
 
 const SHOP_LINKS = [
   { href: "/shop", label: "All Jewellery" },
-  { href: "/category/bridal-sets", label: "Bridal Sets" },
-  { href: "/category/necklaces", label: "Necklaces" },
-  { href: "/category/earrings", label: "Earrings" },
+  { href: "/bridal-sets", label: "Bridal Sets" },
+  { href: "/necklaces", label: "Necklaces" },
+  { href: "/earrings", label: "Earrings" },
 ];
 
 const HELP_LINKS = [

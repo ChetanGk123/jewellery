@@ -7,12 +7,12 @@ import type { BannerSetting } from "@/lib/db/settings";
  */
 const NAV_LINKS = [
   { href: "/shop", label: "All Jewellery" },
-  { href: "/category/bridal-sets", label: "Bridal Sets" },
-  { href: "/category/necklaces", label: "Necklaces" },
-  { href: "/category/earrings", label: "Earrings" },
-  { href: "/category/bangles-bracelets", label: "Bangles & Bracelets" },
-  { href: "/category/maang-tikka", label: "Maang Tikka" },
-  { href: "/category/hand-jewellery", label: "Hand Jewellery" },
+  { href: "/bridal-sets", label: "Bridal Sets" },
+  { href: "/necklaces", label: "Necklaces" },
+  { href: "/earrings", label: "Earrings" },
+  { href: "/bangles-bracelets", label: "Bangles & Bracelets" },
+  { href: "/maang-tikka", label: "Maang Tikka" },
+  { href: "/hand-jewellery", label: "Hand Jewellery" },
 ] as const;
 
 /**

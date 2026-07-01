@@ -1,9 +1,9 @@
-import { Hero } from "@/components/home/Hero";
-import { TrustStrip } from "@/components/home/TrustStrip";
-import { CategoryTiles } from "@/components/home/CategoryTiles";
-import { ProductSection } from "@/components/home/ProductSection";
-import { PromoBanner } from "@/components/home/PromoBanner";
-import { StoryBlock } from "@/components/home/StoryBlock";
+import { Hero } from "@/components/storefront/home/Hero";
+import { TrustStrip } from "@/components/storefront/home/TrustStrip";
+import { CategoryTiles } from "@/components/storefront/home/CategoryTiles";
+import { ProductSection } from "@/components/storefront/home/ProductSection";
+import { PromoBanner } from "@/components/storefront/home/PromoBanner";
+import { StoryBlock } from "@/components/storefront/home/StoryBlock";
 import {
   getCategoryTiles,
   getFeaturedProducts,
