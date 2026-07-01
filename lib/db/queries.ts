@@ -66,7 +66,10 @@ export type ProductListItem = Pick<
   | "is_fresh"
   | "primary_image_url"
   | "created_at"
-> & { image: ProductImageBrief | null };
+> & {
+  category: Pick<Category, "name" | "slug">;
+  image: ProductImageBrief | null;
+};
 
 /** Full product for the detail page. */
 export type ProductDetail = ProductRow & {
@@ -122,7 +125,7 @@ export async function getProducts(
   let query = supabase
     .from("product")
     .select(
-      `${LIST_COLUMNS}, category:category!inner(slug), images:product_image(url, bg, is_primary, sort_order)`,
+      `${LIST_COLUMNS}, category:category!inner(name, slug), images:product_image(url, bg, is_primary, sort_order)`,
     )
     .in("status", STOREFRONT_VISIBLE_STATUSES);
 
@@ -160,10 +163,12 @@ export async function getProducts(
   return (data ?? []).map((row) => {
     const record = row as Record<string, unknown> & {
       images?: EmbeddedImage[] | null;
+      category: Pick<Category, "name" | "slug">;
     };
-    const { images, category: _category, ...rest } = record;
+    const { images, category, ...rest } = record;
     return {
-      ...(rest as Omit<ProductListItem, "image">),
+      ...(rest as Omit<ProductListItem, "image" | "category">),
+      category,
       image: pickPrimaryImage(images),
     };
   });
