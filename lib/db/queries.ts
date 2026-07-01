@@ -299,6 +299,24 @@ export async function getProductBySlug(
   };
 }
 
+/**
+ * Products related to the given one — same category, excluding the current
+ * slug — for the "You may also love" rail on the detail page. Fetches one extra
+ * so removing the current product still leaves a full row.
+ */
+export async function getRelatedProducts(
+  categorySlug: string,
+  excludeSlug: string,
+  limit = 4,
+): Promise<ProductListItem[]> {
+  const products = await getProducts({
+    categorySlug,
+    sort: "featured",
+    limit: limit + 1,
+  });
+  return products.filter((p) => p.slug !== excludeSlug).slice(0, limit);
+}
+
 /** Approved reviews for a product, newest first. */
 export async function getApprovedReviews(
   productId: string,
