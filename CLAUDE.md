@@ -2,14 +2,38 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## RULE: Reference the prototypes before generating any UI
+
+**Before generating, scaffolding, or editing any UI component, page, or layout, you
+MUST reference the relevant prototype in [`refereces/`](refereces/) and mirror its
+actual design** — layout, spacing, copy, colors, typography, component structure, and
+interaction/hover states. Do **not** design UI from imagination or generic templates
+when a prototype exists.
+
+- [`refereces/JR Jewellers Storefront.html`](refereces/JR%20Jewellers%20Storefront.html) — customer storefront.
+- [`refereces/JR Admin Dashboard.html`](refereces/JR%20Admin%20Dashboard.html) — admin console.
+
+These are builder exports: the `.html` is encoded and only renders when its JS
+**self-unpacks in a real browser** — reading the file directly shows the bootstrap,
+not the design. So do **both**:
+
+1. **Decode the DSL for structure** — parse the `__bundler/template` section (see
+   "Reading / decoding the prototypes" below) to get exact layout, copy, and bindings.
+2. **Render the screen in a browser for visual fidelity** — load the `.html` (via the
+   Chrome DevTools MCP or `python3 -m http.server`), let it unpack, and study the
+   real spacing/color/typography/hover states before building the React/Tailwind version.
+
+Only deviate when the user explicitly asks, or when the prototype has no equivalent
+for what's being built.
+
 ## Project status
 
 This repo is **mid-transition**: it currently contains two finished UI prototypes
 and an approved plan to rebuild them as one app. There is **no application code,
 `package.json`, build, or test suite yet**, and it is **not a git repository**.
 
-- `JR Jewellers Storefront.html` (~426 KB) — customer storefront prototype.
-- `JR Admin Dashboard.html` (~486 KB) — admin console prototype.
+- `refereces/JR Jewellers Storefront.html` (~426 KB) — customer storefront prototype.
+- `refereces/JR Admin Dashboard.html` (~486 KB) — admin console prototype.
 - `ARCHITECTURE_PLAN.md` — **the rebuild plan; read this first.** Recreates both
   prototypes as a single **Next.js (App Router) + TypeScript + Tailwind + Supabase**
   app. Confirmed decisions: Supabase backend; **storefront-first**; **COD-only for
@@ -51,7 +75,7 @@ file, parse the embedded scripts and gunzip the manifest payloads, e.g.:
 
 ```python
 import re, json, base64, gzip
-data = open("JR Jewellers Storefront.html").read()
+data = open("refereces/JR Jewellers Storefront.html").read()
 tpl = json.loads(re.search(r'type="__bundler/template">\s*(".*?")\s*</script>', data, re.S).group(1))
 # -> tpl is the readable DSL with all pages/components/bindings
 ```

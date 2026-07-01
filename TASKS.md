@@ -34,11 +34,10 @@ Goal: a clean, branded shell wired to Supabase. No product pages yet.
 - ✅ **0.3 — `git init` + baseline commit.** On `main`; `.env.local`/`node_modules`/`.next` confirmed excluded. Commit `3ce9c46`.
 - ✅ **0.4 — Brand design tokens.** `app/globals.css` rewritten: maroon/gold/cream palette, `--font-*`, sharp radii via Tailwind v4 `@theme`; forced dark mode removed.
 - ✅ **0.5 — Fonts.** Marcellus/Cormorant Garamond/Jost via `next/font/google`, CSS vars wired; real metadata set. **Build verified green** (Next 16 + Turbopack).
-- ⬜ **0.6 — Supabase client.** `lib/db/client.ts` (browser, anon/publishable) + `lib/db/server.ts`
-  (server components). Add `lib/env.ts` with zod validation of the two `NEXT_PUBLIC_SUPABASE_*` vars.
-- ⬜ **0.7 — Generated DB types.** Generate TypeScript types from the live schema → `lib/db/types.ts`; re-export typed client.
-- ⬜ **0.8 — Money & format utils.** `lib/utils/money.ts` (`paise → ₹` formatter, INR `Intl`), small unit test.
-- ⬜ **0.9 — App shell.** Root layout with `<Header>` (logo, nav, cart icon stub) + `<Footer>`, semantic landmarks, metadata/`<head>` basics, favicon.
+- ✅ **0.6 — Supabase client.** `lib/db/client.ts` (browser singleton) + `lib/db/server.ts` (server factory, no session) + `lib/env.ts` (zod-validated public env).
+- ✅ **0.7 — Generated DB types.** `lib/db/types.ts` from live schema (7 tables incl. `primary_image_url`, `search`, `updated_at`); clients typed `<Database>`.
+- ✅ **0.8 — Money utils.** `lib/utils/money.ts` (`formatPaise`, `paiseToRupees`, `discountPercent`) + `money.test.ts` — **4/4 pass via `bun test`**.
+- ✅ **0.9 — App shell.** `Header` (maroon announcement bar + cream brand row, nav, cart stub) + `Footer` wired into `layout.tsx`; semantic landmarks. **Build green.** *(Reconcile visuals against storefront prototype — see note below.)*
 
 ## Phase 1 — Storefront (read-only)
 Goal: browse catalog end-to-end from real Supabase data. No cart writes yet.
