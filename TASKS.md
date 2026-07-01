@@ -42,8 +42,8 @@ Goal: a clean, branded shell wired to Supabase. No product pages yet.
 ## Phase 1 — Storefront (read-only)
 Goal: browse catalog end-to-end from real Supabase data. No cart writes yet.
 
-- ⬜ **1.1 — Data access layer.** `lib/db/queries.ts`: `getCategories`, `getProducts(filters)`,
-  `getProductBySlug`, `getFeaturedProducts`, `getApprovedReviews(productId)`. Typed, server-side.
+- ✅ **1.1 — Data access layer.** `lib/db/queries.ts`: `getCategories`, `getProducts(filters)`, `getProductBySlug`, `getFeaturedProducts`, `getApprovedReviews`. Typed, server-side; visible = all statuses except `Draft`; filters (category slug/material/price/search/featured) + sort + pagination; primary-image resolver with gradient (`bg`) fallback. **Query shapes smoke-tested against live Supabase** (embeds, inner-join filter, full-text search, detail).
+- ✅ **1.1b — App shell visual reconciliation.** `Header` + `Footer` rebuilt to match the storefront prototype (decoded DSL + browser-rendered both): gradient announcement bar w/ offer+code (scrolls; only brand row + nav stick), left two-line brand lockup, centre search form, Account + Cart-with-badge, centred 7-item nav w/ gold underline hover; footer gains brand blurb + socials, Shop/Help columns, newsletter (UI-only), payments/GST strip. **Verified 1440 + 375** (flex-wrap responsive, no overflow). Closes the 0.9 follow-up note. *Announcement copy is static — wire to `setting.banner` in 1.3.*
 - ⬜ **1.2 — `ProductCard`.** `components/product/ProductCard.tsx` — image, name, ₹ price + struck MRP, badge; designed hover/focus states.
 - ⬜ **1.3 — Home page.** Hero/banner (from `setting.banner`), featured grid, category tiles, promo strip (`homepage_promo`).
 - ⬜ **1.4 — Category page.** `app/(storefront)/category/[slug]/page.tsx` — header + product grid; 404 on unknown slug.

@@ -1,98 +1,110 @@
 import Link from "next/link";
 
+/**
+ * Primary navigation — a curated 7-item menu mirroring the storefront prototype.
+ * All hrefs resolve to real storefront routes (built out across Phase 1).
+ */
 const NAV_LINKS = [
-  { href: "/shop", label: "Shop All" },
-  { href: "/category/bridal-sets", label: "Bridal" },
+  { href: "/shop", label: "All Jewellery" },
+  { href: "/category/bridal-sets", label: "Bridal Sets" },
   { href: "/category/necklaces", label: "Necklaces" },
   { href: "/category/earrings", label: "Earrings" },
-  { href: "/about", label: "Our Story" },
+  { href: "/category/bangles-bracelets", label: "Bangles & Bracelets" },
+  { href: "/category/maang-tikka", label: "Maang Tikka" },
+  { href: "/category/hand-jewellery", label: "Hand Jewellery" },
 ] as const;
 
 /**
- * Storefront header: slim maroon announcement bar over a cream brand row.
- * Cart count is a stub (0) until the cart store lands in Phase 2.
+ * Storefront header, matched to `refereces/JR Jewellers Storefront.html`:
+ * a gradient announcement bar that scrolls away, over a sticky brand row
+ * (left logo · centre search · account/cart) and a centred nav strip.
+ *
+ * Announcement + cart count are static stubs for now — the banner is wired to
+ * `setting.banner` in Phase 1.3 and the count to the cart store in Phase 2.
  */
 export function Header() {
   return (
-    <header className="sticky top-0 z-40">
-      <div className="bg-maroon-950 text-gold-300">
-        <p className="mx-auto max-w-7xl px-4 py-2 text-center text-[11px] uppercase tracking-[0.18em]">
-          Complimentary shipping over ₹999 · Cash on Delivery across India
-        </p>
+    <header>
+      {/* Announcement bar — scrolls with the page (not sticky), per prototype. */}
+      <div className="bg-[linear-gradient(90deg,#4A0E1C,#71182B_50%,#4A0E1C)] px-4 py-[9px] text-center text-[12px] font-medium leading-normal tracking-[0.06em] text-[#F0DCBE]">
+        <span>Free shipping over ₹999</span>
+        <span className="mx-1.5" aria-hidden>
+          ·
+        </span>
+        <span>Cash on Delivery available</span>
+        <span className="mx-1.5" aria-hidden>
+          ·
+        </span>
+        <span>
+          Festive offer: <span className="font-semibold text-gold-300">FLAT 20% OFF</span>{" "}
+          with code <span className="font-semibold text-gold-300">BRIDE20</span>
+        </span>
       </div>
 
-      <div className="border-b border-border bg-surface/95 backdrop-blur">
-        <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-4">
-          <nav aria-label="Primary" className="hidden md:flex items-center gap-6">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="border-b border-transparent pb-0.5 text-xs uppercase tracking-[0.14em] text-maroon-900 transition-colors hover:border-accent hover:text-accent"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <button
-            type="button"
-            aria-label="Open menu"
-            className="justify-self-start text-maroon-900 md:hidden"
-          >
-            <MenuIcon />
-          </button>
-
-          <Link
-            href="/"
-            className="justify-self-center font-display text-2xl tracking-[0.06em] text-maroon-950"
-          >
-            JR Jewellers
+      <div className="sticky top-0 z-40 border-b border-[#E7D9C2] bg-cream-100/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-[22px] gap-y-3 px-6 py-3.5">
+          <Link href="/" className="flex flex-none flex-col leading-none">
+            <span className="font-display text-[clamp(20px,5.5vw,26px)] leading-none tracking-[0.14em] text-maroon-700">
+              JR JEWELLERS
+            </span>
+            <span className="mt-[5px] text-[9.5px] uppercase leading-none tracking-[0.36em] text-gold-600">
+              Artificial Bridal Jewellery
+            </span>
           </Link>
 
-          <div className="flex items-center justify-end gap-4 text-maroon-900">
-            <Link href="/shop" aria-label="Search" className="transition-colors hover:text-accent">
-              <SearchIcon />
+          <form
+            action="/shop"
+            role="search"
+            className="flex min-w-[200px] flex-1 basis-[300px] items-center rounded-sm border border-[#E7D9C2] bg-white px-3.5 transition-colors focus-within:border-gold-400"
+          >
+            <span className="text-[15px] text-[#B79B7E]" aria-hidden>
+              ⚲
+            </span>
+            <input
+              type="search"
+              name="q"
+              aria-label="Search products"
+              placeholder="Search necklaces, jhumkas, bridal sets..."
+              className="min-w-0 flex-1 border-none bg-transparent px-2.5 py-[11px] text-[13px] text-maroon-900 outline-none placeholder:text-[#B79B7E]"
+            />
+          </form>
+
+          <div className="flex flex-none items-center gap-[18px]">
+            <Link
+              href="/account"
+              className="whitespace-nowrap text-[13px] text-[#5E4A44] transition-colors hover:text-maroon-700"
+            >
+              Account
             </Link>
             <Link
               href="/cart"
               aria-label="Cart"
-              className="relative transition-colors hover:text-accent"
+              className="group flex items-center gap-[7px]"
             >
-              <BagIcon />
-              <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-medium text-cream-50">
+              <span className="whitespace-nowrap text-[13px] text-[#5E4A44] transition-colors group-hover:text-maroon-700">
+                Cart
+              </span>
+              <span className="inline-block min-w-[20px] rounded-[10px] bg-maroon-700 px-[5px] text-center text-[11px] font-semibold leading-5 text-cream-200">
                 0
               </span>
             </Link>
           </div>
         </div>
+
+        <nav aria-label="Primary" className="border-t border-[#EFE3D0] bg-cream-50/60">
+          <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-center gap-x-[26px] gap-y-1 px-6">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="whitespace-nowrap border-b-2 border-transparent py-[13px] text-[12.5px] font-medium uppercase tracking-[0.13em] text-[#5E4A44] transition-colors hover:border-gold-400 hover:text-maroon-700"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
       </div>
     </header>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-      <path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function BagIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-      <path d="M6 8h12l-1 12H7L6 8Z" strokeLinejoin="round" />
-      <path d="M9 8a3 3 0 0 1 6 0" strokeLinecap="round" />
-    </svg>
   );
 }
