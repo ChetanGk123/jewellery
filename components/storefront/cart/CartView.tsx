@@ -5,6 +5,7 @@ import { cartSavingsPaise, cartSubtotalPaise } from "@/lib/cart";
 import { validateCoupon } from "@/lib/coupons";
 import { shippingPaise } from "@/lib/shipping";
 import { ROUTES } from "@/lib/routes";
+import { cartEnquiryUrl } from "@/lib/whatsapp";
 import { useCartHydrated, useCartStore } from "@/stores/cart";
 import { CartLineRow } from "./CartLineRow";
 import { CartSummary } from "./CartSummary";
@@ -82,6 +83,7 @@ export function CartView({ freeShipThresholdPaise }: Props) {
         totalPaise={totalPaise}
         freeShipThresholdPaise={freeShipThresholdPaise}
         checkoutHref={ROUTES.checkout}
+        whatsappHref={cartEnquiryUrl(lines)}
         couponSlot={<CouponField subtotalPaise={subtotalPaise} />}
       />
     </div>

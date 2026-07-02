@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ProductOption } from "@/lib/db/queries";
+import { productEnquiryUrl } from "@/lib/whatsapp";
 import { useCartStore } from "@/stores/cart";
 
 const MIN_QTY = 1;
@@ -24,7 +25,7 @@ type BuyBoxProduct = {
  * Purchase controls for the product detail page: plating-tone selector, a
  * quantity stepper, and the Add to Cart / WhatsApp actions. Matched to the
  * storefront prototype. Add to Cart writes to the persisted cart store; the
- * WhatsApp enquiry stays a stub until 2.7.
+ * WhatsApp enquiry opens a prefilled `wa.me` chat (product name + chosen tone).
  */
 export function ProductBuyBox({
   product,
@@ -61,6 +62,9 @@ export function ProductBuyBox({
     setIsAdded(true);
     window.setTimeout(() => setIsAdded(false), ADDED_FEEDBACK_MS);
   };
+
+  const selectedLabel = options.find((option) => option.value === tone)?.label;
+  const enquiryHref = productEnquiryUrl(product.name, selectedLabel);
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -130,15 +134,18 @@ export function ProductBuyBox({
         </button>
       </div>
 
-      <button
-        type="button"
+      <a
+        href={enquiryHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Enquire about ${product.name} on WhatsApp`}
         className="flex items-center justify-center gap-2.5 rounded-sm border border-[#2EA84F] bg-white px-6 py-3.5 text-[13px] font-semibold leading-none text-[#1E7A38] transition-colors hover:bg-[#F2FBF4]"
       >
         <span className="text-[16px]" aria-hidden>
           💬
         </span>
         Enquire on WhatsApp
-      </button>
+      </a>
     </div>
   );
 }

@@ -11,6 +11,8 @@ type Props = {
   totalPaise: number;
   freeShipThresholdPaise: number;
   checkoutHref: string;
+  /** Prefilled WhatsApp enquiry link built from the cart's lines. */
+  whatsappHref: string;
   couponSlot: ReactNode;
 };
 
@@ -27,6 +29,7 @@ export function CartSummary({
   totalPaise,
   freeShipThresholdPaise,
   checkoutHref,
+  whatsappHref,
   couponSlot,
 }: Props) {
   const toFreePaise = amountToFreeShipPaise(subtotalPaise, freeShipThresholdPaise);
@@ -108,6 +111,20 @@ export function CartSummary({
       >
         Proceed to Checkout
       </Link>
+
+      <a
+        href={whatsappHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Enquire about your cart on WhatsApp"
+        className="flex items-center justify-center gap-2.5 rounded-sm border border-[#2EA84F] bg-white px-4 py-3 text-[13px] font-semibold leading-none text-[#1E7A38] transition-colors hover:bg-[#F2FBF4]"
+      >
+        <span className="text-[16px]" aria-hidden>
+          💬
+        </span>
+        Enquire on WhatsApp
+      </a>
+
       <p className="m-0 text-center text-[11.5px] leading-snug text-[#9C8A84]">
         Cash on Delivery available across India · secure checkout
       </p>
