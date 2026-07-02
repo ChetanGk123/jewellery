@@ -15,6 +15,8 @@ export const ROUTES = {
   track: "/track",
   care: "/care",
   contact: "/contact",
+  about: "/about",
+  faq: "/faq",
   /** Category listing — bare slug at the storefront root. */
   category: (slug: string) => `/${slug}`,
   /** Product detail page. */
