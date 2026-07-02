@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation";
+import { STORE_INFO } from "@/lib/store-info";
 
-const SOCIALS = [
-  { glyph: "f", label: "Facebook" },
-  { glyph: "♢", label: "Instagram" },
-  { glyph: "💬", label: "WhatsApp" },
-];
+const socialBadgeClass =
+  "flex h-[34px] w-[34px] items-center justify-center rounded-full border border-gold-300/40 text-sm text-gold-300 transition-colors hover:bg-gold-300/10";
 
 /**
  * Storefront footer, matched to `refereces/JR Jewellers Storefront.html`:
@@ -18,22 +16,34 @@ export function Footer() {
       <div className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-10 px-6 pt-14 pb-[30px]">
         <div className="flex min-w-[240px] max-w-[320px] flex-1 flex-col gap-[14px]">
           <span className="font-display text-2xl leading-none tracking-[0.14em] text-gold-300">
-            JR JEWELLERS
+            {STORE_INFO.wordmark}
           </span>
           <p className="m-0 text-[13px] font-light leading-[1.7] text-[#C3A89D]">
-            Handcrafted artificial bridal jewellery — Kundan, polki, temple &amp;
-            pearl. Made in India, shipped nationwide.
+            {STORE_INFO.tagline}
           </p>
           <div className="mt-1.5 flex gap-3">
-            {SOCIALS.map((social) => (
-              <span
-                key={social.label}
-                aria-label={social.label}
-                className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-full border border-gold-300/40 text-sm text-gold-300 transition-colors hover:bg-gold-300/10"
-              >
-                {social.glyph}
-              </span>
-            ))}
+            {STORE_INFO.socials.map((social) =>
+              social.href ? (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className={socialBadgeClass}
+                >
+                  {social.glyph}
+                </a>
+              ) : (
+                <span
+                  key={social.label}
+                  aria-label={social.label}
+                  className={socialBadgeClass}
+                >
+                  {social.glyph}
+                </span>
+              ),
+            )}
           </div>
         </div>
 
@@ -68,7 +78,7 @@ export function Footer() {
       <div className="border-t border-gold-300/20">
         <div className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-3 px-6 py-[18px]">
           <span className="text-[11.5px] font-light leading-none text-[#9C8278]">
-            © {new Date().getFullYear()} JR Jewellers · GST registered · Made in India
+            © {new Date().getFullYear()} {STORE_INFO.name} · GST registered · Made in India
           </span>
           <span className="text-[11.5px] font-light leading-none text-[#9C8278]">
             UPI · Cards · Netbanking · COD · Razorpay Secured

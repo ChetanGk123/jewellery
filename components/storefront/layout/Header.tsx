@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { BannerSetting } from "@/lib/db/settings";
 import { ROUTES } from "@/lib/routes";
 import { PRIMARY_NAV } from "@/lib/navigation";
+import { STORE_INFO } from "@/lib/store-info";
 
 /**
  * Storefront header, matched to `refereces/JR Jewellers Storefront.html`:
@@ -57,10 +58,10 @@ export function Header({ banner }: { banner: BannerSetting }) {
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-[22px] gap-y-3 px-6 py-3.5">
           <Link href={ROUTES.home} className="flex flex-none flex-col leading-none">
             <span className="font-display text-[clamp(20px,5.5vw,26px)] leading-none tracking-[0.14em] text-maroon-700">
-              JR JEWELLERS
+              {STORE_INFO.wordmark}
             </span>
             <span className="mt-[5px] text-[9.5px] uppercase leading-none tracking-[0.36em] text-gold-600">
-              Artificial Bridal Jewellery
+              {STORE_INFO.descriptor}
             </span>
           </Link>
 

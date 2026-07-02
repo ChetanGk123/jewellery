@@ -3,7 +3,13 @@
  * Kept in one module so the page components stay presentational. The Shipping,
  * Care, and Contact content mirrors the storefront prototype verbatim; FAQ and
  * About have no prototype equivalent and are authored to match the brand voice.
+ *
+ * The business's own contact details (phone, email, WhatsApp, address, hours)
+ * come from `@/lib/store-info` — the single source of truth — so updating them
+ * doesn't mean editing this file too.
  */
+
+import { STORE_INFO } from "@/lib/store-info";
 
 export type IconItem = { icon: string; title: string; body: string };
 export type NumberedItem = { n: string; title: string; body: string };
@@ -137,36 +143,36 @@ export const CONTACT_CHANNELS: ContactChannel[] = [
   {
     icon: "☎",
     label: "Call us",
-    value: "+91 99999 99999",
-    note: "Mon–Sat, 10am–7pm",
-    href: "tel:+919999999999",
+    value: STORE_INFO.phone.display,
+    note: STORE_INFO.hours.short,
+    href: STORE_INFO.phone.href,
   },
   {
     icon: "✉",
     label: "Email",
-    value: "care@jrjewellers.in",
+    value: STORE_INFO.email.display,
     note: "Replies within a few hours",
-    href: "mailto:care@jrjewellers.in",
+    href: STORE_INFO.email.href,
   },
   {
     icon: "◈",
     label: "WhatsApp",
     value: "Chat with us",
     note: "Fastest way to reach support",
-    href: "https://wa.me/919999999999",
+    href: STORE_INFO.whatsapp.href,
   },
   {
     icon: "⌂",
     label: "Visit our studio",
-    value: "JR Jewellers, Jaipur, Rajasthan",
-    note: "By appointment",
+    value: STORE_INFO.address.line,
+    note: STORE_INFO.address.note,
   },
 ];
 
 export const SUPPORT_HOURS = {
   title: "Support hours",
-  line: "Mon–Sat · 10:00 AM – 7:00 PM IST",
-  note: "WhatsApp messages answered all week.",
+  line: STORE_INFO.hours.long,
+  note: STORE_INFO.hours.note,
 };
 
 export type FaqItem = { q: string; a: string };
