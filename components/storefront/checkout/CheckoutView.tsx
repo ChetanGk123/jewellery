@@ -37,7 +37,7 @@ export function CheckoutView({ freeShipThresholdPaise }: Props) {
   const handlePlaced = (order: PlacedOrder) => {
     setIsRedirecting(true);
     clearCart();
-    router.push(ROUTES.order(order.orderId));
+    router.push(ROUTES.order(order.orderNo));
   };
 
   if (!hasHydrated) {

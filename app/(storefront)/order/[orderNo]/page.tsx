@@ -10,24 +10,24 @@ export const metadata: Metadata = {
 };
 
 type OrderPageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ orderNo: string }>;
 };
 
-/** Matches a v4-shaped UUID before hitting the DB, so a junk path 404s cleanly. */
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Order number shape (JR-YYMMDD-####-XXXX) — reject junk paths before the DB. */
+const ORDER_NO_RE = /^JR-\d{6}-\d{4,}-[0-9A-Z]{4}$/;
 
 /**
  * Order confirmation page (TASKS 2.6). Reached via the checkout redirect keyed
- * on the order's unguessable id. Fetches the non-sensitive confirmation through
- * the `get_order_confirmation` RPC (the `order` table is RLS-sealed) and 404s
- * for an unknown or malformed id.
+ * on the order number, which carries a random suffix so it can't be enumerated.
+ * Fetches the non-sensitive confirmation through the `get_order_confirmation`
+ * RPC (the `order` table is RLS-sealed) and 404s for an unknown/malformed number.
  */
 export default async function OrderPage({ params }: OrderPageProps) {
-  const { id } = await params;
-  if (!UUID_RE.test(id)) notFound();
+  const { orderNo } = await params;
+  const decoded = decodeURIComponent(orderNo);
+  if (!ORDER_NO_RE.test(decoded)) notFound();
 
-  const confirmation = await getOrderConfirmation(id);
+  const confirmation = await getOrderConfirmation(decoded);
   if (!confirmation) notFound();
 
   return <OrderConfirmation confirmation={confirmation} />;

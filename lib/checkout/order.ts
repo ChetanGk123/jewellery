@@ -34,8 +34,7 @@ export function cartLinesToOrderItems(
 
 /** Server-recomputed order summary (camelCase) returned to the client. */
 export type PlacedOrder = {
-  /** Unguessable order id — used as the confirmation URL key (not the order no). */
-  orderId: string;
+  /** Unguessable order number (JR-YYMMDD-####-XXXX) — the confirmation URL key. */
   orderNo: string;
   subtotalPaise: number;
   discountPaise: number;
@@ -45,7 +44,6 @@ export type PlacedOrder = {
 
 /** Shape of the `place_order` RPC's jsonb return (snake_case, integer paise). */
 const placedOrderResultSchema = z.object({
-  order_id: z.string().uuid(),
   order_no: z.string().min(1),
   subtotal_paise: z.number().int(),
   discount_paise: z.number().int(),
@@ -58,7 +56,6 @@ export function toPlacedOrder(raw: unknown): PlacedOrder | null {
   const parsed = placedOrderResultSchema.safeParse(raw);
   if (!parsed.success) return null;
   return {
-    orderId: parsed.data.order_id,
     orderNo: parsed.data.order_no,
     subtotalPaise: parsed.data.subtotal_paise,
     discountPaise: parsed.data.discount_paise,

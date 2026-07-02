@@ -7,8 +7,6 @@ import {
   toPlacedOrder,
 } from "./order";
 
-const UUID_ORDER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-
 const UUID_A = "11111111-1111-4111-8111-111111111111";
 const UUID_B = "22222222-2222-4222-8222-222222222222";
 
@@ -90,16 +88,14 @@ describe("orderItemsSchema", () => {
 describe("toPlacedOrder", () => {
   test("narrows a valid RPC return into camelCase PlacedOrder", () => {
     const order = toPlacedOrder({
-      order_id: UUID_ORDER,
-      order_no: "JR-260703-1001",
+      order_no: "JR-260703-1001-7F3A",
       subtotal_paise: 209600,
       discount_paise: 41920,
       shipping_paise: 0,
       total_paise: 167680,
     });
     expect(order).toEqual({
-      orderId: UUID_ORDER,
-      orderNo: "JR-260703-1001",
+      orderNo: "JR-260703-1001-7F3A",
       subtotalPaise: 209600,
       discountPaise: 41920,
       shippingPaise: 0,
@@ -110,14 +106,13 @@ describe("toPlacedOrder", () => {
   test("returns null when the shape is unexpected", () => {
     expect(toPlacedOrder(null)).toBeNull();
     expect(toPlacedOrder({ order_no: "JR-1" })).toBeNull();
-    // Missing order_id fails even with an otherwise-valid body.
+    // A missing money field fails even with a valid order number.
     expect(
       toPlacedOrder({
-        order_no: "JR-1",
+        order_no: "JR-260703-1001-7F3A",
         subtotal_paise: 1,
         discount_paise: 0,
         shipping_paise: 0,
-        total_paise: 1,
       }),
     ).toBeNull();
   });

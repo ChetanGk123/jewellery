@@ -422,7 +422,7 @@ export type Database = {
     }
     Functions: {
       get_order_confirmation: {
-        Args: { p_id: string }
+        Args: { p_order_no: string }
         Returns: Json
       }
       place_order: {
