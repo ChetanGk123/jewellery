@@ -36,7 +36,7 @@ export function CheckoutSummary({
         Order Summary
       </h2>
 
-      <ul className="m-0 flex max-h-[240px] list-none flex-col gap-3 overflow-auto p-0">
+      <ul className="m-0 flex max-h-[240px] list-none flex-col gap-3 overflow-auto px-0.5 pt-2">
         {lines.map((line) => (
           <SummaryLine key={line.id} line={line} />
         ))}
