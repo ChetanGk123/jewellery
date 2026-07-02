@@ -24,7 +24,7 @@ export function ProductGallery({
   const bigBackground = active?.bg ?? PLACEHOLDER_GRADIENT;
 
   return (
-    <div className="flex min-w-[300px] flex-1 flex-col gap-3.5">
+    <div className="flex flex-col gap-3.5 md:min-w-[300px] md:flex-1">
       <div
         className="relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-[4px] border border-[#EFE3D0]"
         style={{ background: bigBackground }}

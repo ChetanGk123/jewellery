@@ -78,10 +78,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </ol>
       </nav>
 
-      <div className="flex flex-wrap gap-12">
+      <div className="flex flex-col gap-10 md:flex-row md:flex-wrap md:gap-12">
         <ProductGallery images={product.images} productName={product.name} />
 
-        <div className="flex min-w-[300px] max-w-[520px] flex-1 flex-col gap-[18px]">
+        <div className="flex max-w-[520px] flex-col gap-[18px] md:min-w-[300px] md:flex-1">
           <div className="flex flex-col gap-2.5">
             <span className="text-[11px] font-medium uppercase leading-none tracking-[0.18em] text-gold-600">
               {product.category.name}

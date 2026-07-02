@@ -55,8 +55,8 @@ export default function ContactPage() {
         intro="Questions about an order, sizing or a custom bridal set? Reach out — we usually reply within a few hours."
       />
 
-      <div className="mx-auto flex max-w-[1080px] flex-wrap items-start gap-10 px-6 pb-[70px] pt-[54px]">
-        <div className="flex min-w-[280px] flex-1 flex-col gap-4">
+      <div className="mx-auto flex max-w-[1080px] flex-col items-start gap-10 px-6 pb-[70px] pt-[54px] md:flex-row md:flex-wrap">
+        <div className="flex w-full flex-col gap-4 md:w-auto md:min-w-0 md:flex-1">
           <h2 className="m-0 mb-1 font-heading text-[26px] font-semibold leading-[1.1] text-maroon-900">
             Get in touch
           </h2>
@@ -94,7 +94,7 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <div className="min-w-[300px] flex-[1.2]">
+        <div className="w-full md:min-w-0 md:flex-[1.2]">
           <ContactForm />
         </div>
       </div>

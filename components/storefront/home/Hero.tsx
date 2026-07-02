@@ -9,8 +9,8 @@ import { ROUTES } from "@/lib/routes";
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-[linear-gradient(120deg,#4A0E1C,#71182B_55%,#5E1322)]">
-      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-12 px-6 py-16">
-        <div className="flex min-w-[300px] flex-1 flex-col gap-[22px]">
+      <div className="mx-auto flex max-w-[1280px] flex-col items-center gap-12 px-6 py-16 md:flex-row md:flex-wrap">
+        <div className="flex w-full flex-col gap-[22px] md:w-auto md:min-w-0 md:flex-1">
           <span className="text-[12px] font-medium uppercase leading-none tracking-[0.34em] text-gold-300">
             The Bridal Edit · 2026
           </span>

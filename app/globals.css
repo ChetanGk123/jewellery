@@ -16,7 +16,9 @@
   --color-gold-300: #e6ca7e;
   --color-gold-400: #c9a24b;
   --color-gold-500: #b58a3c;
-  --color-gold-600: #a87a1e;
+  /* gold-600: darkened from #a87a1e to clear WCAG AA (4.5:1) for small eyebrow
+     label text on cream backgrounds — see TASKS 1.8 contrast pass. */
+  --color-gold-600: #94670f;
 
   /* Cream (surfaces) */
   --color-cream-50: #fffdf8;
