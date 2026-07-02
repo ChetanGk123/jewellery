@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
@@ -22,12 +23,6 @@ const STORAGE_VERSION = 1;
 
 type CartState = {
   lines: CartLine[];
-  /**
-   * True once the persisted cart has rehydrated from localStorage. The server
-   * always renders an empty cart, so consumers (e.g. the Header badge) render a
-   * neutral value until this flips to avoid a hydration mismatch.
-   */
-  hasHydrated: boolean;
   addItem: (input: CartLineInput, quantity?: number) => void;
   setItemQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
@@ -38,7 +33,6 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       lines: [],
-      hasHydrated: false,
       addItem: (input, quantity = 1) =>
         set((state) => ({ lines: addLine(state.lines, input, quantity) })),
       setItemQuantity: (id, quantity) =>
@@ -51,12 +45,28 @@ export const useCartStore = create<CartState>()(
       name: STORAGE_KEY,
       version: STORAGE_VERSION,
       storage: createJSONStorage(() => localStorage),
-      // Only the lines are persisted; `hasHydrated` must always start false and
-      // is set by onRehydrateStorage once the stored lines are restored.
-      partialize: (state) => ({ lines: state.lines }),
-      onRehydrateStorage: () => () => {
-        useCartStore.setState({ hasHydrated: true });
-      },
     },
   ),
 );
+
+/**
+ * True once the persisted cart has finished rehydrating from localStorage. The
+ * server (and the first client render) always render an empty cart, so consumers
+ * (the cart page, the header badge) gate on this to avoid a hydration mismatch
+ * and a flash of the empty cart. Initialised `false` so SSR and first paint agree,
+ * then flipped via persist's own hydration signal.
+ */
+export function useCartHydrated(): boolean {
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = useCartStore.persist.onFinishHydration(() =>
+      setHydrated(true),
+    );
+    // Cover the case where hydration already finished before this effect ran.
+    if (useCartStore.persist.hasHydrated()) setHydrated(true);
+    return unsubscribe;
+  }, []);
+
+  return hydrated;
+}

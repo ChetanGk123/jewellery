@@ -4,6 +4,7 @@ import type { ProductListItem } from "@/lib/db/queries";
 import { discountPercent, formatPaise } from "@/lib/utils/money";
 import { ROUTES } from "@/lib/routes";
 import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
+import { AddToCartButton } from "./AddToCartButton";
 
 /**
  * Storefront product card, matched to the prototype's `ProductCard` component:
@@ -82,13 +83,25 @@ export function ProductCard({ product }: { product: ProductListItem }) {
             {product.rating.toFixed(1)}{" "}
             <span className="text-[#A6938C]">({product.review_count})</span>
           </span>
-          <button
-            type="button"
-            aria-label={`Add ${name} to cart`}
+          <AddToCartButton
+            input={{
+              productId: product.id,
+              slug,
+              name,
+              categoryName: category.name,
+              pricePaise: product.price_paise,
+              mrpPaise: product.mrp_paise,
+              imageUrl: image?.url ?? null,
+              imageBg: image?.bg ?? null,
+              optionLabel: null,
+              optionValue: null,
+            }}
+            ariaLabel={`Add ${name} to cart`}
+            addedLabel="✓"
             className="relative z-10 rounded-sm border border-gold-300 bg-[#FBF1E0] px-[13px] py-[9px] text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-gold-600 transition-colors duration-200 hover:border-maroon-700 hover:bg-maroon-700 hover:text-cream-200"
           >
             Add
-          </button>
+          </AddToCartButton>
         </div>
       </div>
     </article>

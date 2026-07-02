@@ -3,6 +3,7 @@ import type { BannerSetting } from "@/lib/db/settings";
 import { ROUTES } from "@/lib/routes";
 import { PRIMARY_NAV } from "@/lib/navigation";
 import { STORE_INFO } from "@/lib/store-info";
+import { CartBadge } from "./CartBadge";
 
 /**
  * Storefront header, matched to `refereces/JR Jewellers Storefront.html`:
@@ -97,9 +98,7 @@ export function Header({ banner }: { banner: BannerSetting }) {
               <span className="whitespace-nowrap text-[13px] text-[#5E4A44] transition-colors group-hover:text-maroon-700">
                 Cart
               </span>
-              <span className="inline-block min-w-[20px] rounded-[10px] bg-maroon-700 px-[5px] text-center text-[11px] font-semibold leading-5 text-cream-200">
-                0
-              </span>
+              <CartBadge />
             </Link>
           </div>
         </div>

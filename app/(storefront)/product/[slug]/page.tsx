@@ -122,7 +122,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
           )}
 
           <ProductBuyBox
-            productName={product.name}
+            product={{
+              id: product.id,
+              slug: product.slug,
+              name: product.name,
+              categoryName: product.category.name,
+              pricePaise: product.price_paise,
+              mrpPaise: product.mrp_paise,
+              imageUrl:
+                (product.images.find((img) => img.is_primary) ??
+                  product.images[0])?.url ?? null,
+              imageBg:
+                (product.images.find((img) => img.is_primary) ??
+                  product.images[0])?.bg ?? null,
+            }}
             options={product.options}
           />
 
