@@ -1,28 +1,33 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { amountToFreeShipPaise, qualifiesForFreeShipping } from "@/lib/shipping";
 import { formatPaise } from "@/lib/utils/money";
 
 type Props = {
   subtotalPaise: number;
   savingsPaise: number;
+  discountPaise: number;
   shippingPaise: number;
   totalPaise: number;
   freeShipThresholdPaise: number;
   checkoutHref: string;
+  couponSlot: ReactNode;
 };
 
 /**
- * Cart order-summary panel, matched to the prototype: a free-shipping progress
- * hint, the subtotal / shipping / total breakdown, and the checkout CTA. Coupon
- * input and the discount line land in 2.3; COD is the only v1 tender.
+ * Cart order-summary panel, matched to the prototype: coupon entry, a
+ * free-shipping progress hint, the subtotal / discount / shipping / total
+ * breakdown, and the checkout CTA. COD is the only v1 tender.
  */
 export function CartSummary({
   subtotalPaise,
   savingsPaise,
+  discountPaise,
   shippingPaise,
   totalPaise,
   freeShipThresholdPaise,
   checkoutHref,
+  couponSlot,
 }: Props) {
   const toFreePaise = amountToFreeShipPaise(subtotalPaise, freeShipThresholdPaise);
   const qualifies = qualifiesForFreeShipping(subtotalPaise, freeShipThresholdPaise);
@@ -39,6 +44,8 @@ export function CartSummary({
       <h2 className="text-[14px] font-semibold uppercase leading-none tracking-[0.14em] text-maroon-900">
         Order Summary
       </h2>
+
+      {couponSlot}
 
       {qualifies ? (
         <p className="m-0 text-[12.5px] font-medium leading-snug text-[#1E7A38]">
@@ -69,6 +76,13 @@ export function CartSummary({
         <SummaryRow
           label="You save"
           value={`− ${formatPaise(savingsPaise)}`}
+          tone="save"
+        />
+      )}
+      {discountPaise > 0 && (
+        <SummaryRow
+          label="Discount"
+          value={`− ${formatPaise(discountPaise)}`}
           tone="save"
         />
       )}

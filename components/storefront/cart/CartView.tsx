@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { cartSavingsPaise, cartSubtotalPaise } from "@/lib/cart";
+import { validateCoupon } from "@/lib/coupons";
 import { shippingPaise } from "@/lib/shipping";
 import { ROUTES } from "@/lib/routes";
 import { useCartHydrated, useCartStore } from "@/stores/cart";
 import { CartLineRow } from "./CartLineRow";
 import { CartSummary } from "./CartSummary";
+import { CouponField } from "./CouponField";
 
 type Props = {
   freeShipThresholdPaise: number;
@@ -22,6 +24,7 @@ type Props = {
 export function CartView({ freeShipThresholdPaise }: Props) {
   const hasHydrated = useCartHydrated();
   const lines = useCartStore((state) => state.lines);
+  const couponCode = useCartStore((state) => state.couponCode);
   const setItemQuantity = useCartStore((state) => state.setItemQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
 
@@ -42,8 +45,12 @@ export function CartView({ freeShipThresholdPaise }: Props) {
 
   const subtotalPaise = cartSubtotalPaise(lines);
   const savingsPaise = cartSavingsPaise(lines);
+  const couponResult = couponCode
+    ? validateCoupon(couponCode, subtotalPaise)
+    : null;
+  const discountPaise = couponResult?.ok ? couponResult.discountPaise : 0;
   const shipPaise = shippingPaise(subtotalPaise, freeShipThresholdPaise);
-  const totalPaise = subtotalPaise + shipPaise;
+  const totalPaise = subtotalPaise - discountPaise + shipPaise;
 
   return (
     <div className="flex flex-wrap items-start gap-10">
@@ -70,10 +77,12 @@ export function CartView({ freeShipThresholdPaise }: Props) {
       <CartSummary
         subtotalPaise={subtotalPaise}
         savingsPaise={savingsPaise}
+        discountPaise={discountPaise}
         shippingPaise={shipPaise}
         totalPaise={totalPaise}
         freeShipThresholdPaise={freeShipThresholdPaise}
         checkoutHref={ROUTES.checkout}
+        couponSlot={<CouponField subtotalPaise={subtotalPaise} />}
       />
     </div>
   );
