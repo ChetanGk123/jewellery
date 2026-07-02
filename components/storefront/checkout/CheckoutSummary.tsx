@@ -89,20 +89,22 @@ function SummaryLine({ line }: { line: CartLine }) {
 
   return (
     <li className="flex items-center gap-3">
-      <div
-        className="relative h-12 w-12 flex-none overflow-hidden rounded-[2px] border border-[#EFE3D0]"
-        style={{ background }}
-      >
-        {line.imageUrl && (
-          <Image
-            src={line.imageUrl}
-            alt={line.name}
-            fill
-            sizes="48px"
-            className="object-cover"
-          />
-        )}
-        <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-maroon-700 px-1 text-[10px] font-semibold leading-none text-[#F3E3C7]">
+      <div className="relative h-12 w-12 flex-none">
+        <div
+          className="relative h-full w-full overflow-hidden rounded-[2px] border border-[#EFE3D0]"
+          style={{ background }}
+        >
+          {line.imageUrl && (
+            <Image
+              src={line.imageUrl}
+              alt={line.name}
+              fill
+              sizes="48px"
+              className="object-cover"
+            />
+          )}
+        </div>
+        <span className="absolute -right-1.5 -top-1.5 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-maroon-700 px-1 text-[10px] font-semibold leading-none text-[#F3E3C7]">
           {line.quantity}
         </span>
       </div>
