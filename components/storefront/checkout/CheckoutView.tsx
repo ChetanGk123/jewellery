@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { cartSubtotalPaise } from "@/lib/cart";
+import type { PlacedOrder } from "@/lib/checkout/order";
 import { validateCoupon } from "@/lib/coupons";
 import { ROUTES } from "@/lib/routes";
 import { shippingPaise } from "@/lib/shipping";
 import { useCartHydrated, useCartStore } from "@/stores/cart";
 import { CheckoutForm } from "./CheckoutForm";
+import { OrderPlaced } from "./OrderPlaced";
 
 type Props = {
   freeShipThresholdPaise: number;
@@ -24,6 +27,15 @@ export function CheckoutView({ freeShipThresholdPaise }: Props) {
   const hasHydrated = useCartHydrated();
   const lines = useCartStore((state) => state.lines);
   const couponCode = useCartStore((state) => state.couponCode);
+  const clearCart = useCartStore((state) => state.clearCart);
+  const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
+
+  // On a successful order we clear the cart (which empties `lines`), so the
+  // confirmation must be gated ABOVE the empty-cart check to stay on screen.
+  const handlePlaced = (order: PlacedOrder) => {
+    setPlacedOrder(order);
+    clearCart();
+  };
 
   if (!hasHydrated) {
     return (
@@ -34,6 +46,10 @@ export function CheckoutView({ freeShipThresholdPaise }: Props) {
         Loading checkout…
       </div>
     );
+  }
+
+  if (placedOrder) {
+    return <OrderPlaced order={placedOrder} />;
   }
 
   if (lines.length === 0) {
@@ -66,10 +82,12 @@ export function CheckoutView({ freeShipThresholdPaise }: Props) {
   return (
     <CheckoutForm
       lines={lines}
+      couponCode={couponCode}
       subtotalPaise={subtotalPaise}
       discountPaise={discountPaise}
       shippingPaise={shipPaise}
       totalPaise={totalPaise}
+      onPlaced={handlePlaced}
     />
   );
 }

@@ -48,6 +48,123 @@ export type Database = {
         }
         Relationships: []
       }
+      order: {
+        Row: {
+          address_line: string
+          awb: string | null
+          city: string
+          coupon_code: string | null
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          discount_paise: number
+          id: string
+          order_no: string
+          payment_method: string
+          payment_status: string
+          pincode: string
+          shipping_paise: number
+          shiprocket_shipment_id: string | null
+          state: string
+          status: string
+          subtotal_paise: number
+          total_paise: number
+        }
+        Insert: {
+          address_line: string
+          awb?: string | null
+          city: string
+          coupon_code?: string | null
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          discount_paise?: number
+          id?: string
+          order_no: string
+          payment_method?: string
+          payment_status?: string
+          pincode: string
+          shipping_paise?: number
+          shiprocket_shipment_id?: string | null
+          state: string
+          status?: string
+          subtotal_paise: number
+          total_paise: number
+        }
+        Update: {
+          address_line?: string
+          awb?: string | null
+          city?: string
+          coupon_code?: string | null
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          discount_paise?: number
+          id?: string
+          order_no?: string
+          payment_method?: string
+          payment_status?: string
+          pincode?: string
+          shipping_paise?: number
+          shiprocket_shipment_id?: string | null
+          state?: string
+          status?: string
+          subtotal_paise?: number
+          total_paise?: number
+        }
+        Relationships: []
+      }
+      order_item: {
+        Row: {
+          id: string
+          line_total_paise: number
+          name: string
+          order_id: string
+          product_id: string
+          qty: number
+          tone: string | null
+          unit_price_paise: number
+        }
+        Insert: {
+          id?: string
+          line_total_paise: number
+          name: string
+          order_id: string
+          product_id: string
+          qty: number
+          tone?: string | null
+          unit_price_paise: number
+        }
+        Update: {
+          id?: string
+          line_total_paise?: number
+          name?: string
+          order_id?: string
+          product_id?: string
+          qty?: number
+          tone?: string | null
+          unit_price_paise?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_item_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_item_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product: {
         Row: {
           badge: string
@@ -304,7 +421,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      place_order: {
+        Args: { p_coupon?: string; p_customer: Json; p_items: Json }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

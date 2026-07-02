@@ -6,6 +6,10 @@ import { type FieldError, useForm } from "react-hook-form";
 import { submitCheckout } from "@/app/(storefront)/checkout/actions";
 import type { CartLine } from "@/lib/cart";
 import {
+  cartLinesToOrderItems,
+  type PlacedOrder,
+} from "@/lib/checkout/order";
+import {
   CHECKOUT_DEFAULTS,
   type CheckoutFormValues,
   checkoutSchema,
@@ -14,10 +18,12 @@ import { CheckoutSummary } from "./CheckoutSummary";
 
 type Props = {
   lines: readonly CartLine[];
+  couponCode: string | null;
   subtotalPaise: number;
   discountPaise: number;
   shippingPaise: number;
   totalPaise: number;
+  onPlaced: (order: PlacedOrder) => void;
 };
 
 /**
@@ -29,10 +35,12 @@ type Props = {
  */
 export function CheckoutForm({
   lines,
+  couponCode,
   subtotalPaise,
   discountPaise,
   shippingPaise,
   totalPaise,
+  onPlaced,
 }: Props) {
   const {
     register,
@@ -45,11 +53,14 @@ export function CheckoutForm({
     mode: "onTouched",
   });
   const [formError, setFormError] = useState<string | null>(null);
-  const [confirmedEmail, setConfirmedEmail] = useState<string | null>(null);
 
   const onValid = async (values: CheckoutFormValues) => {
     setFormError(null);
-    const result = await submitCheckout(values);
+    const result = await submitCheckout({
+      values,
+      items: cartLinesToOrderItems(lines),
+      couponCode,
+    });
     if (!result.ok) {
       for (const [field, message] of Object.entries(result.fieldErrors)) {
         setError(field as keyof CheckoutFormValues, { message });
@@ -57,7 +68,7 @@ export function CheckoutForm({
       setFormError(result.formError ?? "Something went wrong. Please try again.");
       return;
     }
-    setConfirmedEmail(values.email);
+    onPlaced(result.order);
   };
 
   return (
@@ -67,17 +78,6 @@ export function CheckoutForm({
       className="flex flex-wrap items-start gap-10"
     >
       <div className="flex min-w-[320px] flex-1 flex-col gap-[26px]">
-        {confirmedEmail && (
-          <p
-            role="status"
-            className="m-0 rounded-sm border border-[#BFE3C6] bg-[#F2FBF4] px-3.5 py-3 text-[13px] leading-snug text-[#1E7A38]"
-          >
-            ✓ Your details are verified. We&apos;ll confirm your Cash-on-Delivery
-            order and send updates to{" "}
-            <span className="font-semibold">{confirmedEmail}</span>.
-          </p>
-        )}
-
         <fieldset className="m-0 flex flex-col gap-3.5 border-0 p-0">
           <legend className="mb-0.5 p-0 text-[13px] font-semibold uppercase leading-none tracking-[0.14em] text-maroon-900">
             Contact &amp; Shipping
