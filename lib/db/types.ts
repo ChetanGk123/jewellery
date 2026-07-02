@@ -421,6 +421,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_order_confirmation: {
+        Args: { p_id: string }
+        Returns: Json
+      }
       place_order: {
         Args: { p_coupon?: string; p_customer: Json; p_items: Json }
         Returns: Json

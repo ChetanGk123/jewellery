@@ -22,4 +22,6 @@ export const ROUTES = {
   category: (slug: string) => `/${slug}`,
   /** Product detail page. */
   product: (slug: string) => `/product/${slug}`,
+  /** Order confirmation — keyed on the unguessable order id, not the order no. */
+  order: (id: string) => `/order/${id}`,
 } as const;

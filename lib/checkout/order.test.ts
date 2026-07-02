@@ -3,8 +3,11 @@ import type { CartLine } from "@/lib/cart";
 import {
   cartLinesToOrderItems,
   orderItemsSchema,
+  toOrderConfirmation,
   toPlacedOrder,
 } from "./order";
+
+const UUID_ORDER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 const UUID_A = "11111111-1111-4111-8111-111111111111";
 const UUID_B = "22222222-2222-4222-8222-222222222222";
@@ -87,6 +90,7 @@ describe("orderItemsSchema", () => {
 describe("toPlacedOrder", () => {
   test("narrows a valid RPC return into camelCase PlacedOrder", () => {
     const order = toPlacedOrder({
+      order_id: UUID_ORDER,
       order_no: "JR-260703-1001",
       subtotal_paise: 209600,
       discount_paise: 41920,
@@ -94,6 +98,7 @@ describe("toPlacedOrder", () => {
       total_paise: 167680,
     });
     expect(order).toEqual({
+      orderId: UUID_ORDER,
       orderNo: "JR-260703-1001",
       subtotalPaise: 209600,
       discountPaise: 41920,
@@ -105,14 +110,41 @@ describe("toPlacedOrder", () => {
   test("returns null when the shape is unexpected", () => {
     expect(toPlacedOrder(null)).toBeNull();
     expect(toPlacedOrder({ order_no: "JR-1" })).toBeNull();
+    // Missing order_id fails even with an otherwise-valid body.
     expect(
       toPlacedOrder({
-        order_no: "",
+        order_no: "JR-1",
         subtotal_paise: 1,
         discount_paise: 0,
         shipping_paise: 0,
         total_paise: 1,
       }),
     ).toBeNull();
+  });
+});
+
+describe("toOrderConfirmation", () => {
+  test("narrows a valid RPC return into camelCase OrderConfirmation", () => {
+    const confirmation = toOrderConfirmation({
+      order_no: "JR-260703-1001",
+      status: "Pending",
+      payment_method: "cod",
+      customer_email: "buyer@example.com",
+      total_paise: 167680,
+      created_at: "2026-07-03T05:00:00+00:00",
+    });
+    expect(confirmation).toEqual({
+      orderNo: "JR-260703-1001",
+      status: "Pending",
+      paymentMethod: "cod",
+      customerEmail: "buyer@example.com",
+      totalPaise: 167680,
+      createdAt: "2026-07-03T05:00:00+00:00",
+    });
+  });
+
+  test("returns null for a missing order (null) or partial shape", () => {
+    expect(toOrderConfirmation(null)).toBeNull();
+    expect(toOrderConfirmation({ order_no: "JR-1" })).toBeNull();
   });
 });

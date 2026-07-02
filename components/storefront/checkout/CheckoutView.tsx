@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cartSubtotalPaise } from "@/lib/cart";
 import type { PlacedOrder } from "@/lib/checkout/order";
@@ -9,7 +10,6 @@ import { ROUTES } from "@/lib/routes";
 import { shippingPaise } from "@/lib/shipping";
 import { useCartHydrated, useCartStore } from "@/stores/cart";
 import { CheckoutForm } from "./CheckoutForm";
-import { OrderPlaced } from "./OrderPlaced";
 
 type Props = {
   freeShipThresholdPaise: number;
@@ -24,17 +24,20 @@ type Props = {
  * authoritatively at order creation (TASKS 2.5).
  */
 export function CheckoutView({ freeShipThresholdPaise }: Props) {
+  const router = useRouter();
   const hasHydrated = useCartHydrated();
   const lines = useCartStore((state) => state.lines);
   const couponCode = useCartStore((state) => state.couponCode);
   const clearCart = useCartStore((state) => state.clearCart);
-  const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // On a successful order we clear the cart (which empties `lines`), so the
-  // confirmation must be gated ABOVE the empty-cart check to stay on screen.
+  // On a successful order, clear the cart and hand off to the confirmation page
+  // (keyed on the unguessable order id). `isRedirecting` is checked ABOVE the
+  // empty-cart guard so clearing the cart doesn't flash the empty prompt.
   const handlePlaced = (order: PlacedOrder) => {
-    setPlacedOrder(order);
+    setIsRedirecting(true);
     clearCart();
+    router.push(ROUTES.order(order.orderId));
   };
 
   if (!hasHydrated) {
@@ -48,8 +51,15 @@ export function CheckoutView({ freeShipThresholdPaise }: Props) {
     );
   }
 
-  if (placedOrder) {
-    return <OrderPlaced order={placedOrder} />;
+  if (isRedirecting) {
+    return (
+      <div
+        aria-busy="true"
+        className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]"
+      >
+        Taking you to your order confirmation…
+      </div>
+    );
   }
 
   if (lines.length === 0) {

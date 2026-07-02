@@ -34,6 +34,8 @@ export function cartLinesToOrderItems(
 
 /** Server-recomputed order summary (camelCase) returned to the client. */
 export type PlacedOrder = {
+  /** Unguessable order id — used as the confirmation URL key (not the order no). */
+  orderId: string;
   orderNo: string;
   subtotalPaise: number;
   discountPaise: number;
@@ -43,6 +45,7 @@ export type PlacedOrder = {
 
 /** Shape of the `place_order` RPC's jsonb return (snake_case, integer paise). */
 const placedOrderResultSchema = z.object({
+  order_id: z.string().uuid(),
   order_no: z.string().min(1),
   subtotal_paise: z.number().int(),
   discount_paise: z.number().int(),
@@ -55,10 +58,45 @@ export function toPlacedOrder(raw: unknown): PlacedOrder | null {
   const parsed = placedOrderResultSchema.safeParse(raw);
   if (!parsed.success) return null;
   return {
+    orderId: parsed.data.order_id,
     orderNo: parsed.data.order_no,
     subtotalPaise: parsed.data.subtotal_paise,
     discountPaise: parsed.data.discount_paise,
     shippingPaise: parsed.data.shipping_paise,
     totalPaise: parsed.data.total_paise,
+  };
+}
+
+/** Non-sensitive confirmation view of a placed order (for `/order/[id]`). */
+export type OrderConfirmation = {
+  orderNo: string;
+  status: string;
+  paymentMethod: string;
+  customerEmail: string;
+  totalPaise: number;
+  createdAt: string;
+};
+
+/** Shape of the `get_order_confirmation` RPC's jsonb return. */
+const orderConfirmationResultSchema = z.object({
+  order_no: z.string().min(1),
+  status: z.string().min(1),
+  payment_method: z.string().min(1),
+  customer_email: z.string().min(1),
+  total_paise: z.number().int(),
+  created_at: z.string().min(1),
+});
+
+/** Narrow the untyped RPC return into a typed `OrderConfirmation` (null on miss). */
+export function toOrderConfirmation(raw: unknown): OrderConfirmation | null {
+  const parsed = orderConfirmationResultSchema.safeParse(raw);
+  if (!parsed.success) return null;
+  return {
+    orderNo: parsed.data.order_no,
+    status: parsed.data.status,
+    paymentMethod: parsed.data.payment_method,
+    customerEmail: parsed.data.customer_email,
+    totalPaise: parsed.data.total_paise,
+    createdAt: parsed.data.created_at,
   };
 }
