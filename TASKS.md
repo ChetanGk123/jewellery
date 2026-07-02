@@ -57,7 +57,7 @@ Goal: browse catalog end-to-end from real Supabase data. No cart writes yet.
 ## Phase 2 — Cart & checkout (COD)
 Goal: place a COD order. Introduces the first storefront **writes** (needs RLS insert policies).
 
-- ⬜ **2.1 — Cart store.** Zustand store + localStorage persistence; add/remove/qty; derived totals.
+- ✅ **2.1 — Cart store.** Split into a **pure domain core** + a **thin persisted store** (mirrors `lib/utils/money` — logic is testable without React). `lib/cart.ts`: `CartLine`/`CartLineInput` model (integer-paise **snapshots**, display-only — server recomputes at 2.5), immutable ops `addLine` (merges same product+variant, distinct variants stay separate lines, qty capped `MAX_LINE_QUANTITY=10`), `setLineQuantity` (clamps; ≤0 removes), `removeLine`, deterministic `cartLineId(productId, optionValue?)`, and derived selectors `cartCount`/`cartSubtotalPaise`/`cartMrpTotalPaise`/`cartSavingsPaise`. `stores/cart.ts` (`"use client"`): Zustand `useCartStore` wrapping those ops, `persist` → localStorage (`jr-cart` v1, `partialize` lines only) with a `hasHydrated` flag (set via `onRehydrateStorage`) so consumers render neutral until rehydrated (no SSR/CSR badge mismatch); actions `addItem`/`setItemQuantity`/`removeItem`/`clearCart`. **`bun test` 13/13 pass; tsc clean (cart code); build green (all 10 routes).** *UI wiring (buttons → store) is 2.2; the `bun:test` module tsc error on `*.test.ts` is pre-existing (Next build excludes tests).*
 - ⬜ **2.2 — Cart UI.** Drawer/page: line items, qty controls, subtotal, free-ship threshold hint.
 - ⬜ **2.3 — Coupons.** Apply/validate `BRIDE20`; show discount; guard invalid/expired.
 - ⬜ **2.4 — Checkout form.** Address + COD, React Hook Form + zod; client **and** server validation.
@@ -70,6 +70,7 @@ Goal: place a COD order. Introduces the first storefront **writes** (needs RLS i
   Uses **service-role key server-side only**.
 
 ## Cross-cutting (ongoing, not a phase)
+- ⬜ **Store info config (single source of truth).** Centralize the business's own details — name, tagline, phone, WhatsApp number, email, physical address, GSTIN, and social links (Instagram/Facebook/etc.) — into **one** typed module (`lib/store-info.ts`, values overridable via `NEXT_PUBLIC_*` env where they differ per environment) and consume everywhere via that export, so updates happen in one place. *Currently duplicated across ≥5 files:* `components/storefront/layout/Footer.tsx` (socials, GST strip), `components/storefront/product/ProductBuyBox.tsx` + `app/(storefront)/product/[slug]/page.tsx` (WhatsApp), `app/(storefront)/contact/page.tsx` + `lib/help-content.ts` (tel/mailto/WhatsApp/hours), `app/(storefront)/shipping/page.tsx`. Feeds **2.7** (WhatsApp enquiry builds `wa.me` from the shared number). *Store-editable settings (banner/promo) already live in `setting` table via `getStoreSettings` — this is for static brand/contact constants, not DB-backed copy.*
 - ⬜ **Testing** — unit (utils/queries), component visual regression, E2E for browse→COD order (Playwright). Target 80%.
 - ⬜ **Performance** — CWV budgets (LCP <2.5s), `next/image` dims, font preload, bundle budget.
 - ⬜ **Security** — CSP/security headers, server-side input validation, no service-role key in client, form anti-abuse.
