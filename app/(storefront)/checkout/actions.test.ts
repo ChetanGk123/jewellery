@@ -16,9 +16,22 @@ const rpc = mock(async (_name: string, _args: unknown) => ({
   error: null as unknown,
 }));
 
+/** Mutable session holder — tests flip this to simulate signed in / out. */
+const session = {
+  user: { id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99", email: "asha@example.com" } as {
+    id: string;
+    email: string;
+  } | null,
+};
+
+const upsertCustomerProfile = mock(async () => ({ ok: true }));
+
 mock.module("@/lib/db/server", () => ({
-  createServerClient: () => ({ rpc }),
+  createServerClient: async () => ({ rpc }),
+  getCurrentUser: async () => session.user,
 }));
+
+mock.module("@/lib/db/profile", () => ({ upsertCustomerProfile }));
 
 const { submitCheckout } = await import("./actions");
 
@@ -49,6 +62,37 @@ const rpcOk = {
 beforeEach(() => {
   rpc.mockClear();
   rpc.mockImplementation(async () => ({ data: null, error: null }));
+  upsertCustomerProfile.mockClear();
+  session.user = {
+    id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99",
+    email: "asha@example.com",
+  };
+});
+
+test("declines an unauthenticated submission before touching the DB", async () => {
+  session.user = null;
+
+  const result = await submitCheckout({ values: validValues, items: validItems });
+
+  expect(result.ok).toBe(false);
+  if (!result.ok) expect(result.formError).toContain("sign in");
+  expect(rpc).not.toHaveBeenCalled();
+});
+
+test("saves the checkout contact as the customer profile on success", async () => {
+  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }));
+
+  const result = await submitCheckout({ values: validValues, items: validItems });
+
+  expect(result.ok).toBe(true);
+  expect(upsertCustomerProfile).toHaveBeenCalledTimes(1);
+  const [userId, profile] = upsertCustomerProfile.mock.calls[0] as unknown as [
+    string,
+    Record<string, string>,
+  ];
+  expect(userId).toBe("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99");
+  expect(profile.fullName).toBe("Asha Rao");
+  expect(profile.pincode).toBe("411001");
 });
 
 test("drops a submission with a filled honeypot before touching the DB", async () => {

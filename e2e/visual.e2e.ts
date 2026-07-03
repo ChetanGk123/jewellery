@@ -24,6 +24,7 @@ const SURFACES = [
   { path: "/shop", name: "shop" },
   { path: "/product/kundan-rani-haar-set", name: "product" },
   { path: "/cart", name: "cart-empty" },
+  { path: "/sign-in", name: "sign-in" },
 ] as const;
 
 for (const width of BREAKPOINTS) {

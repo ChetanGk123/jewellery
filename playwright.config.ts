@@ -1,4 +1,22 @@
+import { readFileSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
+
+/**
+ * Load `.env.local` into the test process (the seeded E2E account credentials
+ * live there). Next.js loads it for the web server on its own, but the
+ * Playwright runner doesn't — and we avoid adding a dotenv dependency for a
+ * six-line parse. Existing process env always wins.
+ */
+try {
+  for (const line of readFileSync(".env.local", "utf8").split("\n")) {
+    const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
+    if (match && process.env[match[1]] === undefined) {
+      process.env[match[1]] = match[2];
+    }
+  }
+} catch {
+  // No .env.local (CI) — env must come from the environment itself.
+}
 
 /** Port for the E2E production server — off 3000 so a dev server can coexist. */
 const E2E_PORT = 3200;
