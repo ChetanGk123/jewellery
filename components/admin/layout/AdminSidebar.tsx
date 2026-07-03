@@ -6,10 +6,13 @@ import { ADMIN_NAV, type AdminBadgeKey } from "@/lib/admin/nav";
 import { ROUTES } from "@/lib/routes";
 import { STORE_INFO } from "@/lib/store-info";
 import { AdminNavIcon } from "./AdminNavIcons";
+import { AdminSignOutButton } from "@/components/admin/auth/AdminSignOutButton";
 import type { AdminNavCounts } from "@/lib/db/admin-metrics";
 
 type Props = {
   counts: AdminNavCounts;
+  /** Signed-in admin's email, shown in the footer card. */
+  adminEmail: string;
   /** Mobile drawer open state (ignored at `lg` where the sidebar is static). */
   isOpen: boolean;
   onClose: () => void;
@@ -21,7 +24,7 @@ type Props = {
  * and a Store Admin footer card. Static column at `lg`; an off-canvas drawer
  * with a backdrop below it.
  */
-export function AdminSidebar({ counts, isOpen, onClose }: Props) {
+export function AdminSidebar({ counts, adminEmail, isOpen, onClose }: Props) {
   const pathname = usePathname();
 
   const isActive = (href: string) =>
@@ -93,14 +96,18 @@ export function AdminSidebar({ counts, isOpen, onClose }: Props) {
           <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[linear-gradient(135deg,#E6CA7E,#A87A1E)] text-sm font-semibold text-maroon-950">
             {initials(STORE_INFO.name)}
           </span>
-          <div className="flex flex-col leading-tight">
+          <div className="flex min-w-0 flex-col leading-tight">
             <span className="text-[13px] font-medium text-[#F0DDC9]">
               Store Admin
             </span>
-            <span className="text-[11px] text-[#9C7A6E]">
-              {STORE_INFO.email.display}
+            <span
+              className="truncate text-[11px] text-[#9C7A6E]"
+              title={adminEmail}
+            >
+              {adminEmail}
             </span>
           </div>
+          <AdminSignOutButton />
         </div>
       </aside>
     </>

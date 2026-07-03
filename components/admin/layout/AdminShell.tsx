@@ -12,9 +12,11 @@ import type { AdminNavCounts } from "@/lib/db/admin-metrics";
  */
 export function AdminShell({
   counts,
+  adminEmail,
   children,
 }: {
   counts: AdminNavCounts;
+  adminEmail: string;
   children: ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,6 +25,7 @@ export function AdminShell({
     <div className="flex min-h-screen bg-[#F5F1EA] font-sans text-[#2A1F1A]">
       <AdminSidebar
         counts={counts}
+        adminEmail={adminEmail}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />

@@ -1,5 +1,6 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAdmin } from "@/lib/admin/roles";
 import { safeNext } from "@/lib/auth/redirect";
 import { createServerClient } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
@@ -43,14 +44,22 @@ export async function GET(request: NextRequest) {
   // 1) Template-based link: verify the hash server-side.
   if (tokenHash && type && isEmailOtpType(type)) {
     const supabase = await createServerClient();
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       type,
       token_hash: tokenHash,
     });
     if (!error) {
-      // Recovery links continue to the choose-new-password screen.
-      const target = type === "recovery" ? ROUTES.resetPassword : next;
-      return NextResponse.redirect(new URL(target, url.origin));
+      // Recovery links continue to a choose-new-password screen. The email
+      // carries no app context (the shared recovery template has no `next`), so
+      // route by the recovering user's ROLE: an admin lands on the admin reset
+      // page, a customer on theirs.
+      if (type === "recovery") {
+        const dest = isAdmin(data.user)
+          ? ROUTES.adminResetPassword
+          : ROUTES.resetPassword;
+        return NextResponse.redirect(new URL(dest, url.origin));
+      }
+      return NextResponse.redirect(new URL(next, url.origin));
     }
     return redirectToSignIn(url.origin, isExpired(error.code) ? "expired" : "link");
   }

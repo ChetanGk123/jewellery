@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminShell } from "@/components/admin/layout/AdminShell";
+import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminNavCounts } from "@/lib/db/admin-metrics";
 
 /**
@@ -8,20 +9,25 @@ import { getAdminNavCounts } from "@/lib/db/admin-metrics";
  * dark-maroon sidebar + topbar instead. `noindex` keeps the whole console out
  * of search engines.
  *
- * NOTE: the admin gate (allow-listed admin check) lands in Phase 3.1 — until
- * then these routes are unauthenticated. The foundation views expose no
- * customer data (aggregate counts only), and real data views (dashboard,
- * orders) come after the gate.
+ * Gated: `requireAdmin` redirects anyone who isn't an allow-listed admin
+ * (`app_metadata.role`) to the admin sign-in BEFORE any console data is fetched
+ * or the chrome renders. The proxy does a coarse redirect first; this is the
+ * authoritative check.
  */
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s · RJ Jewellers Admin" },
   robots: { index: false, follow: false },
 };
 
-export default async function AdminLayout({
+export default async function AdminConsoleLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const admin = await requireAdmin();
   const counts = await getAdminNavCounts();
 
-  return <AdminShell counts={counts}>{children}</AdminShell>;
+  return (
+    <AdminShell counts={counts} adminEmail={admin.email ?? "Admin"}>
+      {children}
+    </AdminShell>
+  );
 }

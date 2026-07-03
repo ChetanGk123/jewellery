@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { AdminPlaceholder } from "@/components/admin/ui/AdminPlaceholder";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default function AdminDashboardPage() {
   return (

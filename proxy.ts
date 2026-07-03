@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAdmin } from "@/lib/admin/roles";
+import { ROUTES } from "@/lib/routes";
 
 /**
  * Per-request Content-Security-Policy with a nonce (TASKS — Security).
@@ -108,8 +110,29 @@ export async function proxy(request: NextRequest) {
       },
     },
   );
-  // Triggers the refresh when needed; result intentionally unused here.
-  await supabaseClient.auth.getUser();
+  // Triggers the session refresh when needed, and gives us the current user for
+  // the admin gate below.
+  const {
+    data: { user },
+  } = await supabaseClient.auth.getUser();
+
+  // Coarse admin gate: bounce non-admins off the console before it renders. The
+  // console layout re-checks authoritatively via `requireAdmin`; this is the
+  // early first line (and covers the `(auth)` pages via `isAdminPublic`).
+  const path = request.nextUrl.pathname;
+  const isAdminArea =
+    path === ROUTES.admin || path.startsWith(`${ROUTES.admin}/`);
+  const isAdminPublic =
+    path === ROUTES.adminSignIn ||
+    path === ROUTES.adminForgotPassword ||
+    path === ROUTES.adminResetPassword;
+  if (isAdminArea && !isAdminPublic && !isAdmin(user)) {
+    const signIn = new URL(ROUTES.adminSignIn, request.url);
+    signIn.searchParams.set("next", path);
+    const redirectRes = NextResponse.redirect(signIn);
+    redirectRes.headers.set("Content-Security-Policy", csp);
+    return redirectRes;
+  }
 
   response.headers.set("Content-Security-Policy", csp);
   return response;
