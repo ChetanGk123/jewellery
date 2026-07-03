@@ -460,6 +460,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_order_status: {
+        Args: { p_order_id: string; p_status: string }
+        Returns: string
+      }
       get_order_confirmation: { Args: { p_order_no: string }; Returns: Json }
       place_order: {
         Args: { p_coupon?: string; p_customer: Json; p_items: Json }
