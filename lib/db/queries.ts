@@ -102,7 +102,7 @@ function pickPrimaryImage(
 
 /** All categories, in display order. */
 export async function getCategories(): Promise<Category[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("category")
     .select("*")
@@ -116,7 +116,7 @@ export async function getCategories(): Promise<Category[]> {
 
 /** A single category by slug, or null if it doesn't exist. */
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("category")
     .select("*")
@@ -136,7 +136,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 export async function getProducts(
   filters: ProductFilters = {},
 ): Promise<ProductListItem[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   let query = supabase
     .from("product")
@@ -238,7 +238,7 @@ export async function getFreshProducts(limit = 8): Promise<ProductListItem[]> {
  * fine; revisit with a dedicated view if the product table grows large.
  */
 export async function getMaterials(): Promise<string[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("product")
     .select("material")
@@ -265,7 +265,7 @@ export type CategoryTile = Category & { productCount: number };
  * `category_id` scan (fine at catalog scale; revisit if products grow large).
  */
 export async function getCategoryTiles(): Promise<CategoryTile[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const [cats, counts] = await Promise.all([
     supabase.from("category").select("*").order("sort_order", { ascending: true }),
     supabase
@@ -296,7 +296,7 @@ export async function getCategoryTiles(): Promise<CategoryTile[]> {
 export async function getProductBySlug(
   slug: string,
 ): Promise<ProductDetail | null> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("product")
     .select(
@@ -345,7 +345,7 @@ export async function getRelatedProducts(
 export async function getApprovedReviews(
   productId: string,
 ): Promise<Review[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("review")
     .select("*")

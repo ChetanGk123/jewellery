@@ -102,7 +102,7 @@ function mergePromo(raw: unknown): PromoSetting {
 
 /** The store's public settings (banner, homepage promo, free-ship threshold). */
 export async function getStoreSettings(): Promise<StoreSettings> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("setting")
     .select("store_name, banner, homepage_promo, free_ship_threshold_paise")

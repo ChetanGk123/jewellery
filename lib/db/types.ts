@@ -48,6 +48,42 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_profile: {
+        Row: {
+          address_line: string
+          city: string
+          created_at: string
+          full_name: string
+          id: string
+          phone: string
+          pincode: string
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          address_line?: string
+          city?: string
+          created_at?: string
+          full_name?: string
+          id: string
+          phone?: string
+          pincode?: string
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          address_line?: string
+          city?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          pincode?: string
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order: {
         Row: {
           address_line: string
@@ -70,6 +106,7 @@ export type Database = {
           status: string
           subtotal_paise: number
           total_paise: number
+          user_id: string | null
         }
         Insert: {
           address_line: string
@@ -92,6 +129,7 @@ export type Database = {
           status?: string
           subtotal_paise: number
           total_paise: number
+          user_id?: string | null
         }
         Update: {
           address_line?: string
@@ -114,6 +152,7 @@ export type Database = {
           status?: string
           subtotal_paise?: number
           total_paise?: number
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -421,10 +460,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_order_confirmation: {
-        Args: { p_order_no: string }
-        Returns: Json
-      }
+      get_order_confirmation: { Args: { p_order_no: string }; Returns: Json }
       place_order: {
         Args: { p_coupon?: string; p_customer: Json; p_items: Json }
         Returns: Json

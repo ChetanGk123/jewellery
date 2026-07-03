@@ -1,3 +1,4 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
@@ -36,7 +37,7 @@ function makeNonce(): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const nonce = makeNonce();
   const supabase = supabaseOrigin();
   const isDev = process.env.NODE_ENV !== "production";
@@ -76,7 +77,40 @@ export function proxy(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
+
+  // Supabase session refresh: rotate an expired auth token on the way in so
+  // Server Components always see a live session. When tokens rotate we must
+  // (a) update the REQUEST cookies (so this render sees the new token) and
+  // (b) rebuild the response and set the cookies on it (so the browser keeps
+  // it) — the standard @supabase/ssr middleware dance, merged with our CSP
+  // request headers.
+  const supabaseClient = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          for (const { name, value } of cookiesToSet) {
+            request.cookies.set(name, value);
+          }
+          // request.cookies.set mutates the underlying Cookie header; re-sync
+          // our forwarded header copy before rebuilding the response.
+          requestHeaders.set("cookie", request.headers.get("cookie") ?? "");
+          response = NextResponse.next({ request: { headers: requestHeaders } });
+          for (const { name, value, options } of cookiesToSet) {
+            response.cookies.set(name, value, options);
+          }
+        },
+      },
+    },
+  );
+  // Triggers the refresh when needed; result intentionally unused here.
+  await supabaseClient.auth.getUser();
+
   response.headers.set("Content-Security-Policy", csp);
   return response;
 }
