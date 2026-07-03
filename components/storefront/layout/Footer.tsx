@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FacebookIcon } from "@/components/ui/FacebookIcon";
+import { InstagramIcon } from "@/components/ui/InstagramIcon";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation";
 import { STORE_INFO, type SocialLink } from "@/lib/store-info";
@@ -95,6 +96,7 @@ export function Footer() {
 function SocialGlyph({ social }: { social: SocialLink }) {
   if (social.label === "WhatsApp") return <WhatsAppIcon size={16} />;
   if (social.label === "Facebook") return <FacebookIcon size={16} />;
+  if (social.label === "Instagram") return <InstagramIcon size={16} />;
   return <>{social.glyph}</>;
 }
 
