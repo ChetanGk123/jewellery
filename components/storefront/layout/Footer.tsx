@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation";
 import { STORE_INFO } from "@/lib/store-info";
 
@@ -32,7 +33,11 @@ export function Footer() {
                   aria-label={social.label}
                   className={socialBadgeClass}
                 >
-                  {social.glyph}
+                  {social.label === "WhatsApp" ? (
+                    <WhatsAppIcon size={16} />
+                  ) : (
+                    social.glyph
+                  )}
                 </a>
               ) : (
                 <span
@@ -40,7 +45,11 @@ export function Footer() {
                   aria-label={social.label}
                   className={socialBadgeClass}
                 >
-                  {social.glyph}
+                  {social.label === "WhatsApp" ? (
+                    <WhatsAppIcon size={16} />
+                  ) : (
+                    social.glyph
+                  )}
                 </span>
               ),
             )}
