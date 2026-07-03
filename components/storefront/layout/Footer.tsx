@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { FacebookIcon } from "@/components/ui/FacebookIcon";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation";
-import { STORE_INFO } from "@/lib/store-info";
+import { STORE_INFO, type SocialLink } from "@/lib/store-info";
 
 const socialBadgeClass =
   "flex h-[34px] w-[34px] items-center justify-center rounded-full border border-gold-300/40 text-sm text-gold-300 transition-colors hover:bg-gold-300/10";
@@ -33,11 +34,7 @@ export function Footer() {
                   aria-label={social.label}
                   className={socialBadgeClass}
                 >
-                  {social.label === "WhatsApp" ? (
-                    <WhatsAppIcon size={16} />
-                  ) : (
-                    social.glyph
-                  )}
+                  <SocialGlyph social={social} />
                 </a>
               ) : (
                 <span
@@ -45,11 +42,7 @@ export function Footer() {
                   aria-label={social.label}
                   className={socialBadgeClass}
                 >
-                  {social.label === "WhatsApp" ? (
-                    <WhatsAppIcon size={16} />
-                  ) : (
-                    social.glyph
-                  )}
+                  <SocialGlyph social={social} />
                 </span>
               ),
             )}
@@ -96,6 +89,13 @@ export function Footer() {
       </div>
     </footer>
   );
+}
+
+/** Renders a social badge's mark: a self-hosted SVG where we have one, else the text glyph. */
+function SocialGlyph({ social }: { social: SocialLink }) {
+  if (social.label === "WhatsApp") return <WhatsAppIcon size={16} />;
+  if (social.label === "Facebook") return <FacebookIcon size={16} />;
+  return <>{social.glyph}</>;
 }
 
 function FooterColumn({
