@@ -39,21 +39,37 @@ function makeNonce(): string {
 export function proxy(request: NextRequest) {
   const nonce = makeNonce();
   const supabase = supabaseOrigin();
+  const isDev = process.env.NODE_ENV !== "production";
 
-  const csp = [
+  // Production is strict: only nonce'd scripts run (via `'strict-dynamic'`).
+  // Development must relax to `'unsafe-eval'`/`'unsafe-inline'` — Next's Fast
+  // Refresh/HMR runtime evals code and injects un-nonce'd inline scripts, which
+  // a strict policy would block, breaking the dev server entirely.
+  const scriptSrc = isDev
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval'`
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+
+  // Dev HMR opens a websocket back to the Next dev server; allow ws(s):.
+  const connectSrc = isDev
+    ? `connect-src 'self' ${supabase} ws: wss:`
+    : `connect-src 'self' ${supabase}`;
+
+  const directives = [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    scriptSrc,
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: ${supabase}`.trim(),
     `font-src 'self'`,
-    `connect-src 'self' ${supabase}`.trim(),
+    connectSrc.trim(),
     `frame-src 'none'`,
     `frame-ancestors 'none'`,
     `form-action 'self'`,
     `base-uri 'self'`,
     `object-src 'none'`,
-    `upgrade-insecure-requests`,
-  ].join("; ");
+  ];
+  // Only force HTTPS upgrades in production (localhost dev is plain http).
+  if (!isDev) directives.push(`upgrade-insecure-requests`);
+  const csp = directives.join("; ");
 
   // Give Next the nonce (and CSP) on the *request* so it stamps its scripts.
   const requestHeaders = new Headers(request.headers);
