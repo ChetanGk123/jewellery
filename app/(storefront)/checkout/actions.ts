@@ -27,7 +27,17 @@ const submitInputSchema = z.object({
   values: z.unknown(),
   items: orderItemsSchema,
   couponCode: z.string().nullable().optional(),
+  /**
+   * Honeypot: a decoy field hidden from humans (see `Honeypot`). Real users
+   * leave it empty; naive bots autofill it. Any non-empty value is treated as
+   * abuse and the order is silently dropped. Never trusted for real data.
+   */
+  honeypot: z.string().optional(),
 });
+
+/** Generic failure message shown when we decline to place an order. */
+const DECLINE_MESSAGE =
+  "We couldn't place your order just now. Please try again in a moment.";
 
 /**
  * Authoritative checkout gate (TASKS 2.5). Re-validates the SAME form schema
@@ -47,6 +57,12 @@ export async function submitCheckout(
       formError:
         "Your cart looks out of date. Please refresh the page and try again.",
     };
+  }
+
+  // Bot check: a filled honeypot means it wasn't a human. Decline generically
+  // so we don't hint at the trap, and never reach the DB.
+  if (wrapper.data.honeypot && wrapper.data.honeypot.trim().length > 0) {
+    return { ok: false, fieldErrors: {}, formError: DECLINE_MESSAGE };
   }
 
   const parsed = checkoutSchema.safeParse(wrapper.data.values);
@@ -87,12 +103,7 @@ export async function submitCheckout(
 
   if (error) {
     console.error("place_order failed", error);
-    return {
-      ok: false,
-      fieldErrors: {},
-      formError:
-        "We couldn't place your order just now. Please try again in a moment.",
-    };
+    return { ok: false, fieldErrors: {}, formError: DECLINE_MESSAGE };
   }
 
   const order = toPlacedOrder(data);

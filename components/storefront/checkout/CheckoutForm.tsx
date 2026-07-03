@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { type FieldError, useForm } from "react-hook-form";
 import { submitCheckout } from "@/app/(storefront)/checkout/actions";
+import { Honeypot } from "@/components/ui/Honeypot";
 import type { CartLine } from "@/lib/cart";
 import {
   cartLinesToOrderItems,
@@ -53,6 +54,7 @@ export function CheckoutForm({
     mode: "onTouched",
   });
   const [formError, setFormError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
 
   const onValid = async (values: CheckoutFormValues) => {
     setFormError(null);
@@ -60,6 +62,7 @@ export function CheckoutForm({
       values,
       items: cartLinesToOrderItems(lines),
       couponCode,
+      honeypot,
     });
     if (!result.ok) {
       for (const [field, message] of Object.entries(result.fieldErrors)) {
@@ -75,8 +78,9 @@ export function CheckoutForm({
     <form
       onSubmit={handleSubmit(onValid)}
       noValidate
-      className="flex flex-wrap items-start gap-10"
+      className="relative flex flex-wrap items-start gap-10"
     >
+      <Honeypot value={honeypot} onChange={setHoneypot} />
       <div className="flex min-w-[320px] flex-1 flex-col gap-[26px]">
         <fieldset className="m-0 flex flex-col gap-3.5 border-0 p-0">
           <legend className="mb-0.5 p-0 text-[13px] font-semibold uppercase leading-none tracking-[0.14em] text-maroon-900">

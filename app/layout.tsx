@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Marcellus, Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 
@@ -31,11 +32,18 @@ export const metadata: Metadata = {
     "Handcrafted Kundan, Polki and temple jewellery for the Indian bride. Cash on delivery across India.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Reading a request header opts every route into dynamic rendering. That's the
+  // deliberate cost of our strict, nonce-based CSP: only during a per-request
+  // render can Next.js stamp the nonce (minted in `proxy.ts`) onto its own
+  // bootstrap/hydration scripts, so `script-src 'nonce-…' 'strict-dynamic'`
+  // allows them without ever falling back to `'unsafe-inline'`.
+  await headers();
+
   return (
     <html
       lang="en"
