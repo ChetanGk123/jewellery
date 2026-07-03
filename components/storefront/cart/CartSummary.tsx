@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { amountToFreeShipPaise, qualifiesForFreeShipping } from "@/lib/shipping";
 import { formatPaise } from "@/lib/utils/money";
 
@@ -119,9 +120,7 @@ export function CartSummary({
         aria-label="Enquire about your cart on WhatsApp"
         className="flex items-center justify-center gap-2.5 rounded-sm border border-[#2EA84F] bg-white px-4 py-3 text-[13px] font-semibold leading-none text-[#1E7A38] transition-colors hover:bg-[#F2FBF4]"
       >
-        <span className="text-[16px]" aria-hidden>
-          💬
-        </span>
+        <WhatsAppIcon size={18} />
         Enquire on WhatsApp
       </a>
 

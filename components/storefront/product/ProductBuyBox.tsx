@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ProductOption } from "@/lib/db/queries";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { productEnquiryUrl } from "@/lib/whatsapp";
 import { useCartStore } from "@/stores/cart";
 
@@ -148,9 +149,7 @@ export function ProductBuyBox({
         aria-label={`Enquire about ${product.name} on WhatsApp`}
         className="flex items-center justify-center gap-2.5 rounded-sm border border-[#2EA84F] bg-white px-6 py-3.5 text-[13px] font-semibold leading-none text-[#1E7A38] transition-colors hover:bg-[#F2FBF4]"
       >
-        <span className="text-[16px]" aria-hidden>
-          <img width="30" height="30" src="https://img.icons8.com/color/30/whatsapp--v1.png" alt="whatsapp--v1"/>
-        </span>
+        <WhatsAppIcon size={18} />
         Enquire on WhatsApp
       </a>
     </div>
