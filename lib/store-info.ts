@@ -15,8 +15,8 @@
  */
 
 /** Full phone in E.164 digits (country code + number, no spaces or symbols). */
-const PHONE_E164 = "919999999999";
-const PHONE_DISPLAY = "+91 99999 99999";
+const PHONE_E164 = "919972777455";
+const PHONE_DISPLAY = "+91 99727 77455";
 const EMAIL = "care@rjjewellers.in";
 
 export type SocialLink = {
