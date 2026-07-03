@@ -40,29 +40,47 @@ describe("whatsappUrl", () => {
 
 describe("productEnquiryMessage", () => {
   test("names the product", () => {
-    expect(productEnquiryMessage("Kundan Rani Haar")).toBe(
+    expect(productEnquiryMessage({ name: "Kundan Rani Haar" })).toBe(
       `Hi ${STORE_INFO.name}, I'm interested in the Kundan Rani Haar.`,
     );
   });
 
   test("appends the plating tone when one is chosen", () => {
-    expect(productEnquiryMessage("Kundan Rani Haar", "Gold")).toBe(
+    expect(productEnquiryMessage({ name: "Kundan Rani Haar", tone: "Gold" })).toBe(
       `Hi ${STORE_INFO.name}, I'm interested in the Kundan Rani Haar (Gold plating).`,
     );
   });
 
-  test("omits the tone for a falsy value", () => {
-    expect(productEnquiryMessage("Anklet", null)).not.toContain("plating");
-    expect(productEnquiryMessage("Anklet", "")).not.toContain("plating");
+  test("appends the product link on its own line when provided", () => {
+    expect(
+      productEnquiryMessage({
+        name: "Kundan Rani Haar",
+        tone: "Gold",
+        url: "https://shop.example/product/kundan-rani-haar",
+      }),
+    ).toBe(
+      `Hi ${STORE_INFO.name}, I'm interested in the Kundan Rani Haar (Gold plating).\nhttps://shop.example/product/kundan-rani-haar`,
+    );
+  });
+
+  test("omits tone/link for falsy values", () => {
+    const message = productEnquiryMessage({ name: "Anklet", tone: "", url: null });
+    expect(message).not.toContain("plating");
+    expect(message).toBe(`Hi ${STORE_INFO.name}, I'm interested in the Anklet.`);
   });
 });
 
 describe("productEnquiryUrl", () => {
   test("encodes the enquiry message into a wa.me link", () => {
-    const url = productEnquiryUrl("Kundan Rani Haar", "Gold");
+    const enquiry = {
+      name: "Kundan Rani Haar",
+      tone: "Gold",
+      url: "https://shop.example/product/kundan-rani-haar",
+    };
+    const url = productEnquiryUrl(enquiry);
     expect(url.startsWith(PREFIX)).toBe(true);
     expect(decodeURIComponent(url.slice(PREFIX.length))).toBe(
-      productEnquiryMessage("Kundan Rani Haar", "Gold"),
+      productEnquiryMessage(enquiry),
     );
   });
 });

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/storefront/product/ProductCard";
@@ -54,6 +55,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const hasSale = off > 0;
   const reviewCount = product.review_count;
   const freeShip = formatPaise(settings.freeShipThresholdPaise);
+
+  // Absolute URL for the WhatsApp enquiry link (derived from the request host).
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
+  const proto =
+    headerList.get("x-forwarded-proto") ??
+    (host && /^(localhost|127\.)/.test(host) ? "http" : "https");
+  const productUrl = host
+    ? `${proto}://${host}${ROUTES.product(product.slug)}`
+    : undefined;
 
   return (
     <main className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]">
@@ -137,6 +148,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   product.images[0])?.bg ?? null,
             }}
             options={product.options}
+            productUrl={productUrl}
           />
 
           <ul className="m-0 flex flex-wrap gap-[18px] border-y border-[#EFE3D0] py-[18px] text-[12.5px] font-normal leading-none text-[#5E4A44]">

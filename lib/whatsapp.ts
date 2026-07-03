@@ -18,18 +18,25 @@ export function whatsappUrl(message: string): string {
   return `${WA_BASE}/${STORE_INFO.whatsapp.number}?text=${encodeURIComponent(message)}`;
 }
 
-/** Enquiry text for a single product, optionally naming the chosen plating tone. */
-export function productEnquiryMessage(
-  name: string,
-  tone?: string | null,
-): string {
+/** Context for a product enquiry: the name, optional chosen tone, and page link. */
+export type ProductEnquiry = {
+  name: string;
+  /** Chosen plating tone label, appended when present. */
+  tone?: string | null;
+  /** Absolute product URL, appended on its own line when present. */
+  url?: string | null;
+};
+
+/** Enquiry text for a product — names it, the chosen tone, and links the page. */
+export function productEnquiryMessage({ name, tone, url }: ProductEnquiry): string {
   const tonePart = tone ? ` (${tone} plating)` : "";
-  return `Hi ${STORE_INFO.name}, I'm interested in the ${name}${tonePart}.`;
+  const urlPart = url ? `\n${url}` : "";
+  return `Hi ${STORE_INFO.name}, I'm interested in the ${name}${tonePart}.${urlPart}`;
 }
 
 /** Prefilled `wa.me` link enquiring about one product. */
-export function productEnquiryUrl(name: string, tone?: string | null): string {
-  return whatsappUrl(productEnquiryMessage(name, tone));
+export function productEnquiryUrl(enquiry: ProductEnquiry): string {
+  return whatsappUrl(productEnquiryMessage(enquiry));
 }
 
 /** Enquiry text listing the cart's lines (qty, name, tone, unit price) + subtotal. */

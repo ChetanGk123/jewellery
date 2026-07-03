@@ -30,9 +30,12 @@ type BuyBoxProduct = {
 export function ProductBuyBox({
   product,
   options,
+  productUrl,
 }: {
   product: BuyBoxProduct;
   options: ProductOption[];
+  /** Absolute URL of this product page, appended to the WhatsApp enquiry. */
+  productUrl?: string;
 }) {
   const addItem = useCartStore((state) => state.addItem);
   const [tone, setTone] = useState(options[0]?.value ?? "");
@@ -64,7 +67,11 @@ export function ProductBuyBox({
   };
 
   const selectedLabel = options.find((option) => option.value === tone)?.label;
-  const enquiryHref = productEnquiryUrl(product.name, selectedLabel);
+  const enquiryHref = productEnquiryUrl({
+    name: product.name,
+    tone: selectedLabel,
+    url: productUrl,
+  });
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -142,7 +149,7 @@ export function ProductBuyBox({
         className="flex items-center justify-center gap-2.5 rounded-sm border border-[#2EA84F] bg-white px-6 py-3.5 text-[13px] font-semibold leading-none text-[#1E7A38] transition-colors hover:bg-[#F2FBF4]"
       >
         <span className="text-[16px]" aria-hidden>
-          💬
+          <img width="30" height="30" src="https://img.icons8.com/color/30/whatsapp--v1.png" alt="whatsapp--v1"/>
         </span>
         Enquire on WhatsApp
       </a>
