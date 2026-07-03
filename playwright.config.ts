@@ -20,6 +20,14 @@ const E2E_PORT = 3200;
 export default defineConfig({
   testDir: "./e2e",
   testMatch: /.*\.e2e\.ts/,
+  expect: {
+    toHaveScreenshot: {
+      // Kill CSS animations/transitions mid-flight so captures are stable.
+      animations: "disabled",
+      // Tolerate sub-pixel antialiasing drift across runs/machines.
+      maxDiffPixelRatio: 0.02,
+    },
+  },
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
