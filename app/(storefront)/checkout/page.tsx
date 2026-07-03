@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { CheckoutView } from "@/components/storefront/checkout/CheckoutView";
+import { profileToCheckoutDefaults } from "@/lib/account/profile";
+import { getCustomerProfile } from "@/lib/db/profile";
+import { getCurrentUser } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
 import { getStoreSettings } from "@/lib/db/settings";
 
@@ -11,12 +15,23 @@ export const metadata: Metadata = {
 };
 
 /**
- * Checkout page (TASKS 2.4). A thin server shell supplying the store's free-ship
- * threshold; the cart, totals, form, and validation all live client-side in
- * `CheckoutView` (the cart is persisted in localStorage via `useCartStore`).
+ * Checkout page (TASKS 2.4). Sign-in required (checkout is account-only): the
+ * gate redirects to sign-in and returns here. The server shell supplies the
+ * free-ship threshold plus form defaults prefilled from the customer's saved
+ * profile + account email; cart, totals and validation live client-side in
+ * `CheckoutView`.
  */
 export default async function CheckoutPage() {
-  const settings = await getStoreSettings();
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect(`${ROUTES.signIn}?next=${encodeURIComponent(ROUTES.checkout)}`);
+  }
+
+  const [settings, profile] = await Promise.all([
+    getStoreSettings(),
+    getCustomerProfile(user.id),
+  ]);
+  const defaults = profileToCheckoutDefaults(profile, user.email ?? "");
 
   return (
     <main className="mx-auto max-w-[1180px] flex-1 px-6 pb-20 pt-[30px]">
@@ -33,7 +48,10 @@ export default async function CheckoutPage() {
       <h1 className="mb-7 font-heading text-[44px] font-semibold leading-none text-maroon-900">
         Checkout
       </h1>
-      <CheckoutView freeShipThresholdPaise={settings.freeShipThresholdPaise} />
+      <CheckoutView
+        freeShipThresholdPaise={settings.freeShipThresholdPaise}
+        defaults={defaults}
+      />
     </main>
   );
 }

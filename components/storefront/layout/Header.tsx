@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { BannerSetting } from "@/lib/db/settings";
+import { getCurrentUser } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
 import { PRIMARY_NAV } from "@/lib/navigation";
 import { STORE_INFO } from "@/lib/store-info";
@@ -10,11 +11,15 @@ import { CartBadge } from "./CartBadge";
  * a gradient announcement bar that scrolls away, over a sticky brand row
  * (left logo · centre search · account/cart) and a centred nav strip.
  *
- * The announcement bar is driven by `setting.banner`; the cart count is a
- * static stub until the cart store lands in Phase 2.
+ * The announcement bar is driven by `setting.banner`. The account link is
+ * session-aware ("Sign In" ↔ "Account") — every route already renders
+ * per-request (strict CSP nonce), so reading the session here costs nothing.
  */
-export function Header({ banner }: { banner: BannerSetting }) {
+export async function Header({ banner }: { banner: BannerSetting }) {
   const showBanner = banner.enabled && Boolean(banner.msg1);
+  const user = await getCurrentUser();
+  const accountHref = user ? ROUTES.account : ROUTES.signIn;
+  const accountLabel = user ? "Account" : "Sign In";
 
   return (
     <header>
@@ -85,10 +90,10 @@ export function Header({ banner }: { banner: BannerSetting }) {
 
           <div className="flex flex-none items-center gap-[18px]">
             <Link
-              href={ROUTES.account}
+              href={accountHref}
               className="whitespace-nowrap text-[13px] text-[#5E4A44] transition-colors hover:text-maroon-700"
             >
-              Account
+              {accountLabel}
             </Link>
             <Link
               href={ROUTES.cart}

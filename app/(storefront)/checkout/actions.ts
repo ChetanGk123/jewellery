@@ -10,7 +10,8 @@ import {
   type PlacedOrder,
   toPlacedOrder,
 } from "@/lib/checkout/order";
-import { createServerClient } from "@/lib/db/server";
+import { upsertCustomerProfile } from "@/lib/db/profile";
+import { createServerClient, getCurrentUser } from "@/lib/db/server";
 
 export type CheckoutActionResult =
   | { ok: true; order: PlacedOrder }
@@ -65,6 +66,18 @@ export async function submitCheckout(
     return { ok: false, fieldErrors: {}, formError: DECLINE_MESSAGE };
   }
 
+  // Checkout is sign-in only. The `place_order` RPC enforces this too (raises
+  // for anonymous callers); checking here returns a friendly message instead
+  // of a generic failure when a session expires mid-checkout.
+  const user = await getCurrentUser();
+  if (!user) {
+    return {
+      ok: false,
+      fieldErrors: {},
+      formError: "Your session has expired. Please sign in and try again.",
+    };
+  }
+
   const parsed = checkoutSchema.safeParse(wrapper.data.values);
   if (!parsed.success) {
     const flat = parsed.error.flatten().fieldErrors;
@@ -81,7 +94,7 @@ export async function submitCheckout(
   }
 
   const contact = parsed.data;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase.rpc("place_order", {
     p_items: wrapper.data.items.map((item) => ({
       product_id: item.productId,
@@ -116,6 +129,18 @@ export async function submitCheckout(
         "Your order may not have gone through. Please contact us before retrying.",
     };
   }
+
+  // "Saved details" loop: remember this checkout's contact + address as the
+  // customer's profile so the next checkout prefills. Best-effort — a profile
+  // hiccup must never fail an already-placed order.
+  await upsertCustomerProfile(user.id, {
+    fullName: contact.fullName,
+    phone: contact.phone,
+    addressLine: contact.addressLine,
+    city: contact.city,
+    state: contact.state,
+    pincode: contact.pincode,
+  });
 
   return { ok: true, order };
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cartSubtotalPaise } from "@/lib/cart";
 import type { PlacedOrder } from "@/lib/checkout/order";
+import type { CheckoutFormValues } from "@/lib/checkout/schema";
 import { validateCoupon } from "@/lib/coupons";
 import { ROUTES } from "@/lib/routes";
 import { shippingPaise } from "@/lib/shipping";
@@ -13,6 +14,8 @@ import { CheckoutForm } from "./CheckoutForm";
 
 type Props = {
   freeShipThresholdPaise: number;
+  /** Form defaults prefilled server-side from the customer's saved profile. */
+  defaults: CheckoutFormValues;
 };
 
 /**
@@ -23,7 +26,7 @@ type Props = {
  * nothing to check out. All totals are display-only — the server recomputes them
  * authoritatively at order creation (TASKS 2.5).
  */
-export function CheckoutView({ freeShipThresholdPaise }: Props) {
+export function CheckoutView({ freeShipThresholdPaise, defaults }: Props) {
   const router = useRouter();
   const hasHydrated = useCartHydrated();
   const lines = useCartStore((state) => state.lines);
@@ -92,6 +95,7 @@ export function CheckoutView({ freeShipThresholdPaise }: Props) {
   return (
     <CheckoutForm
       lines={lines}
+      defaults={defaults}
       couponCode={couponCode}
       subtotalPaise={subtotalPaise}
       discountPaise={discountPaise}

@@ -11,7 +11,6 @@ import {
   type PlacedOrder,
 } from "@/lib/checkout/order";
 import {
-  CHECKOUT_DEFAULTS,
   type CheckoutFormValues,
   checkoutSchema,
 } from "@/lib/checkout/schema";
@@ -19,6 +18,8 @@ import { CheckoutSummary } from "./CheckoutSummary";
 
 type Props = {
   lines: readonly CartLine[];
+  /** Prefill from the signed-in customer's saved profile + account email. */
+  defaults: CheckoutFormValues;
   couponCode: string | null;
   subtotalPaise: number;
   discountPaise: number;
@@ -36,6 +37,7 @@ type Props = {
  */
 export function CheckoutForm({
   lines,
+  defaults,
   couponCode,
   subtotalPaise,
   discountPaise,
@@ -50,7 +52,7 @@ export function CheckoutForm({
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: CHECKOUT_DEFAULTS,
+    defaultValues: defaults,
     mode: "onTouched",
   });
   const [formError, setFormError] = useState<string | null>(null);
