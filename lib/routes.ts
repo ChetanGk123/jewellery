@@ -31,4 +31,20 @@ export const ROUTES = {
   product: (slug: string) => `/product/${slug}`,
   /** Order confirmation — keyed on the order number (carries a random suffix). */
   order: (orderNo: string) => `/order/${encodeURIComponent(orderNo)}`,
+
+  /**
+   * Admin console (Phase 3) — the prototype's `sc-if` view switches become real
+   * routes under the `(admin)` group. Kept together so the whole console can be
+   * re-namespaced from one place.
+   */
+  admin: "/admin",
+  adminOrders: "/admin/orders",
+  adminProducts: "/admin/products",
+  adminAnalytics: "/admin/analytics",
+  adminCategories: "/admin/categories",
+  adminCoupons: "/admin/coupons",
+  adminReviews: "/admin/reviews",
+  adminMessages: "/admin/messages",
+  adminSubscribers: "/admin/subscribers",
+  adminSettings: "/admin/settings",
 } as const;
