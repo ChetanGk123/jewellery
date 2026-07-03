@@ -1,0 +1,74 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Jost:wght@300;400;600&display=swap");
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#FBF6EE;">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
+    Your one-time sign-in link and code for RJ Jewellers.
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FBF6EE;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:560px;max-width:100%;">
+
+          <!-- Brand band -->
+          <tr>
+            <td align="center" style="background-color:#2A1115;border-bottom:2px solid #C9A24B;border-radius:4px 4px 0 0;padding:28px 40px;">
+              <div style="font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-size:23px;font-weight:600;letter-spacing:0.22em;color:#E6CA7E;">RJ&nbsp;JEWELLERS</div>
+              <div style="font-family:'Jost','Segoe UI',Helvetica,Arial,sans-serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;color:#F3E3C7;padding-top:7px;">Artificial Bridal Jewellery</div>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background-color:#FFFDF8;border:1px solid #E7D9C2;border-top:none;border-radius:0 0 4px 4px;padding:36px 40px 32px;">
+              <h1 style="margin:0 0 10px;font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;font-size:28px;font-weight:600;line-height:1.2;color:#2A1115;">Welcome back</h1>
+              <p style="margin:0 0 26px;font-family:'Jost','Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:300;line-height:1.6;color:#5E4A44;">
+                Tap the button below to sign in to your RJ&nbsp;Jewellers account — no password needed.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+                <tr>
+                  <td align="center" bgcolor="#C9A24B" style="border-radius:2px;background-color:#C9A24B;background-image:linear-gradient(135deg,#E6CA7E,#C9A24B 55%,#A87A1E);">
+                    <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=magiclink&next=/account"
+                       style="display:inline-block;padding:15px 34px;font-family:'Jost','Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#3A0E18;text-decoration:none;">
+                      Sign in to RJ Jewellers
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:26px 0 10px;font-family:'Jost','Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;text-align:center;color:#9C8A84;">
+                Or enter this code on the sign-in page
+              </p>
+              <div style="background-color:#FBF6EE;border:1px solid #E7D9C2;border-radius:2px;padding:16px 12px;text-align:center;font-family:Georgia,'Times New Roman',serif;font-size:30px;letter-spacing:0.3em;color:#71182B;">
+                {{ .Token }}
+              </div>
+
+              <p style="margin:26px 0 0;padding-top:22px;border-top:1px solid #F3E3C7;font-family:'Jost','Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;font-weight:300;line-height:1.7;color:#9C8A84;">
+                This link and code expire in 1 hour and can be used once.
+                If the button doesn't work, copy this address into your browser:<br />
+                <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=magiclink&next=/account" style="color:#71182B;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=magiclink&next=/account</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:24px 40px 0;font-family:'Jost','Segoe UI',Helvetica,Arial,sans-serif;font-size:11.5px;font-weight:300;line-height:1.8;color:#9C8A84;">
+              RJ Jewellers · Jaipur, Rajasthan<br />
+              Questions? Write to <a href="mailto:care@rjjewellers.in" style="color:#71182B;">care@rjjewellers.in</a><br />
+              Didn't request this email? You can safely ignore it — no one can sign in without it.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

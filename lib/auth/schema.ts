@@ -42,10 +42,13 @@ export type OtpRequestValues = z.infer<typeof otpRequestSchema>;
 
 export const otpVerifySchema = z.object({
   email: emailField,
+  // 6–10 digits: Supabase's Email OTP Length is project config (this project
+  // currently sends 8), so don't hardcode one length — Supabase verifies the
+  // exact code anyway.
   code: z
     .string()
     .trim()
-    .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
+    .regex(/^\d{6,10}$/, "Enter the one-time code from your email."),
 });
 export type OtpVerifyValues = z.infer<typeof otpVerifySchema>;
 

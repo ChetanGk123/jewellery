@@ -116,9 +116,10 @@ function PasswordForm({ target }: { target: string }) {
 /**
  * Passwordless flow. Requesting sends ONE email whose content depends on the
  * project's "Magic Link" template: a sign-in link (handled by /auth/callback)
- * and — when the template includes `{{ .Token }}` — a 6-digit code that can be
- * entered here. The sent-state supports both so the UI never promises
- * something the email doesn't contain.
+ * and — when the template includes `{{ .Token }}` — a one-time code (6–10
+ * digits, per the project's Email OTP Length setting) that can be entered
+ * here. The sent-state supports both so the UI never promises something the
+ * email doesn't contain.
  */
 function OtpForm({ target }: { target: string }) {
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -174,12 +175,12 @@ function OtpForm({ target }: { target: string }) {
           We&apos;ve emailed{" "}
           <span className="font-medium text-maroon-900">{sentTo}</span>.
           Open the <span className="font-medium text-maroon-900">sign-in link</span>{" "}
-          in that email to continue — or, if it shows a 6-digit code, enter it
+          in that email to continue — or, if it shows a one-time code, enter it
           below.
         </p>
         <AuthField
           id="code"
-          label="6-digit code (if your email has one)"
+          label="One-time code (if your email has one)"
           inputMode="numeric"
           autoComplete="one-time-code"
           error={verify.formState.errors.code?.message}
