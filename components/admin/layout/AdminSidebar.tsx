@@ -11,6 +11,8 @@ import type { AdminNavCounts } from "@/lib/db/admin-metrics";
 
 type Props = {
   counts: AdminNavCounts;
+  /** Signed-in admin's display name (or email) — drives the footer avatar initials. */
+  adminName: string;
   /** Signed-in admin's email, shown in the footer card. */
   adminEmail: string;
   /** Mobile drawer open state (ignored at `lg` where the sidebar is static). */
@@ -24,7 +26,13 @@ type Props = {
  * and a Store Admin footer card. Static column at `lg`; an off-canvas drawer
  * with a backdrop below it.
  */
-export function AdminSidebar({ counts, adminEmail, isOpen, onClose }: Props) {
+export function AdminSidebar({
+  counts,
+  adminName,
+  adminEmail,
+  isOpen,
+  onClose,
+}: Props) {
   const pathname = usePathname();
 
   const isActive = (href: string) =>
@@ -94,7 +102,7 @@ export function AdminSidebar({ counts, adminEmail, isOpen, onClose }: Props) {
 
         <div className="mt-auto flex items-center gap-3 rounded-lg border-t border-gold-300/15 px-3 py-3">
           <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[linear-gradient(135deg,#E6CA7E,#A87A1E)] text-sm font-semibold text-maroon-950">
-            {initials(STORE_INFO.name)}
+            {initials(adminName)}
           </span>
           <div className="flex min-w-0 flex-col leading-tight">
             <span className="text-[13px] font-medium text-[#F0DDC9]">
@@ -114,11 +122,17 @@ export function AdminSidebar({ counts, adminEmail, isOpen, onClose }: Props) {
   );
 }
 
-/** First letters of the first two words, e.g. "RJ Jewellers" → "RJ". */
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
+/**
+ * Up to two initials from a display name or email: first letters of the first
+ * two "words" (splitting on spaces and email/handle separators like . _ + -),
+ * else the first two characters. "Chetan GK" → "CG"; "asha.k@x.com" → "AK".
+ */
+function initials(value: string): string {
+  const base = value.includes("@") ? value.slice(0, value.indexOf("@")) : value;
+  const parts = base.split(/[\s._+-]+/).filter(Boolean);
+  const letters =
+    parts.length >= 2
+      ? parts[0][0] + parts[1][0]
+      : (parts[0] ?? base).slice(0, 2);
+  return letters.toUpperCase();
 }

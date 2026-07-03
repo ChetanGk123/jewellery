@@ -25,8 +25,15 @@ export default async function AdminConsoleLayout({
   const admin = await requireAdmin();
   const counts = await getAdminNavCounts();
 
+  // Prefer a real name for the footer avatar initials; fall back to the email.
+  const meta = admin.user_metadata as
+    | { full_name?: string; name?: string }
+    | undefined;
+  const email = admin.email ?? "Admin";
+  const adminName = meta?.full_name?.trim() || meta?.name?.trim() || email;
+
   return (
-    <AdminShell counts={counts} adminEmail={admin.email ?? "Admin"}>
+    <AdminShell counts={counts} adminName={adminName} adminEmail={email}>
       {children}
     </AdminShell>
   );
