@@ -20,10 +20,10 @@ import { GoogleButton } from "./GoogleButton";
 type Mode = "password" | "otp";
 
 /**
- * Sign-in card body: email+password by default, a passwordless email-code
- * mode behind the "Email me a code instead" toggle, and Google OAuth below the
- * divider. On success we do a full navigation to `next` so the server layout
- * re-renders with the new session cookie (header flips to "Account").
+ * Sign-in card body: email+password by default, a passwordless mode behind the
+ * "Email me a sign-in link instead" toggle, and Google OAuth below the divider.
+ * On success we do a full navigation to `next` so the server layout re-renders
+ * with the new session cookie (header flips to "Account").
  */
 export function SignInForm({ next }: { next: string }) {
   const [mode, setMode] = useState<Mode>("password");
@@ -43,7 +43,7 @@ export function SignInForm({ next }: { next: string }) {
         className="self-start border-none bg-transparent p-0 text-[13px] font-medium text-maroon-700 underline-offset-4 hover:underline"
       >
         {mode === "password"
-          ? "Email me a code instead"
+          ? "Email me a sign-in link instead"
           : "Use a password instead"}
       </button>
 
@@ -113,7 +113,13 @@ function PasswordForm({ target }: { target: string }) {
   );
 }
 
-/** Two-step passwordless flow: request a 6-digit code, then verify it. */
+/**
+ * Passwordless flow. Requesting sends ONE email whose content depends on the
+ * project's "Magic Link" template: a sign-in link (handled by /auth/callback)
+ * and — when the template includes `{{ .Token }}` — a 6-digit code that can be
+ * entered here. The sent-state supports both so the UI never promises
+ * something the email doesn't contain.
+ */
 function OtpForm({ target }: { target: string }) {
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -127,9 +133,16 @@ function OtpForm({ target }: { target: string }) {
 
   const onRequest = async ({ email }: OtpRequestValues) => {
     setFormError(null);
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    // The emailed link returns through /auth/callback: either as
+    // ?token_hash=…&type=… (recommended template — verified server-side) or
+    // as a same-browser PKCE ?code=… (default template). Both are handled.
+    const emailRedirectTo = `${window.location.origin}${ROUTES.authCallback}?next=${encodeURIComponent(target)}`;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo },
+    });
     if (error) {
-      setFormError("We couldn't send the code just now. Please try again.");
+      setFormError("We couldn't send the email just now. Please try again.");
       return;
     }
     verify.setValue("email", email);
@@ -158,12 +171,15 @@ function OtpForm({ target }: { target: string }) {
         className="flex flex-col gap-4"
       >
         <p className="m-0 text-[13.5px] leading-relaxed text-[#5E4A44]">
-          We emailed a 6-digit code to{" "}
+          We&apos;ve emailed{" "}
           <span className="font-medium text-maroon-900">{sentTo}</span>.
+          Open the <span className="font-medium text-maroon-900">sign-in link</span>{" "}
+          in that email to continue — or, if it shows a 6-digit code, enter it
+          below.
         </p>
         <AuthField
           id="code"
-          label="6-digit code"
+          label="6-digit code (if your email has one)"
           inputMode="numeric"
           autoComplete="one-time-code"
           error={verify.formState.errors.code?.message}
@@ -173,6 +189,13 @@ function OtpForm({ target }: { target: string }) {
         <AuthSubmit isBusy={verify.formState.isSubmitting}>
           {verify.formState.isSubmitting ? "Verifying…" : "Verify & Sign In"}
         </AuthSubmit>
+        <button
+          type="button"
+          onClick={() => setSentTo(null)}
+          className="self-start border-none bg-transparent p-0 text-[13px] font-medium text-maroon-700 underline-offset-4 hover:underline"
+        >
+          Use a different email
+        </button>
       </form>
     );
   }
@@ -193,7 +216,7 @@ function OtpForm({ target }: { target: string }) {
       />
       <AuthError message={formError} />
       <AuthSubmit isBusy={request.formState.isSubmitting}>
-        {request.formState.isSubmitting ? "Sending code…" : "Email me a code"}
+        {request.formState.isSubmitting ? "Sending…" : "Email me a sign-in link"}
       </AuthSubmit>
     </form>
   );

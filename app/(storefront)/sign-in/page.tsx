@@ -40,8 +40,14 @@ export default async function SignInPage({
         </>
       }
     >
-      {error === "link" && (
-        <AuthError message="That link has expired or was already used. Please sign in or request a new one." />
+      {error && (
+        <AuthError
+          message={
+            error === "expired"
+              ? "That sign-in link has expired. Please request a new one below."
+              : "That link has expired or was already used. Please sign in or request a new one."
+          }
+        />
       )}
       <SignInForm next={target} />
     </AuthCard>

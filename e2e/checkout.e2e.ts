@@ -26,8 +26,9 @@ const ORDER_NO_RE = /JR-\d{6}-\d{4,}-[0-9A-Z]{4}/;
 /** Sign in with the seeded test account via the password form. */
 async function signIn(page: Page) {
   await page.goto("/sign-in");
-  await page.getByLabel("Email").fill(E2E_EMAIL);
-  await page.getByLabel("Password").fill(E2E_PASSWORD);
+  // Exact match — the footer newsletter input is also labelled "Email address".
+  await page.getByLabel("Email", { exact: true }).fill(E2E_EMAIL);
+  await page.getByLabel("Password", { exact: true }).fill(E2E_PASSWORD);
   await page.getByRole("button", { name: /^sign in$/i }).click();
   // Default post-auth target is the account page.
   await page.waitForURL(/\/account/);
