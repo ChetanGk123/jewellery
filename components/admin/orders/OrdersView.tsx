@@ -9,7 +9,11 @@ import {
   ORDER_STATUSES,
   ORDERS_PAGE_SIZE,
 } from "@/lib/admin/order-status";
-import type { AdminOrdersPage, OrderFilter } from "@/lib/db/admin-orders";
+import type {
+  AdminOrderRow,
+  AdminOrdersPage,
+  OrderFilter,
+} from "@/lib/db/admin-orders";
 import { ROUTES } from "@/lib/routes";
 import { formatPaise } from "@/lib/utils/money";
 import { OrderDrawer } from "./OrderDrawer";
@@ -25,21 +29,19 @@ function hrefFor(filter: OrderFilter, page: number): string {
 }
 
 export function OrdersView({ page }: { page: AdminOrdersPage }) {
-  const [selectedNo, setSelectedNo] = useState<string | null>(null);
+  // A snapshot of the open order — held locally (not derived from page.rows) so
+  // the drawer survives revalidation and stays open even when a status change
+  // moves the order out of the active filter. Only the backdrop / × close it.
+  const [selected, setSelected] = useState<AdminOrderRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const selected =
-    selectedNo === null
-      ? null
-      : (page.rows.find((r) => r.orderNo === selectedNo) ?? null);
-
-  const openOrder = (orderNo: string) => {
+  const openOrder = (order: AdminOrderRow) => {
     setError(null);
-    setSelectedNo(orderNo);
+    setSelected(order);
   };
   const closeOrder = () => {
-    setSelectedNo(null);
+    setSelected(null);
     setError(null);
   };
 
@@ -48,9 +50,9 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
     startTransition(async () => {
       const res = await setOrderStatus(selected.id, next);
       if (res.ok) {
-        // The order may leave the current filter — return to the queue.
-        setSelectedNo(null);
         setError(null);
+        // Keep the drawer open; reflect the confirmed new status in place.
+        setSelected((prev) => (prev ? { ...prev, status: next } : prev));
       } else {
         setError(res.error ?? "Couldn't update the order.");
       }
@@ -114,7 +116,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
                   <button
                     type="button"
                     key={o.orderNo}
-                    onClick={() => openOrder(o.orderNo)}
+                    onClick={() => openOrder(o)}
                     className="flex w-full items-center gap-3.5 border-b border-[#F3EEE4] px-[22px] py-[15px] text-left transition-colors last:border-b-0 hover:bg-[#FBF8F2]"
                   >
                     <span className="w-[130px] text-[13px] font-semibold text-maroon-700">
