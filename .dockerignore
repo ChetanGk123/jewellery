@@ -1,0 +1,42 @@
+# Dependencies & build output — reinstalled/recompiled inside the image.
+node_modules
+.next
+out
+build
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets — never copy env files into the image (public values arrive as
+# build args; SUPABASE_SECRET_KEY is passed at `docker run`).
+.env
+.env.*
+!.env.example
+
+# VCS & tooling
+.git
+.gitignore
+.vscode
+.fallow
+.claude
+
+# Tests & their artifacts
+e2e
+test-results
+playwright-report
+blob-report
+playwright.config.ts
+coverage
+
+# Docs & design references (huge builder-export HTML, not needed at runtime)
+refereces
+*.md
+
+# Local Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Misc
+.DS_Store
+*.pem
+npm-debug.log*

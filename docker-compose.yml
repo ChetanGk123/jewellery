@@ -1,0 +1,32 @@
+# JR Jewellers — one-command build + run.
+#
+#   docker compose up --build
+#
+# Reads values from a local .env (or .env.local — see `env_file` below). The two
+# NEXT_PUBLIC_* values are passed as *build args* because Next.js inlines them
+# into the browser bundle at build time; SUPABASE_SECRET_KEY is a runtime-only
+# server secret.
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+    image: jr-jewellers:latest
+    ports:
+      - "3000:3000"
+    environment:
+      # Server-only secret — read at runtime by lib/db/admin.ts.
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY}
+    env_file:
+      - .env.local
+    restart: unless-stopped
+    healthcheck:
+      # Next serves this route once the server is ready; no extra tooling needed.
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

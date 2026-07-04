@@ -26,6 +26,10 @@ const securityHeaders = [
 ] as const;
 
 const nextConfig: NextConfig = {
+  // Trace only the files the server actually needs into `.next/standalone`, so
+  // the Docker runtime image ships a minimal `server.js` + pruned node_modules
+  // instead of the whole repo. See Dockerfile.
+  output: "standalone",
   images: {
     remotePatterns: [
       {
