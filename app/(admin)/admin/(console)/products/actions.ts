@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { PLATING_OPTIONS, type ProductImage } from "@/lib/admin/product-status";
 import { createServerClient } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
 
@@ -15,7 +16,8 @@ export type ProductInput = {
   saleRupees: number | null;
   stock: number;
   status: string;
-  imageUrl: string;
+  images: ProductImage[];
+  platingOptions: string[];
   material: string;
   badge: string;
   blurb: string;
@@ -28,7 +30,73 @@ export type ProductInput = {
   isFresh: boolean;
 };
 
+/**
+ * Normalise the Designs & images grid: trim, drop entries with no url, and
+ * guarantee exactly one primary (the marked one, else the first). Returns the
+ * cleaned gallery plus the primary url denormalised for the storefront.
+ */
+function normalizeImages(images: ProductImage[]): {
+  gallery: ProductImage[];
+  primaryUrl: string;
+} {
+  const cleaned = (images ?? [])
+    .map((im) => ({
+      url: (im.url ?? "").trim(),
+      name: (im.name ?? "").trim(),
+      primary: im.primary === true,
+    }))
+    .filter((im) => im.url !== "");
+
+  if (cleaned.length === 0) return { gallery: [], primaryUrl: "" };
+
+  let primaryIdx = cleaned.findIndex((im) => im.primary);
+  if (primaryIdx === -1) primaryIdx = 0;
+  const gallery = cleaned.map((im, i) => ({ ...im, primary: i === primaryIdx }));
+  return { gallery, primaryUrl: gallery[primaryIdx].url };
+}
+
 export type ProductActionResult = { ok: boolean; error?: string };
+export type UploadResult = { ok: boolean; url?: string; error?: string };
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+const PRODUCT_IMAGE_BUCKET = "product-images";
+
+/**
+ * Upload one product image to Supabase Storage through the admin cookie session
+ * (Storage writes are is_admin()-gated by 0010). Returns the public URL, which
+ * the modal stores in the product's gallery. Validates type + size server-side.
+ */
+export async function uploadProductImage(
+  formData: FormData,
+): Promise<UploadResult> {
+  await requireAdmin(ROUTES.adminProducts);
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "No file selected." };
+  }
+  if (!file.type.startsWith("image/")) {
+    return { ok: false, error: "Please choose an image file." };
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    return { ok: false, error: "Image must be under 5 MB." };
+  }
+
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const path = `products/${crypto.randomUUID()}.${ext || "jpg"}`;
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: false });
+
+  if (error) {
+    return { ok: false, error: "Upload failed. Please try again." };
+  }
+
+  const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(path);
+  return { ok: true, url: data.publicUrl };
+}
 
 function messageFor(code: string | undefined, raw: string): string {
   if (code === "23505") return "A product with that SKU already exists.";
@@ -81,6 +149,12 @@ export async function upsertProduct(
     mrpPaise = null;
   }
 
+  const { gallery, primaryUrl } = normalizeImages(input.images);
+  // Only persist recognised finishes, preserving the chip order.
+  const platingOptions = PLATING_OPTIONS.filter((opt) =>
+    (input.platingOptions ?? []).includes(opt),
+  );
+
   const payload = {
     name,
     sku,
@@ -89,7 +163,9 @@ export async function upsertProduct(
     mrp_paise: mrpPaise,
     stock,
     status: input.status || "Active",
-    primary_image_url: input.imageUrl?.trim() ?? "",
+    primary_image_url: primaryUrl,
+    gallery,
+    plating_options: platingOptions,
     material: input.material?.trim() ?? "",
     badge: input.badge || "None",
     blurb: input.blurb?.trim() ?? "",

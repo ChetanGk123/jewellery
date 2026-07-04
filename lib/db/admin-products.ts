@@ -2,9 +2,22 @@ import "server-only";
 import {
   ADMIN_PRODUCTS_PAGE_SIZE,
   PRODUCT_STATUS_FILTERS,
+  type ProductImage,
   type ProductStatusFilter,
 } from "@/lib/admin/product-status";
 import { createServerClient } from "./server";
+
+/** Coerce the stored `gallery` jsonb into a clean ProductImage[]. */
+function parseGallery(raw: unknown): ProductImage[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((x): x is Record<string, unknown> => !!x && typeof x === "object")
+    .map((x) => ({
+      url: typeof x.url === "string" ? x.url : "",
+      name: typeof x.name === "string" ? x.name : "",
+      primary: x.primary === true,
+    }));
+}
 
 /**
  * Admin catalogue (Phase 3.4). Reads `product` + `category` through the admin's
@@ -37,6 +50,8 @@ export type AdminProductRow = {
   shippingNote: string | null;
   isFeatured: boolean;
   isFresh: boolean;
+  gallery: ProductImage[];
+  platingOptions: string[];
 };
 
 export type AdminProductsPage = {
@@ -53,7 +68,7 @@ export type AdminProductsPage = {
 const LOW_STOCK_THRESHOLD = 5;
 
 const SELECT =
-  "id, name, sku, category_id, price_paise, mrp_paise, stock, status, primary_image_url, material, badge, blurb, desc_long, details_plating, details_stones, details_care, shipping_note, is_featured, is_fresh, category(name)";
+  "id, name, sku, category_id, price_paise, mrp_paise, stock, status, primary_image_url, gallery, plating_options, material, badge, blurb, desc_long, details_plating, details_stones, details_care, shipping_note, is_featured, is_fresh, category(name)";
 
 /** Coerce an untrusted `?status=` value to a valid filter. */
 export function toProductStatusFilter(
@@ -149,6 +164,8 @@ export async function listAdminProducts(opts: {
       shippingNote: p.shipping_note,
       isFeatured: p.is_featured,
       isFresh: p.is_fresh,
+      gallery: parseGallery(p.gallery),
+      platingOptions: Array.isArray(p.plating_options) ? p.plating_options : [],
     }));
 
     return {

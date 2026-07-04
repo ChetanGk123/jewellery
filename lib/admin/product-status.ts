@@ -24,6 +24,19 @@ export const PRODUCT_STATUS_OPTIONS = ["Active", "Draft"] as const;
 /** Badge choices in the modal ("None" stores the literal string, no badge). */
 export const BADGE_OPTIONS = ["None", "Bestseller", "New", "Bridal Edit"] as const;
 
+/** Plating finishes a customer can pick on the storefront (chip toggles). */
+export const PLATING_OPTIONS = ["Gold tone", "Silver tone", "Rose gold"] as const;
+
+/** Max design/image variants per product (matches the prototype's "1 of 6"). */
+export const MAX_PRODUCT_IMAGES = 6;
+
+/**
+ * One entry in a product's "Designs & images" grid. `url` is image-URL based for
+ * now (no Storage upload yet); exactly one entry is `primary` and its url is
+ * denormalised to `product.primary_image_url` for the storefront thumbnail.
+ */
+export type ProductImage = { url: string; name: string; primary: boolean };
+
 const LOW_STOCK_THRESHOLD = 5;
 
 export type StatusChip = { label: string; color: string; bg: string };

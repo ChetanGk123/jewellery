@@ -214,12 +214,14 @@ export type Database = {
           details_care: string | null
           details_plating: string | null
           details_stones: string | null
+          gallery: Json
           id: string
           is_featured: boolean
           is_fresh: boolean
           material: string | null
           mrp_paise: number | null
           name: string
+          plating_options: string[]
           price_paise: number
           primary_image_url: string | null
           rating: number
@@ -241,12 +243,14 @@ export type Database = {
           details_care?: string | null
           details_plating?: string | null
           details_stones?: string | null
+          gallery?: Json
           id?: string
           is_featured?: boolean
           is_fresh?: boolean
           material?: string | null
           mrp_paise?: number | null
           name: string
+          plating_options?: string[]
           price_paise: number
           primary_image_url?: string | null
           rating?: number
@@ -268,12 +272,14 @@ export type Database = {
           details_care?: string | null
           details_plating?: string | null
           details_stones?: string | null
+          gallery?: Json
           id?: string
           is_featured?: boolean
           is_fresh?: boolean
           material?: string | null
           mrp_paise?: number | null
           name?: string
+          plating_options?: string[]
           price_paise?: number
           primary_image_url?: string | null
           rating?: number

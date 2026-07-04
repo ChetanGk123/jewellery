@@ -21,6 +21,7 @@ export function ProductsView({ page }: { page: AdminProductsPage }) {
   const router = useRouter();
   const [search, setSearch] = useState(page.search);
   const [modal, setModal] = useState<ModalState>({ open: false, product: null });
+  const [notice, setNotice] = useState<string | null>(null);
 
   const hrefFor = (over: Partial<Record<"search" | "category" | "status" | "page", string>>) => {
     const params = new URLSearchParams();
@@ -89,17 +90,43 @@ export function ProductsView({ page }: { page: AdminProductsPage }) {
           ))}
         </select>
 
-        <button
-          type="button"
-          onClick={() => setModal({ open: true, product: null })}
-          className="ml-auto inline-flex items-center gap-2 rounded-lg bg-maroon-700 px-[18px] py-[11px] text-[12px] font-semibold uppercase tracking-[0.04em] text-cream-200 transition-opacity hover:opacity-90"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Add product
-        </button>
+        <div className="ml-auto flex gap-2.5">
+          <button
+            type="button"
+            onClick={() => setNotice("CSV import is coming soon.")}
+            className="inline-flex items-center gap-2 rounded-lg border border-maroon-700 bg-white px-[18px] py-[11px] text-[12px] font-semibold tracking-[0.04em] text-maroon-700 transition-colors hover:bg-[#FBF4F0]"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path d="M12 15V3M8 7l4-4 4 4M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />
+            </svg>
+            Import CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setModal({ open: true, product: null })}
+            className="inline-flex items-center gap-2 rounded-lg bg-maroon-700 px-[18px] py-[11px] text-[12px] font-semibold tracking-[0.04em] text-cream-200 transition-opacity hover:opacity-90"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Add Product
+          </button>
+        </div>
       </div>
+
+      {notice && (
+        <div className="flex items-center justify-between rounded-lg border border-[#E7D9BE] bg-[#FBF4E4] px-4 py-2.5 text-[12.5px] text-[#8A6A2A]">
+          <span>{notice}</span>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            aria-label="Dismiss"
+            className="text-[16px] leading-none text-[#B69663] hover:text-[#8A6A2A]"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-[#EAE3D7] bg-white">
@@ -168,13 +195,26 @@ export function ProductsView({ page }: { page: AdminProductsPage }) {
                         {chip.label}
                       </span>
                     </span>
-                    <span className="w-[56px] text-right">
+                    <span className="flex w-[56px] items-center justify-end gap-3">
+                      <Link
+                        href={ROUTES.adminAnalytics}
+                        title="View analytics"
+                        className="inline-flex text-[#8A7E74] transition-colors hover:text-maroon-700"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                          <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+                        </svg>
+                      </Link>
                       <button
                         type="button"
                         onClick={() => setModal({ open: true, product: p })}
-                        className="text-[12px] font-semibold text-maroon-700 hover:underline"
+                        title="Edit product"
+                        className="inline-flex text-[#8A7E74] transition-colors hover:text-maroon-700"
                       >
-                        Edit
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                          <path d="M4 20h4L18 10l-4-4L4 16v4Z" />
+                          <path d="M14 6l4 4" />
+                        </svg>
                       </button>
                     </span>
                   </div>
@@ -193,6 +233,11 @@ export function ProductsView({ page }: { page: AdminProductsPage }) {
           </span>
           {page.pageCount > 1 && (
             <div className="flex flex-wrap items-center gap-1.5">
+              <PagerArrow
+                label="‹ Prev"
+                href={hrefFor({ page: String(page.page - 1) })}
+                disabled={page.page <= 1}
+              />
               {Array.from({ length: page.pageCount }, (_, i) => i + 1).map((n) => (
                 <Link
                   key={n}
@@ -207,6 +252,11 @@ export function ProductsView({ page }: { page: AdminProductsPage }) {
                   {n}
                 </Link>
               ))}
+              <PagerArrow
+                label="Next ›"
+                href={hrefFor({ page: String(page.page + 1) })}
+                disabled={page.page >= page.pageCount}
+              />
             </div>
           )}
         </div>
@@ -221,5 +271,27 @@ export function ProductsView({ page }: { page: AdminProductsPage }) {
         />
       )}
     </div>
+  );
+}
+
+/** Prev / Next pager control — a Link when active, an inert dimmed span at the ends. */
+function PagerArrow({
+  label,
+  href,
+  disabled,
+}: {
+  label: string;
+  href: string;
+  disabled: boolean;
+}) {
+  const cls =
+    "rounded-md border border-[#E7E0D4] bg-white px-[13px] py-[7px] text-[12px] font-semibold text-maroon-700";
+  if (disabled) {
+    return <span className={`${cls} cursor-default opacity-40`}>{label}</span>;
+  }
+  return (
+    <Link href={href} className={`${cls} hover:border-[#D8CDB9]`}>
+      {label}
+    </Link>
   );
 }
