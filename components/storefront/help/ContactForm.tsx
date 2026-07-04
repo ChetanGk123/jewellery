@@ -7,7 +7,7 @@ import { Honeypot } from "@/components/ui/Honeypot";
 const inputClass =
   "w-full rounded-sm border border-[#E7D9C2] bg-cream-50 px-3.5 py-3 text-[14px] text-maroon-900 outline-none transition-colors focus-visible:border-gold-400 placeholder:text-[#B79B7E]";
 
-type ContactField = "name" | "contact" | "subject" | "message";
+type ContactField = "name" | "email" | "phone" | "subject" | "message";
 
 /**
  * Contact form (TASKS 3.8) — submits through the `submitContactMessage` server
@@ -20,7 +20,8 @@ type ContactField = "name" | "contact" | "subject" | "message";
 export function ContactForm() {
   const [values, setValues] = useState({
     name: "",
-    contact: "",
+    email: "",
+    phone: "",
     subject: "",
     message: "",
   });
@@ -51,7 +52,7 @@ export function ContactForm() {
   }
 
   function reset() {
-    setValues({ name: "", contact: "", subject: "", message: "" });
+    setValues({ name: "", email: "", phone: "", subject: "", message: "" });
     setHoneypot("");
     setFieldErrors({});
     setFormError(null);
@@ -118,24 +119,42 @@ export function ContactForm() {
             {fieldErrors.name && <FieldError>{fieldErrors.name}</FieldError>}
           </div>
           <div className="flex min-w-[160px] flex-1 flex-col">
-            <label htmlFor="contact-detail" className="sr-only">
-              Email or phone
+            <label htmlFor="contact-email" className="sr-only">
+              Email
             </label>
             <input
-              id="contact-detail"
-              name="contact"
-              type="text"
+              id="contact-email"
+              name="email"
+              type="email"
+              autoComplete="email"
               required
-              value={values.contact}
-              onChange={(event) => setField("contact", event.target.value)}
-              placeholder="Email or phone"
-              aria-invalid={fieldErrors.contact ? true : undefined}
+              value={values.email}
+              onChange={(event) => setField("email", event.target.value)}
+              placeholder="Email"
+              aria-invalid={fieldErrors.email ? true : undefined}
               className={inputClass}
             />
-            {fieldErrors.contact && (
-              <FieldError>{fieldErrors.contact}</FieldError>
-            )}
+            {fieldErrors.email && <FieldError>{fieldErrors.email}</FieldError>}
           </div>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="contact-phone" className="sr-only">
+            Phone
+          </label>
+          <input
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            required
+            value={values.phone}
+            onChange={(event) => setField("phone", event.target.value)}
+            placeholder="Phone (10-digit mobile)"
+            aria-invalid={fieldErrors.phone ? true : undefined}
+            className={inputClass}
+          />
+          {fieldErrors.phone && <FieldError>{fieldErrors.phone}</FieldError>}
         </div>
         <label htmlFor="contact-subject" className="sr-only">
           Subject

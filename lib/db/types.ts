@@ -51,30 +51,33 @@ export type Database = {
       contact_message: {
         Row: {
           body: string
-          contact: string
           created_at: string
+          email: string
           id: string
           name: string
+          phone: string
           status: string
           subject: string | null
           ticket_no: string
         }
         Insert: {
           body: string
-          contact: string
           created_at?: string
+          email: string
           id?: string
           name: string
+          phone: string
           status?: string
           subject?: string | null
           ticket_no: string
         }
         Update: {
           body?: string
-          contact?: string
           created_at?: string
+          email?: string
           id?: string
           name?: string
+          phone?: string
           status?: string
           subject?: string | null
           ticket_no?: string

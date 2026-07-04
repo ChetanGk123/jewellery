@@ -4,7 +4,7 @@ import { z } from "zod";
 import { contactMessageSchema } from "@/lib/contact/schema";
 import { createServerClient } from "@/lib/db/server";
 
-type ContactField = "name" | "contact" | "subject" | "message";
+type ContactField = "name" | "email" | "phone" | "subject" | "message";
 
 export type ContactActionResult =
   | { ok: true; ticketNo: string }
@@ -65,7 +65,8 @@ export async function submitContactMessage(
   const { data, error } = await supabase.rpc("submit_contact_message", {
     p_payload: {
       name: parsed.data.name,
-      contact: parsed.data.contact,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
       subject: parsed.data.subject ?? null,
       message: parsed.data.message,
     },

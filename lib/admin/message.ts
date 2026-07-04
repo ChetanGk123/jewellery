@@ -28,8 +28,10 @@ export type AdminMessageRow = {
   subject: string | null;
   body: string;
   name: string;
-  /** Email or phone, as the customer typed it. */
-  contact: string;
+  /** Customer email — the admin can reach them here or by phone. */
+  email: string;
+  /** Customer phone (10-digit mobile). */
+  phone: string;
   status: MessageStatus;
   /** ISO instant the ticket was raised. */
   createdAt: string;

@@ -9,17 +9,24 @@
 
 import { z } from "zod";
 
+/** Indian mobile: 10 digits, first digit 6–9 (matches the checkout schema). */
+const PHONE_RE = /^[6-9]\d{9}$/;
+
 export const contactMessageSchema = z.object({
   name: z
     .string()
     .trim()
     .min(2, "Enter your name.")
     .max(80, "Name is too long."),
-  contact: z
+  email: z
     .string()
     .trim()
-    .min(3, "Enter your email or phone.")
-    .max(120, "That's too long."),
+    .email("Enter a valid email address.")
+    .max(120, "Email is too long."),
+  phone: z
+    .string()
+    .trim()
+    .regex(PHONE_RE, "Enter a valid 10-digit mobile number."),
   subject: z.string().trim().max(120, "Subject is too long.").optional(),
   message: z
     .string()

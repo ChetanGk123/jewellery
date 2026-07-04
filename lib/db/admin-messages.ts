@@ -28,7 +28,9 @@ export async function listAdminMessages(): Promise<AdminMessagesData> {
     const supabase = await createServerClient();
     const { data } = await supabase
       .from("contact_message")
-      .select("id, ticket_no, subject, body, name, contact, status, created_at")
+      .select(
+        "id, ticket_no, subject, body, name, email, phone, status, created_at",
+      )
       .order("created_at", { ascending: false });
 
     const rows: AdminMessageRow[] = (data ?? []).map((m) => ({
@@ -37,7 +39,8 @@ export async function listAdminMessages(): Promise<AdminMessagesData> {
       subject: m.subject,
       body: m.body,
       name: m.name,
-      contact: m.contact,
+      email: m.email,
+      phone: m.phone,
       status: m.status as MessageStatus,
       createdAt: m.created_at,
     }));
