@@ -18,6 +18,10 @@ export type CouponInput = {
   kind: CouponKind;
   value: string;
   minOrder: string;
+  /** Max discount cap in rupees (percent coupons only), or "" for uncapped. */
+  maxDiscount: string;
+  /** Total times the code may be redeemed, or "" for unlimited. */
+  usageLimit: string;
   expiresAt: string;
   isActive: boolean;
 };
@@ -51,6 +55,15 @@ function couponValueFor(kind: CouponKind, raw: string): number {
   return Math.round(parsed); // percent
 }
 
+/** Whole-number string → non-negative integer, or null when blank/invalid. */
+function toCountOrNull(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  if (!Number.isInteger(n) || n < 0) return null;
+  return n;
+}
+
 /**
  * Create or update a coupon through the admin-only `admin_upsert_coupon` RPC
  * (0012). The RPC re-checks admin + required code and clamps percent to 0–100.
@@ -63,11 +76,24 @@ export async function upsertCoupon(
   const code = input.code?.trim().toUpperCase() ?? "";
   if (!code) return { ok: false, error: "Coupon code is required." };
 
-  // Store expiry as end-of-day UTC so the code stays valid through the chosen
-  // date; the list formats it back in UTC to match.
+  // Guard percent range client-to-server too (the RPC clamps silently; reject
+  // so an admin isn't quietly corrected). TASKS 3.6b.
+  if (input.kind === "percent") {
+    const pct = Number(input.value.trim());
+    if (Number.isFinite(pct) && pct > 100) {
+      return { ok: false, error: "A percentage discount can't exceed 100%." };
+    }
+  }
+
+  // Store expiry as end-of-day IST (18:29:59 UTC) so an India coupon stays valid
+  // through the chosen local date and not ~5.5h into the next one. TASKS 3.6b.
   const expiresAt = input.expiresAt?.trim()
-    ? `${input.expiresAt.trim()}T23:59:59.000Z`
+    ? `${input.expiresAt.trim()}T18:29:59.000Z`
     : null;
+
+  // Max discount only caps percent coupons; ignore it for fixed/free-shipping.
+  const maxDiscountPaise =
+    input.kind === "percent" ? rupeesToPaise(input.maxDiscount) : null;
 
   const supabase = await createServerClient();
   const { error } = await supabase.rpc("admin_upsert_coupon", {
@@ -77,8 +103,8 @@ export async function upsertCoupon(
       kind: input.kind,
       value: couponValueFor(input.kind, input.value),
       min_subtotal_paise: rupeesToPaise(input.minOrder),
-      max_discount_paise: null,
-      usage_limit: null,
+      max_discount_paise: maxDiscountPaise,
+      usage_limit: toCountOrNull(input.usageLimit),
       expires_at: expiresAt,
       is_active: input.isActive,
     },

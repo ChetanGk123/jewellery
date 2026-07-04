@@ -93,6 +93,7 @@ describe("toPlacedOrder", () => {
       discount_paise: 41920,
       shipping_paise: 0,
       total_paise: 167680,
+      coupon_dropped: false,
     });
     expect(order).toEqual({
       orderNo: "JR-260703-1001-7F3A",
@@ -100,7 +101,31 @@ describe("toPlacedOrder", () => {
       discountPaise: 41920,
       shippingPaise: 0,
       totalPaise: 167680,
+      couponDropped: false,
     });
+  });
+
+  test("defaults couponDropped to false when the field is absent", () => {
+    const order = toPlacedOrder({
+      order_no: "JR-260703-1001-7F3A",
+      subtotal_paise: 1,
+      discount_paise: 0,
+      shipping_paise: 0,
+      total_paise: 1,
+    });
+    expect(order?.couponDropped).toBe(false);
+  });
+
+  test("carries couponDropped=true when the RPC reports a dropped coupon", () => {
+    const order = toPlacedOrder({
+      order_no: "JR-260703-1001-7F3A",
+      subtotal_paise: 1,
+      discount_paise: 0,
+      shipping_paise: 0,
+      total_paise: 1,
+      coupon_dropped: true,
+    });
+    expect(order?.couponDropped).toBe(true);
   });
 
   test("returns null when the shape is unexpected", () => {

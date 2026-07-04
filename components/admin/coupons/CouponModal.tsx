@@ -15,25 +15,34 @@ const KIND_OPTIONS: { value: CouponKind; label: string }[] = [
 ];
 
 /**
- * Create Coupon modal (TASKS 3.6, prototype-matched — 460px card: code, type +
- * value, min order + expiry). The value field is hidden for free-shipping codes
- * (no amount to enter). New coupons default to active; the list's inline toggle
- * manages active state afterward. Matches the prototype, which offers create +
- * toggle only (no edit/delete). The parent refreshes via revalidatePath.
+ * Create Coupon modal (TASKS 3.6 + 3.6b, prototype-matched — 460px card: code,
+ * type + value, min order, max discount, usage limit, expiry). The value field
+ * is hidden for free-shipping codes; the max-discount cap applies to percent
+ * codes only. New coupons default to active; the list's inline toggle manages
+ * active state afterward. The parent refreshes via revalidatePath.
  */
 export function CouponModal({ onClose }: Props) {
   const [code, setCode] = useState("");
   const [kind, setKind] = useState<CouponKind>("percent");
   const [value, setValue] = useState("");
   const [minOrder, setMinOrder] = useState("");
+  const [maxDiscount, setMaxDiscount] = useState("");
+  const [usageLimit, setUsageLimit] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const showValue = kind !== "free_shipping";
+  const isPercent = kind === "percent";
   const valuePlaceholder = kind === "fixed" ? "200" : "25";
 
   const onSave = () => {
+    // Reject an out-of-range percentage here so the admin isn't silently
+    // clamped server-side (TASKS 3.6b).
+    if (isPercent && Number(value.trim()) > 100) {
+      setError("A percentage discount can't exceed 100%.");
+      return;
+    }
     setError(null);
     startTransition(async () => {
       const res = await upsertCoupon({
@@ -42,6 +51,8 @@ export function CouponModal({ onClose }: Props) {
         kind,
         value,
         minOrder,
+        maxDiscount,
+        usageLimit,
         expiresAt,
         isActive: true,
       });
@@ -126,6 +137,30 @@ export function CouponModal({ onClose }: Props) {
                 onChange={(e) => setMinOrder(e.target.value)}
                 inputMode="numeric"
                 placeholder="999"
+                className="mt-1.5 block w-full rounded-lg border border-[#E7E0D4] bg-white px-3 py-[11px] font-body text-[14px] text-[#2A1F1A] outline-none focus:border-gold-400"
+              />
+            </label>
+            <label className="flex-1 font-body text-[12px] font-medium text-[#8A7E74]">
+              Max discount (₹)
+              <input
+                value={isPercent ? maxDiscount : ""}
+                onChange={(e) => setMaxDiscount(e.target.value)}
+                disabled={!isPercent}
+                inputMode="numeric"
+                placeholder={isPercent ? "No cap" : "—"}
+                className="mt-1.5 block w-full rounded-lg border border-[#E7E0D4] bg-white px-3 py-[11px] font-body text-[14px] text-[#2A1F1A] outline-none focus:border-gold-400 disabled:bg-[#F3EEE4] disabled:text-[#B9AEA2]"
+              />
+            </label>
+          </div>
+
+          <div className="flex gap-3">
+            <label className="flex-1 font-body text-[12px] font-medium text-[#8A7E74]">
+              Usage limit
+              <input
+                value={usageLimit}
+                onChange={(e) => setUsageLimit(e.target.value)}
+                inputMode="numeric"
+                placeholder="Unlimited"
                 className="mt-1.5 block w-full rounded-lg border border-[#E7E0D4] bg-white px-3 py-[11px] font-body text-[14px] text-[#2A1F1A] outline-none focus:border-gold-400"
               />
             </label>

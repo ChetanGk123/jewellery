@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 
 type OrderPageProps = {
   params: Promise<{ orderNo: string }>;
+  searchParams: Promise<{ coupon?: string }>;
 };
 
 /** Order number shape (JR-YYMMDD-####-XXXX) — reject junk paths before the DB. */
@@ -22,13 +23,22 @@ const ORDER_NO_RE = /^JR-\d{6}-\d{4,}-[0-9A-Z]{4}$/;
  * Fetches the non-sensitive confirmation through the `get_order_confirmation`
  * RPC (the `order` table is RLS-sealed) and 404s for an unknown/malformed number.
  */
-export default async function OrderPage({ params }: OrderPageProps) {
+export default async function OrderPage({
+  params,
+  searchParams,
+}: OrderPageProps) {
   const { orderNo } = await params;
+  const { coupon } = await searchParams;
   const decoded = decodeURIComponent(orderNo);
   if (!ORDER_NO_RE.test(decoded)) notFound();
 
   const confirmation = await getOrderConfirmation(decoded);
   if (!confirmation) notFound();
 
-  return <OrderConfirmation confirmation={confirmation} />;
+  return (
+    <OrderConfirmation
+      confirmation={confirmation}
+      couponDropped={coupon === "dropped"}
+    />
+  );
 }

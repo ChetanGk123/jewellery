@@ -46,7 +46,12 @@ export function CheckoutView({
   const handlePlaced = (order: PlacedOrder) => {
     setIsRedirecting(true);
     clearCart();
-    router.push(ROUTES.order(order.orderNo));
+    // A coupon entered but not applied at placement (expired/exhausted) is
+    // flagged so the confirmation page can tell the customer (TASKS 3.6b).
+    const href = order.couponDropped
+      ? `${ROUTES.order(order.orderNo)}?coupon=dropped`
+      : ROUTES.order(order.orderNo);
+    router.push(href);
   };
 
   if (!hasHydrated) {

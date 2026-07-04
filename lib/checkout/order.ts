@@ -40,6 +40,12 @@ export type PlacedOrder = {
   discountPaise: number;
   shippingPaise: number;
   totalPaise: number;
+  /**
+   * True when a coupon was entered but couldn't be applied (expired/exhausted/
+   * below-minimum between the cart preview and placement). The order still
+   * stands at the recomputed total; checkout surfaces a notice (TASKS 3.6b).
+   */
+  couponDropped: boolean;
 };
 
 /** Shape of the `place_order` RPC's jsonb return (snake_case, integer paise). */
@@ -49,6 +55,8 @@ const placedOrderResultSchema = z.object({
   discount_paise: z.number().int(),
   shipping_paise: z.number().int(),
   total_paise: z.number().int(),
+  // Optional for back-compat with pre-3.6b returns (defaults to false).
+  coupon_dropped: z.boolean().optional(),
 });
 
 /** Narrow the untyped RPC return into a typed `PlacedOrder` (null on mismatch). */
@@ -61,6 +69,7 @@ export function toPlacedOrder(raw: unknown): PlacedOrder | null {
     discountPaise: parsed.data.discount_paise,
     shippingPaise: parsed.data.shipping_paise,
     totalPaise: parsed.data.total_paise,
+    couponDropped: parsed.data.coupon_dropped ?? false,
   };
 }
 
