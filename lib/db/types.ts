@@ -464,6 +464,10 @@ export type Database = {
         Args: { p_order_id: string; p_status: string }
         Returns: string
       }
+      admin_upsert_product: {
+        Args: { p_id: string | null; p_payload: Json }
+        Returns: string
+      }
       get_order_confirmation: { Args: { p_order_no: string }; Returns: Json }
       place_order: {
         Args: { p_coupon?: string; p_customer: Json; p_items: Json }

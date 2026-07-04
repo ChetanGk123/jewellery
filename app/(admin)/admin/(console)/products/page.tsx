@@ -1,18 +1,29 @@
 import type { Metadata } from "next";
-import { AdminPlaceholder } from "@/components/admin/ui/AdminPlaceholder";
+import { ProductsView } from "@/components/admin/products/ProductsView";
 import { ADMIN_PAGE_META } from "@/lib/admin/nav";
+import { listAdminProducts, toProductStatusFilter } from "@/lib/db/admin-products";
 import { ROUTES } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: ADMIN_PAGE_META[ROUTES.adminProducts].title,
 };
 
-export default function AdminProductsPage() {
-  return (
-    <AdminPlaceholder
-      title="Products"
-      phase="3.4"
-      description="Your catalogue with search, category and status filters, add/edit product and CSV import — including the stock levels the storefront's in-stock badge reads."
-    />
-  );
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    search?: string;
+    category?: string;
+    status?: string;
+    page?: string;
+  }>;
+}) {
+  const sp = await searchParams;
+  const data = await listAdminProducts({
+    search: sp.search ?? "",
+    categoryId: sp.category ?? "All",
+    status: toProductStatusFilter(sp.status),
+    page: Math.max(1, Number(sp.page) || 1),
+  });
+  return <ProductsView page={data} />;
 }
