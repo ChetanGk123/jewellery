@@ -516,6 +516,10 @@ export type Database = {
         Args: { p_order_id: string; p_status: string }
         Returns: string
       }
+      admin_set_review_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: string
+      }
       admin_toggle_coupon: {
         Args: { p_active: boolean; p_id: string }
         Returns: undefined
