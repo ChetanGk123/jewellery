@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { cartSavingsPaise, cartSubtotalPaise } from "@/lib/cart";
-import { validateCoupon } from "@/lib/coupons";
+import { type Coupon, validateCoupon } from "@/lib/coupons";
 import { shippingPaise } from "@/lib/shipping";
 import { ROUTES } from "@/lib/routes";
 import { cartEnquiryUrl } from "@/lib/whatsapp";
@@ -13,6 +13,8 @@ import { CouponField } from "./CouponField";
 
 type Props = {
   freeShipThresholdPaise: number;
+  /** Currently-usable coupons, loaded server-side (display-only preview). */
+  coupons: Coupon[];
 };
 
 /**
@@ -22,7 +24,7 @@ type Props = {
  * or the line list + order summary. All totals derive from the pure selectors in
  * `lib/cart` / `lib/shipping` at render time.
  */
-export function CartView({ freeShipThresholdPaise }: Props) {
+export function CartView({ freeShipThresholdPaise, coupons }: Props) {
   const hasHydrated = useCartHydrated();
   const lines = useCartStore((state) => state.lines);
   const couponCode = useCartStore((state) => state.couponCode);
@@ -47,10 +49,13 @@ export function CartView({ freeShipThresholdPaise }: Props) {
   const subtotalPaise = cartSubtotalPaise(lines);
   const savingsPaise = cartSavingsPaise(lines);
   const couponResult = couponCode
-    ? validateCoupon(couponCode, subtotalPaise)
+    ? validateCoupon(couponCode, subtotalPaise, coupons)
     : null;
   const discountPaise = couponResult?.ok ? couponResult.discountPaise : 0;
-  const shipPaise = shippingPaise(subtotalPaise, freeShipThresholdPaise);
+  const freeShipping = couponResult?.ok ? couponResult.freeShipping : false;
+  const shipPaise = freeShipping
+    ? 0
+    : shippingPaise(subtotalPaise, freeShipThresholdPaise);
   const totalPaise = subtotalPaise - discountPaise + shipPaise;
 
   return (
@@ -84,7 +89,9 @@ export function CartView({ freeShipThresholdPaise }: Props) {
         freeShipThresholdPaise={freeShipThresholdPaise}
         checkoutHref={ROUTES.checkout}
         whatsappHref={cartEnquiryUrl(lines)}
-        couponSlot={<CouponField subtotalPaise={subtotalPaise} />}
+        couponSlot={
+          <CouponField subtotalPaise={subtotalPaise} coupons={coupons} />
+        }
       />
     </div>
   );

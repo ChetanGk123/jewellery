@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CartView } from "@/components/storefront/cart/CartView";
+import { getActiveCoupons } from "@/lib/db/coupons";
 import { getStoreSettings } from "@/lib/db/settings";
 
 export const metadata: Metadata = {
@@ -14,14 +15,20 @@ export const metadata: Metadata = {
  * so all rendering happens in `CartView`.
  */
 export default async function CartPage() {
-  const settings = await getStoreSettings();
+  const [settings, coupons] = await Promise.all([
+    getStoreSettings(),
+    getActiveCoupons(),
+  ]);
 
   return (
     <main className="mx-auto max-w-[1180px] flex-1 px-6 pb-20 pt-[30px]">
       <h1 className="mb-7 font-heading text-[44px] font-semibold leading-none text-maroon-900">
         Your Cart
       </h1>
-      <CartView freeShipThresholdPaise={settings.freeShipThresholdPaise} />
+      <CartView
+        freeShipThresholdPaise={settings.freeShipThresholdPaise}
+        coupons={coupons}
+      />
     </main>
   );
 }

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { cartSubtotalPaise } from "@/lib/cart";
 import type { PlacedOrder } from "@/lib/checkout/order";
 import type { CheckoutFormValues } from "@/lib/checkout/schema";
-import { validateCoupon } from "@/lib/coupons";
+import { type Coupon, validateCoupon } from "@/lib/coupons";
 import { ROUTES } from "@/lib/routes";
 import { shippingPaise } from "@/lib/shipping";
 import { useCartHydrated, useCartStore } from "@/stores/cart";
@@ -16,6 +16,8 @@ type Props = {
   freeShipThresholdPaise: number;
   /** Form defaults prefilled server-side from the customer's saved profile. */
   defaults: CheckoutFormValues;
+  /** Currently-usable coupons, loaded server-side (display-only preview). */
+  coupons: Coupon[];
 };
 
 /**
@@ -26,7 +28,11 @@ type Props = {
  * nothing to check out. All totals are display-only — the server recomputes them
  * authoritatively at order creation (TASKS 2.5).
  */
-export function CheckoutView({ freeShipThresholdPaise, defaults }: Props) {
+export function CheckoutView({
+  freeShipThresholdPaise,
+  defaults,
+  coupons,
+}: Props) {
   const router = useRouter();
   const hasHydrated = useCartHydrated();
   const lines = useCartStore((state) => state.lines);
@@ -86,10 +92,13 @@ export function CheckoutView({ freeShipThresholdPaise, defaults }: Props) {
 
   const subtotalPaise = cartSubtotalPaise(lines);
   const couponResult = couponCode
-    ? validateCoupon(couponCode, subtotalPaise)
+    ? validateCoupon(couponCode, subtotalPaise, coupons)
     : null;
   const discountPaise = couponResult?.ok ? couponResult.discountPaise : 0;
-  const shipPaise = shippingPaise(subtotalPaise, freeShipThresholdPaise);
+  const freeShipping = couponResult?.ok ? couponResult.freeShipping : false;
+  const shipPaise = freeShipping
+    ? 0
+    : shippingPaise(subtotalPaise, freeShipThresholdPaise);
   const totalPaise = subtotalPaise - discountPaise + shipPaise;
 
   return (

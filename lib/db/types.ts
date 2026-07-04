@@ -48,6 +48,48 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          max_discount_paise: number | null
+          min_subtotal_paise: number | null
+          usage_count: number
+          usage_limit: number | null
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          kind: string
+          max_discount_paise?: number | null
+          min_subtotal_paise?: number | null
+          usage_count?: number
+          usage_limit?: number | null
+          value?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          max_discount_paise?: number | null
+          min_subtotal_paise?: number | null
+          usage_count?: number
+          usage_limit?: number | null
+          value?: number
+        }
+        Relationships: []
+      }
       customer_profile: {
         Row: {
           address_line: string
@@ -472,6 +514,14 @@ export type Database = {
       }
       admin_set_order_status: {
         Args: { p_order_id: string; p_status: string }
+        Returns: string
+      }
+      admin_toggle_coupon: {
+        Args: { p_active: boolean; p_id: string }
+        Returns: undefined
+      }
+      admin_upsert_coupon: {
+        Args: { p_id: string | null; p_payload: Json }
         Returns: string
       }
       admin_upsert_category: {

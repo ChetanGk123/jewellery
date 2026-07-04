@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { validateCoupon } from "@/lib/coupons";
+import { type Coupon, couponLabel, validateCoupon } from "@/lib/coupons";
 import { useCartStore } from "@/stores/cart";
 
 /**
@@ -11,17 +11,25 @@ import { useCartStore } from "@/stores/cart";
  * instead of a phantom discount. The authoritative check runs server-side at
  * order creation (2.5).
  */
-export function CouponField({ subtotalPaise }: { subtotalPaise: number }) {
+export function CouponField({
+  subtotalPaise,
+  coupons,
+}: {
+  subtotalPaise: number;
+  coupons: Coupon[];
+}) {
   const couponCode = useCartStore((state) => state.couponCode);
   const applyCoupon = useCartStore((state) => state.applyCoupon);
   const clearCoupon = useCartStore((state) => state.clearCoupon);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const applied = couponCode ? validateCoupon(couponCode, subtotalPaise) : null;
+  const applied = couponCode
+    ? validateCoupon(couponCode, subtotalPaise, coupons)
+    : null;
 
   const handleApply = () => {
-    const result = validateCoupon(input, subtotalPaise);
+    const result = validateCoupon(input, subtotalPaise, coupons);
     if (result.ok) {
       applyCoupon(result.coupon.code);
       setInput("");
@@ -40,7 +48,7 @@ export function CouponField({ subtotalPaise }: { subtotalPaise: number }) {
     return (
       <div className="flex items-center justify-between gap-2 rounded-sm border border-[#BFE3C6] bg-[#F2FBF4] px-3 py-2.5">
         <span className="text-[12.5px] font-medium leading-none text-[#1E7A38]">
-          ✓ {applied.coupon.code} applied — {applied.coupon.label}
+          ✓ {applied.coupon.code} applied — {couponLabel(applied.coupon)}
         </span>
         <button
           type="button"

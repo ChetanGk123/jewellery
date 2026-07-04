@@ -6,6 +6,7 @@ import { profileToCheckoutDefaults } from "@/lib/account/profile";
 import { getCustomerProfile } from "@/lib/db/profile";
 import { getCurrentUser } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
+import { getActiveCoupons } from "@/lib/db/coupons";
 import { getStoreSettings } from "@/lib/db/settings";
 
 export const metadata: Metadata = {
@@ -27,9 +28,10 @@ export default async function CheckoutPage() {
     redirect(`${ROUTES.signIn}?next=${encodeURIComponent(ROUTES.checkout)}`);
   }
 
-  const [settings, profile] = await Promise.all([
+  const [settings, profile, coupons] = await Promise.all([
     getStoreSettings(),
     getCustomerProfile(user.id),
+    getActiveCoupons(),
   ]);
   const defaults = profileToCheckoutDefaults(profile, user.email ?? "");
 
@@ -51,6 +53,7 @@ export default async function CheckoutPage() {
       <CheckoutView
         freeShipThresholdPaise={settings.freeShipThresholdPaise}
         defaults={defaults}
+        coupons={coupons}
       />
     </main>
   );
