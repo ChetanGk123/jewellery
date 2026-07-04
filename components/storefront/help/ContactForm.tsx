@@ -1,26 +1,64 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent } from "react";
+import { submitContactMessage } from "@/app/(storefront)/contact/actions";
+import { Honeypot } from "@/components/ui/Honeypot";
 
 const inputClass =
   "w-full rounded-sm border border-[#E7D9C2] bg-cream-50 px-3.5 py-3 text-[14px] text-maroon-900 outline-none transition-colors focus-visible:border-gold-400 placeholder:text-[#B79B7E]";
 
+type ContactField = "name" | "contact" | "subject" | "message";
+
 /**
- * Contact form — UI only for v1 (no submission endpoint yet). On submit it
- * shows an inline confirmation with the sender's name; wiring to a real handler
- * is a later phase. Mirrors the storefront prototype's contact form + sent
- * state (name + contact row, subject, message; gold success check).
+ * Contact form (TASKS 3.8) — submits through the `submitContactMessage` server
+ * action, which stores the enquiry as a ticket and returns its number. A hidden
+ * honeypot drops naive bots (enforced server-side, like checkout). On success it
+ * shows the prototype's gold-check confirmation with the ticket reference; field
+ * and form errors surface inline. Mirrors the storefront prototype's layout
+ * (name + contact row, subject, message).
  */
 export function ContactForm() {
-  const [name, setName] = useState("");
-  const [sent, setSent] = useState(false);
+  const [values, setValues] = useState({
+    name: "",
+    contact: "",
+    subject: "",
+    message: "",
+  });
+  const [honeypot, setHoneypot] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<ContactField, string>>
+  >({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [ticketNo, setTicketNo] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const setField = (field: ContactField, value: string) =>
+    setValues((prev) => ({ ...prev, [field]: value }));
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSent(true);
+    setFormError(null);
+    setFieldErrors({});
+    startTransition(async () => {
+      const res = await submitContactMessage({ values, honeypot });
+      if (res.ok) {
+        setTicketNo(res.ticketNo);
+      } else {
+        setFieldErrors(res.fieldErrors);
+        setFormError(res.formError ?? "Something went wrong. Please try again.");
+      }
+    });
   }
 
-  if (sent) {
+  function reset() {
+    setValues({ name: "", contact: "", subject: "", message: "" });
+    setHoneypot("");
+    setFieldErrors({});
+    setFormError(null);
+    setTicketNo(null);
+  }
+
+  if (ticketNo) {
     return (
       <div className="flex flex-col items-center gap-3.5 rounded-md border border-[#E7D9C2] bg-cream-50 px-6 py-[30px] text-center">
         <span
@@ -32,13 +70,14 @@ export function ContactForm() {
         <h3 className="m-0 font-heading text-[26px] font-semibold leading-[1.1] text-maroon-900">
           Message sent!
         </h3>
-        <p className="m-0 max-w-[340px] text-[14px] font-light leading-[1.6] text-[#5E4A44]">
-          Thanks for reaching out{name ? `, ${name}` : ""}. Our team will reply
-          to you shortly.
+        <p className="m-0 max-w-[360px] text-[14px] font-light leading-[1.6] text-[#5E4A44]">
+          Thanks for reaching out. Your reference is{" "}
+          <span className="font-semibold text-maroon-700">{ticketNo}</span> — our
+          team will reply to you shortly.
         </p>
         <button
           type="button"
-          onClick={() => setSent(false)}
+          onClick={reset}
           className="mt-1.5 rounded-sm bg-maroon-700 px-[26px] py-3 text-[12px] font-semibold uppercase leading-none tracking-[0.12em] text-cream-200 transition-colors hover:bg-maroon-800"
         >
           Send another
@@ -53,6 +92,14 @@ export function ContactForm() {
         Send a message
       </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        <Honeypot value={honeypot} onChange={setHoneypot} />
+
+        {formError && (
+          <p className="rounded-sm border border-[#E7B9B0] bg-[#FBECE9] px-3.5 py-2.5 text-[13px] leading-snug text-[#B23A2C]">
+            {formError}
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-3.5">
           <div className="flex min-w-[160px] flex-1 flex-col">
             <label htmlFor="contact-name" className="sr-only">
@@ -62,11 +109,13 @@ export function ContactForm() {
               id="contact-name"
               name="name"
               required
-              value={name}
-              onChange={(event) => setName(event.target.value)}
+              value={values.name}
+              onChange={(event) => setField("name", event.target.value)}
               placeholder="Your name"
+              aria-invalid={fieldErrors.name ? true : undefined}
               className={inputClass}
             />
+            {fieldErrors.name && <FieldError>{fieldErrors.name}</FieldError>}
           </div>
           <div className="flex min-w-[160px] flex-1 flex-col">
             <label htmlFor="contact-detail" className="sr-only">
@@ -77,9 +126,15 @@ export function ContactForm() {
               name="contact"
               type="text"
               required
+              value={values.contact}
+              onChange={(event) => setField("contact", event.target.value)}
               placeholder="Email or phone"
+              aria-invalid={fieldErrors.contact ? true : undefined}
               className={inputClass}
             />
+            {fieldErrors.contact && (
+              <FieldError>{fieldErrors.contact}</FieldError>
+            )}
           </div>
         </div>
         <label htmlFor="contact-subject" className="sr-only">
@@ -88,6 +143,8 @@ export function ContactForm() {
         <input
           id="contact-subject"
           name="subject"
+          value={values.subject}
+          onChange={(event) => setField("subject", event.target.value)}
           placeholder="Subject (order no., product, etc.)"
           className={inputClass}
         />
@@ -99,16 +156,29 @@ export function ContactForm() {
           name="message"
           required
           rows={5}
+          value={values.message}
+          onChange={(event) => setField("message", event.target.value)}
           placeholder="How can we help?"
+          aria-invalid={fieldErrors.message ? true : undefined}
           className={`${inputClass} resize-y`}
         />
+        {fieldErrors.message && <FieldError>{fieldErrors.message}</FieldError>}
         <button
           type="submit"
-          className="rounded-sm bg-[linear-gradient(135deg,#E6CA7E,#C9A24B_55%,#A87A1E)] px-8 py-4 text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-[#3A0E18] shadow-[0_10px_24px_rgba(168,122,30,0.28)] transition-[filter] hover:brightness-105"
+          disabled={isPending}
+          className="rounded-sm bg-[linear-gradient(135deg,#E6CA7E,#C9A24B_55%,#A87A1E)] px-8 py-4 text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-[#3A0E18] shadow-[0_10px_24px_rgba(168,122,30,0.28)] transition-[filter] hover:brightness-105 disabled:opacity-70"
         >
-          Send message
+          {isPending ? "Sending…" : "Send message"}
         </button>
       </form>
     </div>
+  );
+}
+
+function FieldError({ children }: { children: string }) {
+  return (
+    <span className="mt-1 text-[12px] leading-snug text-[#B23A2C]">
+      {children}
+    </span>
   );
 }

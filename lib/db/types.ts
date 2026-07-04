@@ -48,6 +48,39 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_message: {
+        Row: {
+          body: string
+          contact: string
+          created_at: string
+          id: string
+          name: string
+          status: string
+          subject: string | null
+          ticket_no: string
+        }
+        Insert: {
+          body: string
+          contact: string
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          subject?: string | null
+          ticket_no: string
+        }
+        Update: {
+          body?: string
+          contact?: string
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          subject?: string | null
+          ticket_no?: string
+        }
+        Relationships: []
+      }
       coupon: {
         Row: {
           code: string
@@ -516,6 +549,10 @@ export type Database = {
         Args: { p_order_id: string; p_status: string }
         Returns: string
       }
+      admin_set_message_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: string
+      }
       admin_set_review_status: {
         Args: { p_id: string; p_status: string }
         Returns: string
@@ -539,6 +576,10 @@ export type Database = {
       get_order_confirmation: { Args: { p_order_no: string }; Returns: Json }
       place_order: {
         Args: { p_coupon?: string; p_customer: Json; p_items: Json }
+        Returns: Json
+      }
+      submit_contact_message: {
+        Args: { p_payload: Json }
         Returns: Json
       }
     }

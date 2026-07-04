@@ -7,7 +7,7 @@ export type AdminNavCounts = {
   orders: number;
   /** Reviews awaiting moderation. */
   reviews: number;
-  /** Unresolved contact messages (0 until the table lands in 3.8). */
+  /** Contact tickets in `New` status (not yet started). */
   messages: number;
 };
 
@@ -19,14 +19,12 @@ const ZERO_COUNTS: AdminNavCounts = { orders: 0, reviews: 0, messages: 0 };
  * and `review`, so no service-role key is needed.
  *
  * Resilient by design: if a query fails (or the caller somehow isn't an admin),
- * the badges fall back to 0 rather than crashing the admin chrome. `messages`
- * stays 0 until the `contact_message` table exists (3.8) — we don't query a
- * table that isn't there.
+ * the badges fall back to 0 rather than crashing the admin chrome.
  */
 export async function getAdminNavCounts(): Promise<AdminNavCounts> {
   try {
     const supabase = await createServerClient();
-    const [orders, reviews] = await Promise.all([
+    const [orders, reviews, messages] = await Promise.all([
       supabase
         .from("order")
         .select("*", { count: "exact", head: true })
@@ -35,12 +33,16 @@ export async function getAdminNavCounts(): Promise<AdminNavCounts> {
         .from("review")
         .select("*", { count: "exact", head: true })
         .eq("status", "pending"),
+      supabase
+        .from("contact_message")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "New"),
     ]);
 
     return {
       orders: orders.count ?? 0,
       reviews: reviews.count ?? 0,
-      messages: 0,
+      messages: messages.count ?? 0,
     };
   } catch {
     return ZERO_COUNTS;
