@@ -466,8 +466,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_category: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       admin_set_order_status: {
         Args: { p_order_id: string; p_status: string }
+        Returns: string
+      }
+      admin_upsert_category: {
+        Args: { p_id: string | null; p_payload: Json }
         Returns: string
       }
       admin_upsert_product: {
