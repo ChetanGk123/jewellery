@@ -148,7 +148,7 @@ export function SettingsView({ initial }: Props) {
           </div>
 
           <Preview label="Live preview">
-            <div className="flex flex-wrap items-center justify-center gap-x-1.5 bg-maroon-950 px-4 py-2 text-center font-body text-[12px] text-cream-200">
+            <div className="flex flex-wrap items-center justify-center gap-x-1.5 bg-maroon-800 px-4 py-2 text-center font-body text-[12px] text-cream-200">
               {values.banner.msg1 && <span>{values.banner.msg1}</span>}
               {values.banner.msg2 && (
                 <>
@@ -252,7 +252,7 @@ export function SettingsView({ initial }: Props) {
           </div>
 
           <Preview label="Live preview">
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-maroon-950 px-6 py-5 text-cream-200">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-maroon-800 px-6 py-5 text-cream-200">
               <div className="flex min-w-0 flex-col gap-1.5">
                 <span className="font-body text-[11px] uppercase tracking-[0.14em] text-gold-300">
                   {values.promo.eyebrow || "Eyebrow"}
