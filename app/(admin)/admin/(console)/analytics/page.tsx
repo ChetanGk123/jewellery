@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { AdminPlaceholder } from "@/components/admin/ui/AdminPlaceholder";
+import { AnalyticsView } from "@/components/admin/analytics/AnalyticsView";
 import { ADMIN_PAGE_META } from "@/lib/admin/nav";
+import { getProductAnalytics } from "@/lib/db/admin-analytics";
 import { ROUTES } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: ADMIN_PAGE_META[ROUTES.adminAnalytics].title,
 };
 
-export default function AdminAnalyticsPage() {
-  return (
-    <AdminPlaceholder
-      title="Product Analytics"
-      phase="3.10"
-      description="Per-product sales performance over time — units sold, revenue, best sellers and low-stock — with sortable trends drawn from real order history."
-    />
-  );
+/**
+ * Product Analytics page (TASKS 3.10). Aggregates 6 months of `order_item`
+ * history server-side (KPIs + per-product units/revenue/trend/monthly) and hands
+ * it to the client `AnalyticsView`, which owns sorting and the list ↔ detail
+ * toggle.
+ */
+export default async function AdminAnalyticsPage() {
+  const { kpis, products } = await getProductAnalytics();
+  return <AnalyticsView kpis={kpis} products={products} />;
 }
