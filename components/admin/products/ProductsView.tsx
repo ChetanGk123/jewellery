@@ -17,10 +17,19 @@ import { ProductModal } from "./ProductModal";
 
 type ModalState = { open: boolean; product: AdminProductRow | null };
 
-export function ProductsView({ page }: { page: AdminProductsPage }) {
+export function ProductsView({
+  page,
+  initialEdit = null,
+}: {
+  page: AdminProductsPage;
+  /** Product to open the edit modal for on load (e.g. Analytics "Edit product" deep link). */
+  initialEdit?: AdminProductRow | null;
+}) {
   const router = useRouter();
   const [search, setSearch] = useState(page.search);
-  const [modal, setModal] = useState<ModalState>({ open: false, product: null });
+  const [modal, setModal] = useState<ModalState>(
+    initialEdit ? { open: true, product: initialEdit } : { open: false, product: null },
+  );
   const [notice, setNotice] = useState<string | null>(null);
 
   const hrefFor = (over: Partial<Record<"search" | "category" | "status" | "page", string>>) => {

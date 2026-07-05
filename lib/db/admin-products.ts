@@ -70,6 +70,86 @@ const LOW_STOCK_THRESHOLD = 5;
 const SELECT =
   "id, name, sku, category_id, price_paise, mrp_paise, stock, status, primary_image_url, gallery, plating_options, material, badge, blurb, desc_long, details_plating, details_stones, details_care, shipping_note, is_featured, is_fresh, category(name)";
 
+/** The `SELECT` shape; `category` embeds as an object (or a 1-row array). */
+type ProductSelectRow = {
+  id: string;
+  name: string;
+  sku: string;
+  category_id: string;
+  price_paise: number;
+  mrp_paise: number | null;
+  stock: number;
+  status: string;
+  primary_image_url: string | null;
+  gallery: unknown;
+  plating_options: string[] | null;
+  material: string | null;
+  badge: string;
+  blurb: string | null;
+  desc_long: string | null;
+  details_plating: string | null;
+  details_stones: string | null;
+  details_care: string | null;
+  shipping_note: string | null;
+  is_featured: boolean;
+  is_fresh: boolean;
+  category: { name: string } | { name: string }[] | null;
+};
+
+function categoryName(category: ProductSelectRow["category"]): string {
+  if (Array.isArray(category)) return category[0]?.name ?? "—";
+  return category?.name ?? "—";
+}
+
+/** Map a `SELECT` row to the camelCase `AdminProductRow` the console/modal use. */
+function mapProductRow(p: ProductSelectRow): AdminProductRow {
+  return {
+    id: p.id,
+    name: p.name,
+    sku: p.sku,
+    categoryId: p.category_id,
+    categoryName: categoryName(p.category),
+    pricePaise: p.price_paise,
+    mrpPaise: p.mrp_paise,
+    stock: p.stock,
+    status: p.status,
+    imageUrl: p.primary_image_url,
+    material: p.material,
+    badge: p.badge,
+    blurb: p.blurb,
+    descLong: p.desc_long,
+    detailsPlating: p.details_plating,
+    detailsStones: p.details_stones,
+    detailsCare: p.details_care,
+    shippingNote: p.shipping_note,
+    isFeatured: p.is_featured,
+    isFresh: p.is_fresh,
+    gallery: parseGallery(p.gallery),
+    platingOptions: Array.isArray(p.plating_options) ? p.plating_options : [],
+  };
+}
+
+/**
+ * One product by id (Phase 3.10 → 3.4 deep link). Lets the products page open a
+ * specific product's edit modal via `?edit=<id>` even when that product isn't on
+ * the current list page. Returns null if it's missing.
+ */
+export async function getAdminProductById(
+  id: string,
+): Promise<AdminProductRow | null> {
+  try {
+    const supabase = await createServerClient();
+    const { data } = await supabase
+      .from("product")
+      .select(SELECT)
+      .eq("id", id)
+      .maybeSingle();
+    return data ? mapProductRow(data as ProductSelectRow) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Coerce an untrusted `?status=` value to a valid filter. */
 export function toProductStatusFilter(
   value: string | undefined,
@@ -143,30 +223,7 @@ export async function listAdminProducts(opts: {
     const total = count ?? 0;
     const pageCount = Math.max(1, Math.ceil(total / ADMIN_PRODUCTS_PAGE_SIZE));
 
-    const rows: AdminProductRow[] = (data ?? []).map((p) => ({
-      id: p.id,
-      name: p.name,
-      sku: p.sku,
-      categoryId: p.category_id,
-      categoryName: p.category?.name ?? "—",
-      pricePaise: p.price_paise,
-      mrpPaise: p.mrp_paise,
-      stock: p.stock,
-      status: p.status,
-      imageUrl: p.primary_image_url,
-      material: p.material,
-      badge: p.badge,
-      blurb: p.blurb,
-      descLong: p.desc_long,
-      detailsPlating: p.details_plating,
-      detailsStones: p.details_stones,
-      detailsCare: p.details_care,
-      shippingNote: p.shipping_note,
-      isFeatured: p.is_featured,
-      isFresh: p.is_fresh,
-      gallery: parseGallery(p.gallery),
-      platingOptions: Array.isArray(p.plating_options) ? p.plating_options : [],
-    }));
+    const rows: AdminProductRow[] = (data ?? []).map(mapProductRow);
 
     return {
       rows,

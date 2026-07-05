@@ -225,7 +225,7 @@ function ProductDetail({
           </span>
         </div>
         <Link
-          href={ROUTES.adminProducts}
+          href={`${ROUTES.adminProducts}?edit=${product.id}`}
           className="inline-flex items-center gap-2 rounded-lg bg-[#71182B] px-[18px] py-[11px] font-body text-[12px] font-semibold text-[#F3E3C7] transition-opacity hover:opacity-90"
         >
           Edit product
