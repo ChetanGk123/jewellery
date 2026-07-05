@@ -25,6 +25,9 @@ export const ROUTES = {
   contact: "/contact",
   about: "/about",
   faq: "/faq",
+  privacy: "/privacy",
+  terms: "/terms",
+  refundPolicy: "/refund-policy",
   /** Category listing — bare slug at the storefront root. */
   category: (slug: string) => `/${slug}`,
   /** Product detail page. */

@@ -4,6 +4,7 @@ import { FacebookIcon } from "@/components/ui/FacebookIcon";
 import { InstagramIcon } from "@/components/ui/InstagramIcon";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation";
+import { ROUTES } from "@/lib/routes";
 import { STORE_INFO, type SocialLink } from "@/lib/store-info";
 
 const socialBadgeClass =
@@ -66,10 +67,31 @@ export function Footer() {
       </div>
 
       <div className="border-t border-gold-300/20">
-        <div className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-3 px-6 py-[18px]">
-          <span className="text-[11.5px] font-light leading-none text-[#9C8278]">
-            © {new Date().getFullYear()} {STORE_INFO.name} · GST registered · Made in India
-          </span>
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-6 py-[18px]">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <span className="text-[11.5px] font-light leading-none text-[#9C8278]">
+              © {new Date().getFullYear()} {STORE_INFO.name} · GST registered · Made in India
+            </span>
+            <nav aria-label="Legal">
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] font-light leading-none text-[#9C8278]">
+                <li>
+                  <Link href={ROUTES.privacy} className="hover:text-gold-300 hover:underline">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href={ROUTES.terms} className="hover:text-gold-300 hover:underline">
+                    Terms of Use
+                  </Link>
+                </li>
+                <li>
+                  <Link href={ROUTES.refundPolicy} className="hover:text-gold-300 hover:underline">
+                    Refund Policy
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+          </div>
           <span className="text-[11.5px] font-light leading-none text-[#9C8278]">
             Cash on Delivery · Secure Checkout
           </span>
