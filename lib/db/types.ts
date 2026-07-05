@@ -539,6 +539,27 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriber: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -550,6 +571,10 @@ export type Database = {
       }
       admin_set_order_status: {
         Args: { p_order_id: string; p_status: string }
+        Returns: string
+      }
+      admin_remove_subscriber: {
+        Args: { p_id: string }
         Returns: string
       }
       admin_set_message_status: {
@@ -583,6 +608,10 @@ export type Database = {
       }
       submit_contact_message: {
         Args: { p_payload: Json }
+        Returns: Json
+      }
+      subscribe_email: {
+        Args: { p_email: string; p_source?: string }
         Returns: Json
       }
     }

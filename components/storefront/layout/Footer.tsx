@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NewsletterForm } from "./NewsletterForm";
 import { FacebookIcon } from "@/components/ui/FacebookIcon";
 import { InstagramIcon } from "@/components/ui/InstagramIcon";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
@@ -60,21 +61,7 @@ export function Footer() {
           <p className="m-0 text-[13px] font-light leading-[1.5] text-[#C3A89D]">
             Offers, new drops &amp; bridal inspiration.
           </p>
-          <form className="flex overflow-hidden rounded-sm border border-gold-300/40 focus-within:border-gold-300">
-            <input
-              type="email"
-              name="email"
-              aria-label="Email address"
-              placeholder="Your email"
-              className="min-w-0 flex-1 border-none bg-transparent px-3 py-[11px] text-xs text-gold-300 outline-none placeholder:text-gold-300/60"
-            />
-            <button
-              type="submit"
-              className="cursor-pointer border-none bg-gold-300 px-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-maroon-950 transition-colors hover:bg-gold-400"
-            >
-              Join
-            </button>
-          </form>
+          <NewsletterForm />
         </div>
       </div>
 
