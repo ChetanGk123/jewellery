@@ -20,6 +20,7 @@ type BuyBoxProduct = {
   mrpPaise: number | null;
   imageUrl: string | null;
   imageBg: string | null;
+  stock: number;
 };
 
 /**
@@ -43,8 +44,11 @@ export function ProductBuyBox({
   const [qty, setQty] = useState(MIN_QTY);
   const [isAdded, setIsAdded] = useState(false);
 
+  const isOutOfStock = product.stock <= 0;
+  const maxQty = Math.max(MIN_QTY, Math.min(MAX_QTY, product.stock));
+
   const decrease = () => setQty((q) => Math.max(MIN_QTY, q - 1));
-  const increase = () => setQty((q) => Math.min(MAX_QTY, q + 1));
+  const increase = () => setQty((q) => Math.min(maxQty, q + 1));
 
   const handleAddToCart = () => {
     const selected = options.find((option) => option.value === tone);
@@ -125,7 +129,7 @@ export function ProductBuyBox({
             type="button"
             aria-label="Increase quantity"
             onClick={increase}
-            disabled={qty >= MAX_QTY}
+            disabled={isOutOfStock || qty >= maxQty}
             className="h-[46px] w-[42px] text-[20px] text-maroon-700 disabled:opacity-40"
           >
             +
@@ -134,11 +138,16 @@ export function ProductBuyBox({
 
         <button
           type="button"
-          aria-label={`Add ${product.name} to cart`}
+          aria-label={
+            isOutOfStock
+              ? `${product.name} is out of stock`
+              : `Add ${product.name} to cart`
+          }
           onClick={handleAddToCart}
-          className="min-w-[200px] flex-1 rounded-sm border-none bg-[linear-gradient(135deg,#E6CA7E,#C9A24B_55%,#A87A1E)] px-[30px] py-4 text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-[#3A0E18] shadow-[0_10px_24px_rgba(168,122,30,0.28)] transition-[filter] hover:brightness-105"
+          disabled={isOutOfStock}
+          className="min-w-[200px] flex-1 rounded-sm border-none bg-[linear-gradient(135deg,#E6CA7E,#C9A24B_55%,#A87A1E)] px-[30px] py-4 text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-[#3A0E18] shadow-[0_10px_24px_rgba(168,122,30,0.28)] transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
         >
-          {isAdded ? "Added to cart ✓" : "Add to Cart"}
+          {isOutOfStock ? "Out of Stock" : isAdded ? "Added to cart ✓" : "Add to Cart"}
         </button>
       </div>
 

@@ -14,6 +14,7 @@ type Props = {
   className?: string;
   children: ReactNode;
   addedLabel?: ReactNode;
+  disabled?: boolean;
 };
 
 /**
@@ -28,6 +29,7 @@ export function AddToCartButton({
   className,
   children,
   addedLabel = "Added ✓",
+  disabled = false,
 }: Props) {
   const addItem = useCartStore((state) => state.addItem);
   const [isAdded, setIsAdded] = useState(false);
@@ -43,6 +45,7 @@ export function AddToCartButton({
       type="button"
       aria-label={ariaLabel}
       onClick={handleClick}
+      disabled={disabled}
       className={className}
     >
       {isAdded ? addedLabel : children}

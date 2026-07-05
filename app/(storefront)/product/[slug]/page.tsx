@@ -146,6 +146,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               imageBg:
                 (product.images.find((img) => img.is_primary) ??
                   product.images[0])?.bg ?? null,
+              stock: product.stock,
             }}
             options={product.options}
             productUrl={productUrl}

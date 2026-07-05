@@ -19,6 +19,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   const hasSale = off > 0;
   const hasBadge = Boolean(badge) && badge !== "None";
   const background = image?.bg ?? PLACEHOLDER_GRADIENT;
+  const isOutOfStock = product.stock <= 0;
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-[3px] border border-[#EFE3D0] bg-white transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(74,14,28,0.15)]">
@@ -38,15 +39,21 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           <JewelMotif />
         )}
 
-        {hasBadge && (
+        {hasBadge && !isOutOfStock && (
           <span className="absolute left-3 top-3 rounded-sm bg-maroon-700 px-[9px] py-1.5 text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-cream-200">
             {badge}
           </span>
         )}
-        {hasSale && (
-          <span className="absolute right-3 top-3 rounded-sm border border-gold-300 bg-white px-[9px] py-1.5 text-[11px] font-semibold leading-none text-gold-600">
-            {off}% OFF
+        {isOutOfStock ? (
+          <span className="absolute left-3 top-3 rounded-sm bg-[#5E4A44] px-[9px] py-1.5 text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-cream-200">
+            Out of Stock
           </span>
+        ) : (
+          hasSale && (
+            <span className="absolute right-3 top-3 rounded-sm border border-gold-300 bg-white px-[9px] py-1.5 text-[11px] font-semibold leading-none text-gold-600">
+              {off}% OFF
+            </span>
+          )
         )}
       </div>
 
@@ -96,11 +103,14 @@ export function ProductCard({ product }: { product: ProductListItem }) {
               optionLabel: null,
               optionValue: null,
             }}
-            ariaLabel={`Add ${name} to cart`}
+            ariaLabel={
+              isOutOfStock ? `${name} is out of stock` : `Add ${name} to cart`
+            }
             addedLabel="✓"
-            className="relative z-10 rounded-sm border border-gold-300 bg-[#FBF1E0] px-[13px] py-[9px] text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-gold-600 transition-colors duration-200 hover:border-maroon-700 hover:bg-maroon-700 hover:text-cream-200"
+            disabled={isOutOfStock}
+            className="relative z-10 rounded-sm border border-gold-300 bg-[#FBF1E0] px-[13px] py-[9px] text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-gold-600 transition-colors duration-200 hover:border-maroon-700 hover:bg-maroon-700 hover:text-cream-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gold-300 disabled:hover:bg-[#FBF1E0] disabled:hover:text-gold-600"
           >
-            Add
+            {isOutOfStock ? "Sold Out" : "Add"}
           </AddToCartButton>
         </div>
       </div>
