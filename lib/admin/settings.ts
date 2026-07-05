@@ -1,0 +1,127 @@
+/**
+ * Client-safe settings-form schema + mappers (TASKS 3.11). Shared by the client
+ * `SettingsView` (holds the form state) and the `updateStoreSettings` server
+ * action (validates + builds the RPC payload) so the two can't drift. Type-only
+ * imports from the server-only `lib/db/settings` are erased at build, so this
+ * module stays safe to include in the client bundle.
+ *
+ * Money is edited in whole rupees for the operator and converted to integer
+ * paise at the boundary (the DB stores paise; see CLAUDE.md §2).
+ */
+
+import { z } from "zod";
+import type {
+  BannerSetting,
+  PromoSetting,
+  StoreSettings,
+} from "@/lib/db/settings";
+import type { Json } from "@/lib/db/types";
+
+const optionalText = (max: number) => z.string().trim().max(max);
+
+export const settingsFormSchema = z.object({
+  storeName: z.string().trim().min(1, "Store name is required.").max(120),
+  supportEmail: optionalText(160).refine(
+    (v) => v === "" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
+    "Enter a valid email address.",
+  ),
+  phone: optionalText(40),
+  gstin: optionalText(20),
+  freeShipThresholdRupees: z
+    .number()
+    .int("Whole rupees only.")
+    .min(0, "Can't be negative.")
+    .max(10_000_000),
+  flatRateRupees: z
+    .number()
+    .int("Whole rupees only.")
+    .min(0, "Can't be negative.")
+    .max(1_000_000),
+  codEnabled: z.boolean(),
+  banner: z.object({
+    enabled: z.boolean(),
+    msg1: optionalText(160),
+    msg2: optionalText(160),
+    offerLabel: optionalText(80),
+    offerText: optionalText(80),
+    code: optionalText(40),
+  }),
+  promo: z.object({
+    enabled: z.boolean(),
+    eyebrow: optionalText(120),
+    title: optionalText(200),
+    button: optionalText(60),
+    code: optionalText(40),
+    note: optionalText(200),
+  }),
+});
+
+export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
+
+const RUPEE = 100;
+
+/** Seed the form from the loaded store settings (paise → rupees). */
+export function settingsToFormValues(s: StoreSettings): SettingsFormValues {
+  return {
+    storeName: s.storeName,
+    supportEmail: s.supportEmail ?? "",
+    phone: s.phone ?? "",
+    gstin: s.gstin ?? "",
+    freeShipThresholdRupees: Math.round(s.freeShipThresholdPaise / RUPEE),
+    flatRateRupees: Math.round(s.flatRatePaise / RUPEE),
+    codEnabled: s.codEnabled,
+    banner: bannerValues(s.banner),
+    promo: promoValues(s.promo),
+  };
+}
+
+function bannerValues(b: BannerSetting): SettingsFormValues["banner"] {
+  return {
+    enabled: b.enabled,
+    msg1: b.msg1,
+    msg2: b.msg2,
+    offerLabel: b.offerLabel,
+    offerText: b.offerText,
+    code: b.code,
+  };
+}
+
+function promoValues(p: PromoSetting): SettingsFormValues["promo"] {
+  return {
+    enabled: p.enabled,
+    eyebrow: p.eyebrow,
+    title: p.title,
+    button: p.button,
+    code: p.code,
+    note: p.note,
+  };
+}
+
+/** Build the `admin_update_settings` RPC payload (rupees → paise, banner/promo JSON). */
+export function formValuesToPayload(v: SettingsFormValues): Json {
+  return {
+    store_name: v.storeName,
+    support_email: v.supportEmail.trim(),
+    phone: v.phone.trim(),
+    gstin: v.gstin.trim(),
+    free_ship_threshold_paise: Math.round(v.freeShipThresholdRupees * RUPEE),
+    flat_rate_paise: Math.round(v.flatRateRupees * RUPEE),
+    cod_enabled: v.codEnabled,
+    banner: {
+      enabled: v.banner.enabled,
+      msg1: v.banner.msg1.trim(),
+      msg2: v.banner.msg2.trim(),
+      offerLabel: v.banner.offerLabel.trim(),
+      offerText: v.banner.offerText.trim(),
+      code: v.banner.code.trim(),
+    },
+    homepage_promo: {
+      enabled: v.promo.enabled,
+      eyebrow: v.promo.eyebrow.trim(),
+      title: v.promo.title.trim(),
+      button: v.promo.button.trim(),
+      code: v.promo.code.trim(),
+      note: v.promo.note.trim(),
+    },
+  };
+}

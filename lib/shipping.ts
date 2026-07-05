@@ -9,19 +9,27 @@
  * (2.4), not part of the cart shipping line.
  */
 
-/** Flat delivery fee (in paise) charged when the order is below the free-ship threshold. */
+/**
+ * Fallback flat delivery fee (paise) when a caller doesn't pass the store's
+ * configured rate. The real value is `setting.flat_rate_paise` (Settings 3.11),
+ * threaded through `shippingPaise` from `getStoreSettings`; `place_order`
+ * recomputes from the same column server-side. This constant only backstops
+ * callers/tests that don't supply one.
+ */
 export const FLAT_SHIPPING_PAISE = 7900;
 
 /**
  * Delivery fee for a cart, in paise: free once the subtotal reaches the
- * threshold, otherwise the flat fee. An empty cart (subtotal ≤ 0) ships free.
+ * threshold, otherwise the store's flat fee. An empty cart (subtotal ≤ 0) ships
+ * free. `flatRatePaise` comes from store settings; defaults to the fallback.
  */
 export function shippingPaise(
   subtotalPaise: number,
   freeThresholdPaise: number,
+  flatRatePaise: number = FLAT_SHIPPING_PAISE,
 ): number {
   if (subtotalPaise <= 0) return 0;
-  return subtotalPaise >= freeThresholdPaise ? 0 : FLAT_SHIPPING_PAISE;
+  return subtotalPaise >= freeThresholdPaise ? 0 : flatRatePaise;
 }
 
 /**

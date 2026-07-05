@@ -13,6 +13,8 @@ import { CouponField } from "./CouponField";
 
 type Props = {
   freeShipThresholdPaise: number;
+  /** Store's flat delivery fee (Settings 3.11), used below the free-ship threshold. */
+  flatRatePaise: number;
   /** Currently-usable coupons, loaded server-side (display-only preview). */
   coupons: Coupon[];
 };
@@ -24,7 +26,7 @@ type Props = {
  * or the line list + order summary. All totals derive from the pure selectors in
  * `lib/cart` / `lib/shipping` at render time.
  */
-export function CartView({ freeShipThresholdPaise, coupons }: Props) {
+export function CartView({ freeShipThresholdPaise, flatRatePaise, coupons }: Props) {
   const hasHydrated = useCartHydrated();
   const lines = useCartStore((state) => state.lines);
   const couponCode = useCartStore((state) => state.couponCode);
@@ -55,7 +57,7 @@ export function CartView({ freeShipThresholdPaise, coupons }: Props) {
   const freeShipping = couponResult?.ok ? couponResult.freeShipping : false;
   const shipPaise = freeShipping
     ? 0
-    : shippingPaise(subtotalPaise, freeShipThresholdPaise);
+    : shippingPaise(subtotalPaise, freeShipThresholdPaise, flatRatePaise);
   const totalPaise = subtotalPaise - discountPaise + shipPaise;
 
   return (

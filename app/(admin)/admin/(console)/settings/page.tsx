@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
-import { AdminPlaceholder } from "@/components/admin/ui/AdminPlaceholder";
+import { SettingsView } from "@/components/admin/settings/SettingsView";
 import { ADMIN_PAGE_META } from "@/lib/admin/nav";
+import { settingsToFormValues } from "@/lib/admin/settings";
+import { getStoreSettings } from "@/lib/db/settings";
 import { ROUTES } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: ADMIN_PAGE_META[ROUTES.adminSettings].title,
 };
 
-export default function AdminSettingsPage() {
-  return (
-    <AdminPlaceholder
-      title="Settings"
-      phase="3.11"
-      description="Store information, shipping and payment thresholds (the source of truth the storefront reads), plus the announcement banner and homepage promo editors."
-    />
-  );
+/**
+ * Settings page (TASKS 3.11). Loads the single `setting` row server-side and
+ * seeds the client `SettingsView` form; saving goes through the
+ * `updateStoreSettings` action and revalidates the storefront so banner, promo
+ * and shipping changes are live.
+ */
+export default async function AdminSettingsPage() {
+  const settings = await getStoreSettings();
+  return <SettingsView initial={settingsToFormValues(settings)} />;
 }

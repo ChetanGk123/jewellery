@@ -52,6 +52,7 @@ export default async function CheckoutPage() {
       </h1>
       <CheckoutView
         freeShipThresholdPaise={settings.freeShipThresholdPaise}
+        flatRatePaise={settings.flatRatePaise}
         defaults={defaults}
         coupons={coupons}
       />

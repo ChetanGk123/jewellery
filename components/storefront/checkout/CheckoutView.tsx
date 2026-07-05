@@ -14,6 +14,8 @@ import { CheckoutForm } from "./CheckoutForm";
 
 type Props = {
   freeShipThresholdPaise: number;
+  /** Store's flat delivery fee (Settings 3.11), used below the free-ship threshold. */
+  flatRatePaise: number;
   /** Form defaults prefilled server-side from the customer's saved profile. */
   defaults: CheckoutFormValues;
   /** Currently-usable coupons, loaded server-side (display-only preview). */
@@ -30,6 +32,7 @@ type Props = {
  */
 export function CheckoutView({
   freeShipThresholdPaise,
+  flatRatePaise,
   defaults,
   coupons,
 }: Props) {
@@ -103,7 +106,7 @@ export function CheckoutView({
   const freeShipping = couponResult?.ok ? couponResult.freeShipping : false;
   const shipPaise = freeShipping
     ? 0
-    : shippingPaise(subtotalPaise, freeShipThresholdPaise);
+    : shippingPaise(subtotalPaise, freeShipThresholdPaise, flatRatePaise);
   const totalPaise = subtotalPaise - discountPaise + shipPaise;
 
   return (

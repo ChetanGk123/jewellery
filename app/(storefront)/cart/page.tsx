@@ -27,6 +27,7 @@ export default async function CartPage() {
       </h1>
       <CartView
         freeShipThresholdPaise={settings.freeShipThresholdPaise}
+        flatRatePaise={settings.flatRatePaise}
         coupons={coupons}
       />
     </main>

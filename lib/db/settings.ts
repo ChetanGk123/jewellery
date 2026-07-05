@@ -28,9 +28,18 @@ export type PromoSetting = {
 
 export type StoreSettings = {
   storeName: string;
+  /** Contact + tax details (Store Information card, 3.11); may be unset. */
+  supportEmail: string | null;
+  phone: string | null;
+  gstin: string | null;
   banner: BannerSetting;
   promo: PromoSetting;
+  /** Shipping & Payments (3.11) — the source of truth for the cart/checkout/place_order. */
   freeShipThresholdPaise: number;
+  flatRatePaise: number;
+  codEnabled: boolean;
+  /** Razorpay live mode — surfaced read-only until the payments phase. */
+  razorpayLive: boolean;
 };
 
 const BANNER_DEFAULT: BannerSetting = {
@@ -52,6 +61,7 @@ const PROMO_DEFAULT: PromoSetting = {
 };
 
 const DEFAULT_FREE_SHIP_THRESHOLD_PAISE = 99900;
+const DEFAULT_FLAT_RATE_PAISE = 7900;
 
 /** Coerce an unknown JSON value into a plain string map (empty on mismatch). */
 function asRecord(value: unknown): Record<string, unknown> {
@@ -105,7 +115,9 @@ export async function getStoreSettings(): Promise<StoreSettings> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("setting")
-    .select("store_name, banner, homepage_promo, free_ship_threshold_paise")
+    .select(
+      "store_name, support_email, phone, gstin, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
+    )
     .maybeSingle();
 
   if (error) {
@@ -114,9 +126,15 @@ export async function getStoreSettings(): Promise<StoreSettings> {
 
   return {
     storeName: data?.store_name ?? "JR Jewellers",
+    supportEmail: data?.support_email ?? null,
+    phone: data?.phone ?? null,
+    gstin: data?.gstin ?? null,
     banner: mergeBanner(data?.banner),
     promo: mergePromo(data?.homepage_promo),
     freeShipThresholdPaise:
       data?.free_ship_threshold_paise ?? DEFAULT_FREE_SHIP_THRESHOLD_PAISE,
+    flatRatePaise: data?.flat_rate_paise ?? DEFAULT_FLAT_RATE_PAISE,
+    codEnabled: data?.cod_enabled ?? true,
+    razorpayLive: data?.razorpay_live ?? false,
   };
 }
