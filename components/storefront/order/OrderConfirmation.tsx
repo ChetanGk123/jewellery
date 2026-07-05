@@ -41,8 +41,9 @@ export function OrderConfirmation({ confirmation, couponDropped }: Props) {
         <span className="font-semibold text-maroon-700">
           {confirmation.orderNo}
         </span>{" "}
-        is confirmed. A confirmation has been sent to{" "}
-        <span className="text-maroon-900">{confirmation.customerEmail}</span>.
+        is confirmed. Keep this order number handy — we'll use{" "}
+        <span className="text-maroon-900">{confirmation.customerEmail}</span>{" "}
+        to reach you about it.
       </p>
 
       {couponDropped && (

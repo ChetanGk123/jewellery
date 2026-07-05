@@ -71,7 +71,7 @@ export function Footer() {
             © {new Date().getFullYear()} {STORE_INFO.name} · GST registered · Made in India
           </span>
           <span className="text-[11.5px] font-light leading-none text-[#9C8278]">
-            UPI · Cards · Netbanking · COD · Razorpay Secured
+            Cash on Delivery · Secure Checkout
           </span>
         </div>
       </div>
