@@ -20,6 +20,12 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   const hasBadge = Boolean(badge) && badge !== "None";
   const background = image?.bg ?? PLACEHOLDER_GRADIENT;
   const isOutOfStock = product.stock <= 0;
+  // Below `sm` the 2-col grid leaves ~150px cards — a corner badge + corner
+  // sale flag collide (TASKS 4.9). Stack the flag under the badge there;
+  // `sm:` and up (3-col grid, wider cards) keep the original corner layout.
+  const flagPositionClass = hasBadge
+    ? "left-3 top-10 sm:left-auto sm:right-3 sm:top-3"
+    : "right-3 top-3";
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-[3px] border border-[#EFE3D0] bg-white transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(74,14,28,0.15)]">
@@ -50,7 +56,9 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </span>
         ) : (
           hasSale && (
-            <span className="absolute right-3 top-3 rounded-sm border border-gold-300 bg-white px-[9px] py-1.5 text-[11px] font-semibold leading-none text-gold-600">
+            <span
+              className={`absolute rounded-sm border border-gold-300 bg-white px-[9px] py-1.5 text-[11px] font-semibold leading-none text-gold-600 ${flagPositionClass}`}
+            >
               {off}% OFF
             </span>
           )
