@@ -136,3 +136,25 @@ export async function getMyOrderDetail(
     })),
   };
 }
+
+/**
+ * Whether the signed-in customer has a Delivered order containing this
+ * product — the "Verified Purchase" gate for review submission (TASKS 4.15
+ * follow-up). Scoped by the same "customer reads own orders"/"own order
+ * items" RLS policies as the rest of this file; mirrors the check the
+ * `submit_review` RPC (0022) enforces server-side regardless.
+ */
+export async function hasDeliveredPurchase(productId: string): Promise<boolean> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("order")
+    .select("id, order_item!inner(product_id)")
+    .eq("status", "Delivered")
+    .eq("order_item.product_id", productId)
+    .limit(1);
+
+  if (error) {
+    throw new Error(`hasDeliveredPurchase failed: ${error.message}`);
+  }
+  return (data ?? []).length > 0;
+}

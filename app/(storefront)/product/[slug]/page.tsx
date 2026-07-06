@@ -13,6 +13,7 @@ import {
   getProductBySlug,
   getRelatedProducts,
 } from "@/lib/db/queries";
+import { hasDeliveredPurchase } from "@/lib/db/orders";
 import { getCustomerProfile } from "@/lib/db/profile";
 import { getCurrentUser } from "@/lib/db/server";
 import { getStoreSettings } from "@/lib/db/settings";
@@ -54,6 +55,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     getCurrentUser(),
   ]);
   const profile = user ? await getCustomerProfile(user.id) : null;
+  const hasPurchased = user ? await hasDeliveredPurchase(product.id) : false;
 
   const off = discountPercent(product.price_paise, product.mrp_paise);
   const hasSale = off > 0;
@@ -180,6 +182,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         productId={product.id}
         productSlug={product.slug}
         isSignedIn={Boolean(user)}
+        hasPurchased={hasPurchased}
         prefillName={profile?.fullName ?? ""}
       />
 

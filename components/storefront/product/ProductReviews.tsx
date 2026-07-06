@@ -25,6 +25,7 @@ type Props = {
   productId: string;
   productSlug: string;
   isSignedIn: boolean;
+  hasPurchased: boolean;
   prefillName: string;
 };
 
@@ -33,6 +34,7 @@ export function ProductReviews({
   productId,
   productSlug,
   isSignedIn,
+  hasPurchased,
   prefillName,
 }: Props) {
   return (
@@ -84,6 +86,7 @@ export function ProductReviews({
         productId={productId}
         productSlug={productSlug}
         isSignedIn={isSignedIn}
+        hasPurchased={hasPurchased}
         prefillName={prefillName}
       />
     </section>

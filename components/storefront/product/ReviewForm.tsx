@@ -12,6 +12,8 @@ type Props = {
   productSlug: string;
   /** Signed-in only — false renders a sign-in prompt instead of the form. */
   isSignedIn: boolean;
+  /** Verified-purchase gate — false renders a "buy it first" notice instead of the form. */
+  hasPurchased: boolean;
   prefillName: string;
 };
 
@@ -25,6 +27,7 @@ export function ReviewForm({
   productId,
   productSlug,
   isSignedIn,
+  hasPurchased,
   prefillName,
 }: Props) {
   const [name, setName] = useState(prefillName);
@@ -47,6 +50,16 @@ export function ReviewForm({
             Sign in
           </Link>{" "}
           to write a review.
+        </p>
+      </div>
+    );
+  }
+
+  if (!hasPurchased) {
+    return (
+      <div className="mt-8 rounded-[3px] border border-[#EFE3D0] bg-cream-50 p-6 text-center">
+        <p className="m-0 text-[13.5px] leading-normal text-[#5E4A44]">
+          Only customers who've received this product can write a review.
         </p>
       </div>
     );

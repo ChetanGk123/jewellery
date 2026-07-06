@@ -68,6 +68,14 @@ export async function submitReview(
         formError: "You've already reviewed this product.",
       };
     }
+    if (error.message?.includes("PURCHASE_REQUIRED")) {
+      return {
+        ok: false,
+        fieldErrors: {},
+        formError:
+          "Only customers who've received this product can write a review.",
+      };
+    }
     console.error("submit_review failed", error);
     return { ok: false, fieldErrors: {}, formError: DECLINE_MESSAGE };
   }
