@@ -34,6 +34,9 @@ export const ROUTES = {
   product: (slug: string) => `/product/${slug}`,
   /** Order confirmation — keyed on the order number (carries a random suffix). */
   order: (orderNo: string) => `/order/${encodeURIComponent(orderNo)}`,
+  /** Signed-in order detail (items/address/status + cancel-while-Pending). */
+  accountOrder: (orderNo: string) =>
+    `/account/orders/${encodeURIComponent(orderNo)}`,
 
   /**
    * Admin console (Phase 3) — the prototype's `sc-if` view switches become real

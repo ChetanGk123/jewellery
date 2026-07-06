@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { OrderConfirmation } from "@/components/storefront/order/OrderConfirmation";
+import { ORDER_NO_RE } from "@/lib/checkout/order";
 import { getOrderConfirmation } from "@/lib/db/orders";
 
 export const metadata: Metadata = {
@@ -13,9 +14,6 @@ type OrderPageProps = {
   params: Promise<{ orderNo: string }>;
   searchParams: Promise<{ coupon?: string }>;
 };
-
-/** Order number shape (JR-YYMMDD-####-XXXX) — reject junk paths before the DB. */
-const ORDER_NO_RE = /^JR-\d{6}-\d{4,}-[0-9A-Z]{4}$/;
 
 /**
  * Order confirmation page (TASKS 2.6). Reached via the checkout redirect keyed

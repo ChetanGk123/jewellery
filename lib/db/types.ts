@@ -593,6 +593,10 @@ export type Database = {
         Args: { p_active: boolean; p_id: string }
         Returns: undefined
       }
+      customer_cancel_order: {
+        Args: { p_order_no: string }
+        Returns: string
+      }
       admin_upsert_coupon: {
         Args: { p_id: string | null; p_payload: Json }
         Returns: string

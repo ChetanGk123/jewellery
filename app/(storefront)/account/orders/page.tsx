@@ -73,7 +73,7 @@ function OrderRow({ order }: { order: MyOrderSummary }) {
   return (
     <li>
       <Link
-        href={ROUTES.order(order.orderNo)}
+        href={ROUTES.accountOrder(order.orderNo)}
         className="flex flex-wrap items-center justify-between gap-4 rounded border border-[#E7D9C2] bg-[#FFFDF8] px-6 py-5 transition-colors hover:border-gold-400"
       >
         <span className="flex flex-col gap-1.5">

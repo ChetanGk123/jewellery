@@ -73,6 +73,9 @@ export function toPlacedOrder(raw: unknown): PlacedOrder | null {
   };
 }
 
+/** Order number shape (JR-YYMMDD-####-XXXX) — reject junk paths before the DB. */
+export const ORDER_NO_RE = /^JR-\d{6}-\d{4,}-[0-9A-Z]{4}$/;
+
 /** Non-sensitive confirmation view of a placed order (for `/order/[id]`). */
 export type OrderConfirmation = {
   orderNo: string;
