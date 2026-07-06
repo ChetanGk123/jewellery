@@ -16,6 +16,8 @@ type Props = {
   freeShipThresholdPaise: number;
   /** Store's flat delivery fee (Settings 3.11), used below the free-ship threshold. */
   flatRatePaise: number;
+  /** Whether Cash on Delivery (the only tender) is on. Off = orders paused (5.3). */
+  codEnabled: boolean;
   /** Form defaults prefilled server-side from the customer's saved profile. */
   defaults: CheckoutFormValues;
   /** Currently-usable coupons, loaded server-side (display-only preview). */
@@ -33,6 +35,7 @@ type Props = {
 export function CheckoutView({
   freeShipThresholdPaise,
   flatRatePaise,
+  codEnabled,
   defaults,
   coupons,
 }: Props) {
@@ -113,6 +116,7 @@ export function CheckoutView({
     <CheckoutForm
       lines={lines}
       defaults={defaults}
+      codEnabled={codEnabled}
       couponCode={couponCode}
       subtotalPaise={subtotalPaise}
       discountPaise={discountPaise}

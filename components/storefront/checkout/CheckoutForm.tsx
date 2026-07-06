@@ -16,10 +16,16 @@ import {
 } from "@/lib/checkout/schema";
 import { CheckoutSummary } from "./CheckoutSummary";
 
+/** Shown when the store has paused Cash on Delivery — its only tender (5.3). */
+const ORDERS_PAUSED_MESSAGE =
+  "We've paused online orders for a moment. Please contact us to place your order.";
+
 type Props = {
   lines: readonly CartLine[];
   /** Prefill from the signed-in customer's saved profile + account email. */
   defaults: CheckoutFormValues;
+  /** Cash on Delivery on? Off = the store paused its only tender (5.3). */
+  codEnabled: boolean;
   couponCode: string | null;
   subtotalPaise: number;
   discountPaise: number;
@@ -38,6 +44,7 @@ type Props = {
 export function CheckoutForm({
   lines,
   defaults,
+  codEnabled,
   couponCode,
   subtotalPaise,
   discountPaise,
@@ -60,6 +67,12 @@ export function CheckoutForm({
 
   const onValid = async (values: CheckoutFormValues) => {
     setFormError(null);
+    // COD paused (5.3): the store's only tender is off, so no order can be
+    // placed. Stop before the server round-trip; the RPC enforces this too.
+    if (!codEnabled) {
+      setFormError(ORDERS_PAUSED_MESSAGE);
+      return;
+    }
     const result = await submitCheckout({
       values,
       items: cartLinesToOrderItems(lines),
@@ -160,17 +173,29 @@ export function CheckoutForm({
             Payment Method
           </span>
           <input type="hidden" {...register("paymentMethod")} />
-          <div className="flex items-center gap-3 rounded-sm border border-maroon-700 bg-[#FCF1F2] px-4 py-[15px]">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-maroon-700">
-              <span className="h-2 w-2 rounded-full bg-maroon-700" />
-            </span>
-            <span className="text-[14px] font-medium leading-none text-maroon-900">
-              Cash on Delivery
-            </span>
-            <span className="ml-auto text-[12px] leading-none text-[#9C8A84]">
-              Pay when it arrives
-            </span>
-          </div>
+          {codEnabled ? (
+            <div className="flex items-center gap-3 rounded-sm border border-maroon-700 bg-[#FCF1F2] px-4 py-[15px]">
+              <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-maroon-700">
+                <span className="h-2 w-2 rounded-full bg-maroon-700" />
+              </span>
+              <span className="text-[14px] font-medium leading-none text-maroon-900">
+                Cash on Delivery
+              </span>
+              <span className="ml-auto text-[12px] leading-none text-[#9C8A84]">
+                Pay when it arrives
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-sm border border-[#E7D9C2] bg-[#FBF7F0] px-4 py-[15px] opacity-60">
+              <span className="h-[18px] w-[18px] rounded-full border-2 border-[#CDBBA0]" />
+              <span className="text-[14px] font-medium leading-none text-[#9C8A84]">
+                Cash on Delivery
+              </span>
+              <span className="ml-auto text-[12px] leading-none text-[#B79B7E]">
+                Paused
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-3 rounded-sm border border-[#E7D9C2] bg-[#FBF7F0] px-4 py-[15px] opacity-60">
             <span className="h-[18px] w-[18px] rounded-full border-2 border-[#CDBBA0]" />
             <span className="text-[14px] font-medium leading-none text-[#9C8A84]">
@@ -180,6 +205,15 @@ export function CheckoutForm({
               Coming soon
             </span>
           </div>
+
+          {!codEnabled && (
+            <p
+              role="status"
+              className="m-0 rounded-sm border border-[#F0C8CE] bg-[#FBEAEC] px-3.5 py-3 text-[13px] leading-snug text-[#B23A48]"
+            >
+              {ORDERS_PAUSED_MESSAGE}
+            </p>
+          )}
         </div>
 
         {formError && (
@@ -199,6 +233,7 @@ export function CheckoutForm({
         shippingPaise={shippingPaise}
         totalPaise={totalPaise}
         isSubmitting={isSubmitting}
+        ordersPaused={!codEnabled}
       />
     </form>
   );

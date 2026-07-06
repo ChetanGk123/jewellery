@@ -48,6 +48,9 @@ const DECLINE_MESSAGE =
   "We couldn't place your order just now. Please try again in a moment.";
 const RATE_LIMITED_MESSAGE =
   "Too many order attempts — please wait a few minutes and try again.";
+/** Shown when the store has paused Cash on Delivery (its only tender). TASKS 5.3. */
+const COD_PAUSED_MESSAGE =
+  "We've paused online orders for a moment. Please contact us to place your order.";
 
 /** Checkout throttle: at most 5 order attempts per account per 10 minutes. */
 const RATE_LIMIT = { limit: 5, windowMs: 10 * 60 * 1000 } as const;
@@ -131,6 +134,11 @@ export async function submitCheckout(
   });
 
   if (error) {
+    // COD paused (5.3): the RPC rejects when the store's only tender is off.
+    // Surface the specific reason rather than the generic decline.
+    if (error.message?.includes("COD_DISABLED")) {
+      return { ok: false, fieldErrors: {}, formError: COD_PAUSED_MESSAGE };
+    }
     console.error("place_order failed", error);
     return { ok: false, fieldErrors: {}, formError: DECLINE_MESSAGE };
   }

@@ -215,6 +215,21 @@ test("declines gracefully when the RPC returns an error", async () => {
   expect(queueNewOrderAdminEmail).not.toHaveBeenCalled();
 });
 
+test("maps a COD_DISABLED rejection to the paused-orders message (TASKS 5.3)", async () => {
+  rpc.mockImplementation(async () => ({
+    data: null,
+    error: { message: "COD_DISABLED", code: "check_violation" },
+  }));
+
+  const result = await submitCheckout({ values: validValues, items: validItems });
+
+  expect(result.ok).toBe(false);
+  if (!result.ok) expect(result.formError).toContain("paused");
+  // Store paused → no order, so nothing is emailed.
+  expect(queueOrderConfirmationEmail).not.toHaveBeenCalled();
+  expect(queueNewOrderAdminEmail).not.toHaveBeenCalled();
+});
+
 test("flags a failure when the RPC returns an unexpected shape", async () => {
   rpc.mockImplementation(async () => ({
     data: { unexpected: true },

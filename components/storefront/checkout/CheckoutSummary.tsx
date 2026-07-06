@@ -10,6 +10,8 @@ type Props = {
   shippingPaise: number;
   totalPaise: number;
   isSubmitting: boolean;
+  /** Store paused its only tender (COD) — block placement, explain why (5.3). */
+  ordersPaused?: boolean;
 };
 
 /**
@@ -26,6 +28,7 @@ export function CheckoutSummary({
   shippingPaise,
   totalPaise,
   isSubmitting,
+  ordersPaused = false,
 }: Props) {
   return (
     <aside
@@ -70,14 +73,19 @@ export function CheckoutSummary({
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || ordersPaused}
         className="rounded-sm bg-[linear-gradient(135deg,#E6CA7E,#C9A24B_55%,#A87A1E)] px-4 py-4 text-center text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-[#3A0E18] shadow-[0_10px_24px_rgba(168,122,30,0.28)] transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Placing order…" : "Place Order"}
+        {ordersPaused
+          ? "Orders paused"
+          : isSubmitting
+            ? "Placing order…"
+            : "Place Order"}
       </button>
       <p className="m-0 text-center text-[11.5px] leading-snug text-[#9C8A84]">
-        Cash on Delivery across India · your details are verified securely
-        server-side.
+        {ordersPaused
+          ? "We've paused online orders for a moment — please contact us to order."
+          : "Cash on Delivery across India · your details are verified securely server-side."}
       </p>
     </aside>
   );
