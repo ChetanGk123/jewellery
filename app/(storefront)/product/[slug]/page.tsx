@@ -75,8 +75,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
     getStoreSettings(),
     getCurrentUser(),
   ]);
-  const profile = user ? await getCustomerProfile(user.id) : null;
-  const hasPurchased = user ? await hasDeliveredPurchase(product.id) : false;
+  // Both depend only on the signed-in user — run them together, not in series.
+  const [profile, hasPurchased] = user
+    ? await Promise.all([
+        getCustomerProfile(user.id),
+        hasDeliveredPurchase(product.id),
+      ])
+    : [null, false];
 
   const off = discountPercent(product.price_paise, product.mrp_paise);
   const hasSale = off > 0;

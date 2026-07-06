@@ -1,6 +1,7 @@
 import "server-only";
 import { createServerClient as createSSRClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import type { Database } from "./types";
 import { env } from "@/lib/env";
 
@@ -42,10 +43,11 @@ export async function createServerClient() {
  * Convenience: the signed-in Supabase user for the current request, or null.
  * `getUser()` revalidates the JWT against Supabase Auth (never trust the
  * cookie's claims alone) — use this in layouts/pages/actions for auth gates.
+ * `React.cache`d so a render tree that asks twice pays one Auth round trip.
  */
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const supabase = await createServerClient();
   const { data, error } = await supabase.auth.getUser();
   if (error) return null;
   return data.user;
-}
+});

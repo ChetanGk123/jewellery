@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/db/cache";
 import { createServerClient, getCurrentUser } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
 
@@ -40,5 +41,7 @@ export async function cancelMyOrder(orderNo: string): Promise<CancelOrderResult>
 
   revalidatePath(ROUTES.accountOrder(orderNo));
   revalidatePath(ROUTES.accountOrders);
+  // Cancelling restores stock, which the cached catalog displays.
+  updateTag(CACHE_TAGS.products);
   return { ok: true };
 }

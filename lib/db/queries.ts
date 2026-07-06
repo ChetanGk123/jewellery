@@ -1,12 +1,22 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { PRODUCTS_PAGE_SIZE } from "@/lib/listing";
-import { createServerClient } from "./server";
+import { CACHE_TAGS, CATALOG_REVALIDATE_SECONDS } from "./cache";
+import { publicClient } from "./public";
 import type { Database } from "./types";
 
 /**
  * Storefront data access layer. All reads run server-side against the
  * RLS public-read tables (see TASKS.md Phase 0.0). Prices stay in integer
  * paise — format only in the UI (`lib/utils/money`).
+ *
+ * Caching (TASKS 4.18): reads go through the cookie-free `publicClient` and
+ * are wrapped in `unstable_cache` (arguments become part of the cache key), so
+ * a warm request renders without a single Supabase round trip while every page
+ * still renders per-request for the nonce CSP. Write paths expire the
+ * `CACHE_TAGS` they touch; `CATALOG_REVALIDATE_SECONDS` caps staleness for
+ * changes no action sees (e.g. DB triggers).
  */
 
 type ProductRow = Database["public"]["Tables"]["product"]["Row"];
@@ -118,44 +128,47 @@ function mapProductRows(data: unknown[] | null): ProductListItem[] {
 }
 
 /** All categories, in display order. */
-export async function getCategories(): Promise<Category[]> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("category")
-    .select("*")
-    .order("sort_order", { ascending: true });
+export const getCategories = unstable_cache(
+  async (): Promise<Category[]> => {
+    const { data, error } = await publicClient
+      .from("category")
+      .select("*")
+      .order("sort_order", { ascending: true });
 
-  if (error) {
-    throw new Error(`getCategories failed: ${error.message}`);
-  }
-  return data ?? [];
-}
+    if (error) {
+      throw new Error(`getCategories failed: ${error.message}`);
+    }
+    return data ?? [];
+  },
+  ["getCategories"],
+  { tags: [CACHE_TAGS.categories], revalidate: CATALOG_REVALIDATE_SECONDS },
+);
 
 /** A single category by slug, or null if it doesn't exist. */
-export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("category")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
+export const getCategoryBySlug = unstable_cache(
+  async (slug: string): Promise<Category | null> => {
+    const { data, error } = await publicClient
+      .from("category")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(`getCategoryBySlug failed: ${error.message}`);
-  }
-  return data;
-}
+    if (error) {
+      throw new Error(`getCategoryBySlug failed: ${error.message}`);
+    }
+    return data;
+  },
+  ["getCategoryBySlug"],
+  { tags: [CACHE_TAGS.categories], revalidate: CATALOG_REVALIDATE_SECONDS },
+);
 
 /**
  * Storefront product listing with optional filters, sort, and pagination.
  * Only returns storefront-visible products (excludes `Draft`).
  */
-export async function getProducts(
-  filters: ProductFilters = {},
-): Promise<ProductListItem[]> {
-  const supabase = await createServerClient();
-
-  let query = supabase
+export const getProducts = unstable_cache(
+  async (filters: ProductFilters = {}): Promise<ProductListItem[]> => {
+  let query = publicClient
     .from("product")
     .select(
       `${LIST_COLUMNS}, category:category!inner(name, slug), images:product_image(url, bg, is_primary, sort_order)`,
@@ -197,7 +210,10 @@ export async function getProducts(
   }
 
   return mapProductRows(data);
-}
+  },
+  ["getProducts"],
+  { tags: [CACHE_TAGS.products], revalidate: CATALOG_REVALIDATE_SECONDS },
+);
 
 /** One page of the storefront listing, plus the total count for pagination. */
 export type ProductsPage = {
@@ -218,11 +234,12 @@ export type ProductsPage = {
  * with `getProducts`) rather than changing that widely-used function's
  * return shape for its five other unpaginated callers.
  */
-export async function getProductsPage(
-  filters: Omit<ProductFilters, "limit" | "offset">,
-  page: number,
-): Promise<ProductsPage> {
-  const supabase = await createServerClient();
+export const getProductsPage = unstable_cache(
+  async (
+    filters: Omit<ProductFilters, "limit" | "offset">,
+    page: number,
+  ): Promise<ProductsPage> => {
+  const supabase = publicClient;
   const pageSize = PRODUCTS_PAGE_SIZE;
 
   // Count first and clamp the page to it — PostgREST raises "Requested range
@@ -309,7 +326,10 @@ export async function getProductsPage(
   }
 
   return { items: mapProductRows(data), total, pageCount, page: safePage };
-}
+  },
+  ["getProductsPage"],
+  { tags: [CACHE_TAGS.products], revalidate: CATALOG_REVALIDATE_SECONDS },
+);
 
 function applySort<
   T extends {
@@ -355,24 +375,27 @@ export async function getFreshProducts(limit = 8): Promise<ProductListItem[]> {
  * the Material facet on the listing pages. Small catalog, so a slim scan is
  * fine; revisit with a dedicated view if the product table grows large.
  */
-export async function getMaterials(): Promise<string[]> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("product")
-    .select("material")
-    .in("status", STOREFRONT_VISIBLE_STATUSES)
-    .not("material", "is", null);
+export const getMaterials = unstable_cache(
+  async (): Promise<string[]> => {
+    const { data, error } = await publicClient
+      .from("product")
+      .select("material")
+      .in("status", STOREFRONT_VISIBLE_STATUSES)
+      .not("material", "is", null);
 
-  if (error) {
-    throw new Error(`getMaterials failed: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`getMaterials failed: ${error.message}`);
+    }
 
-  const materials = new Set<string>();
-  for (const row of data ?? []) {
-    if (row.material) materials.add(row.material);
-  }
-  return [...materials].sort((a, b) => a.localeCompare(b));
-}
+    const materials = new Set<string>();
+    for (const row of data ?? []) {
+      if (row.material) materials.add(row.material);
+    }
+    return [...materials].sort((a, b) => a.localeCompare(b));
+  },
+  ["getMaterials"],
+  { tags: [CACHE_TAGS.products], revalidate: CATALOG_REVALIDATE_SECONDS },
+);
 
 /** A category plus its count of storefront-visible products (for home tiles). */
 export type CategoryTile = Category & { productCount: number };
@@ -382,64 +405,81 @@ export type CategoryTile = Category & { productCount: number };
  * "{n} styles" label on the home page tiles. Counts are tallied from a slim
  * `category_id` scan (fine at catalog scale; revisit if products grow large).
  */
-export async function getCategoryTiles(): Promise<CategoryTile[]> {
-  const supabase = await createServerClient();
-  const [cats, counts] = await Promise.all([
-    supabase.from("category").select("*").order("sort_order", { ascending: true }),
-    supabase
-      .from("product")
-      .select("category_id")
-      .in("status", STOREFRONT_VISIBLE_STATUSES),
-  ]);
+export const getCategoryTiles = unstable_cache(
+  async (): Promise<CategoryTile[]> => {
+    const [cats, counts] = await Promise.all([
+      publicClient
+        .from("category")
+        .select("*")
+        .order("sort_order", { ascending: true }),
+      publicClient
+        .from("product")
+        .select("category_id")
+        .in("status", STOREFRONT_VISIBLE_STATUSES),
+    ]);
 
-  if (cats.error) {
-    throw new Error(`getCategoryTiles failed: ${cats.error.message}`);
-  }
-  if (counts.error) {
-    throw new Error(`getCategoryTiles counts failed: ${counts.error.message}`);
-  }
+    if (cats.error) {
+      throw new Error(`getCategoryTiles failed: ${cats.error.message}`);
+    }
+    if (counts.error) {
+      throw new Error(`getCategoryTiles counts failed: ${counts.error.message}`);
+    }
 
-  const tally = new Map<string, number>();
-  for (const row of counts.data ?? []) {
-    tally.set(row.category_id, (tally.get(row.category_id) ?? 0) + 1);
-  }
+    const tally = new Map<string, number>();
+    for (const row of counts.data ?? []) {
+      tally.set(row.category_id, (tally.get(row.category_id) ?? 0) + 1);
+    }
 
-  return (cats.data ?? []).map((category) => ({
-    ...category,
-    productCount: tally.get(category.id) ?? 0,
-  }));
-}
+    return (cats.data ?? []).map((category) => ({
+      ...category,
+      productCount: tally.get(category.id) ?? 0,
+    }));
+  },
+  ["getCategoryTiles"],
+  // Counts products per category, so both facets of the data apply.
+  {
+    tags: [CACHE_TAGS.categories, CACHE_TAGS.products],
+    revalidate: CATALOG_REVALIDATE_SECONDS,
+  },
+);
 
-/** Full product by slug, or null if not found / not storefront-visible. */
-export async function getProductBySlug(
-  slug: string,
-): Promise<ProductDetail | null> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("product")
-    .select(
-      "*, category:category(name, slug), images:product_image(*), options:product_option(*)",
-    )
-    .eq("slug", slug)
-    .in("status", STOREFRONT_VISIBLE_STATUSES)
-    .maybeSingle();
+/**
+ * Full product by slug, or null if not found / not storefront-visible.
+ * Also `React.cache`d: `generateMetadata` and the page body both call it in
+ * the same request, so the second call reuses the first's in-flight result.
+ */
+export const getProductBySlug = cache(
+  unstable_cache(
+    async (slug: string): Promise<ProductDetail | null> => {
+      const { data, error } = await publicClient
+        .from("product")
+        .select(
+          "*, category:category(name, slug), images:product_image(*), options:product_option(*)",
+        )
+        .eq("slug", slug)
+        .in("status", STOREFRONT_VISIBLE_STATUSES)
+        .maybeSingle();
 
-  if (error) {
-    throw new Error(`getProductBySlug failed: ${error.message}`);
-  }
-  if (!data) return null;
+      if (error) {
+        throw new Error(`getProductBySlug failed: ${error.message}`);
+      }
+      if (!data) return null;
 
-  const record = data as unknown as ProductDetail;
-  return {
-    ...record,
-    images: [...(record.images ?? [])].sort(
-      (a, b) => a.sort_order - b.sort_order,
-    ),
-    options: [...(record.options ?? [])].sort(
-      (a, b) => a.sort_order - b.sort_order,
-    ),
-  };
-}
+      const record = data as unknown as ProductDetail;
+      return {
+        ...record,
+        images: [...(record.images ?? [])].sort(
+          (a, b) => a.sort_order - b.sort_order,
+        ),
+        options: [...(record.options ?? [])].sort(
+          (a, b) => a.sort_order - b.sort_order,
+        ),
+      };
+    },
+    ["getProductBySlug"],
+    { tags: [CACHE_TAGS.products], revalidate: CATALOG_REVALIDATE_SECONDS },
+  ),
+);
 
 /**
  * Products related to the given one — same category, excluding the current
@@ -460,19 +500,20 @@ export async function getRelatedProducts(
 }
 
 /** Approved reviews for a product, newest first. */
-export async function getApprovedReviews(
-  productId: string,
-): Promise<Review[]> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("review")
-    .select("*")
-    .eq("product_id", productId)
-    .eq("status", "approved")
-    .order("created_at", { ascending: false });
+export const getApprovedReviews = unstable_cache(
+  async (productId: string): Promise<Review[]> => {
+    const { data, error } = await publicClient
+      .from("review")
+      .select("*")
+      .eq("product_id", productId)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    throw new Error(`getApprovedReviews failed: ${error.message}`);
-  }
-  return data ?? [];
-}
+    if (error) {
+      throw new Error(`getApprovedReviews failed: ${error.message}`);
+    }
+    return data ?? [];
+  },
+  ["getApprovedReviews"],
+  { tags: [CACHE_TAGS.reviews], revalidate: CATALOG_REVALIDATE_SECONDS },
+);

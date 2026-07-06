@@ -110,11 +110,14 @@ export async function proxy(request: NextRequest) {
       },
     },
   );
-  // Triggers the session refresh when needed, and gives us the current user for
-  // the admin gate below.
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser();
+  // Triggers the session refresh when needed, and gives us the verified JWT
+  // claims for the admin gate below. `getClaims()` (not `getUser()`): the
+  // project signs JWTs with an asymmetric key (ES256), so verification runs
+  // locally via WebCrypto against the JWKS (module-cached ~10 min) — no Auth
+  // server round trip on every navigation (TASKS 4.18). Near-expiry sessions
+  // are still refreshed first, which is what persists rotated cookies above.
+  const { data: claimsData } = await supabaseClient.auth.getClaims();
+  const claims = claimsData?.claims ?? null;
 
   // Coarse admin gate: bounce non-admins off the console before it renders. The
   // console layout re-checks authoritatively via `requireAdmin`; this is the
@@ -126,7 +129,7 @@ export async function proxy(request: NextRequest) {
     path === ROUTES.adminSignIn ||
     path === ROUTES.adminForgotPassword ||
     path === ROUTES.adminResetPassword;
-  if (isAdminArea && !isAdminPublic && !isAdmin(user)) {
+  if (isAdminArea && !isAdminPublic && !isAdmin(claims)) {
     const signIn = new URL(ROUTES.adminSignIn, request.url);
     signIn.searchParams.set("next", path);
     const redirectRes = NextResponse.redirect(signIn);

@@ -33,6 +33,12 @@ mock.module("@/lib/db/server", () => ({
 
 mock.module("@/lib/db/profile", () => ({ upsertCustomerProfile }));
 
+// The real limiter is an in-process Map that would trip once 5 tests reuse
+// the same user id; the throttle itself isn't under test here.
+mock.module("@/lib/rate-limit", () => ({
+  checkRateLimit: () => ({ ok: true, retryAfterSec: 0 }),
+}));
+
 const { submitCheckout } = await import("./actions");
 
 const validValues = {

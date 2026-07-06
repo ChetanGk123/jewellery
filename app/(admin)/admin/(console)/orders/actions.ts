@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { CACHE_TAGS } from "@/lib/db/cache";
 import { ORDER_STATUSES } from "@/lib/db/admin-orders";
 import { createServerClient } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
@@ -48,5 +49,7 @@ export async function setOrderStatus(
   }
 
   revalidatePath(ROUTES.adminOrders);
+  // A Cancel restores stock, which the cached catalog displays.
+  updateTag(CACHE_TAGS.products);
   return { ok: true };
 }

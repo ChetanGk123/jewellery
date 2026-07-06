@@ -1,5 +1,8 @@
 import "server-only";
-import { createServerClient } from "./server";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
+import { CACHE_TAGS, CATALOG_REVALIDATE_SECONDS } from "./cache";
+import { publicClient } from "./public";
 
 /**
  * Typed access to the single `setting` row. The `banner` and `homepage_promo`
@@ -110,21 +113,27 @@ function mergePromo(raw: unknown): PromoSetting {
   };
 }
 
-/** The store's public settings (banner, homepage promo, free-ship threshold). */
-export async function getStoreSettings(): Promise<StoreSettings> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("setting")
-    .select(
-      "store_name, support_email, phone, gstin, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
-    )
-    .maybeSingle();
+/**
+ * The store's public settings (banner, homepage promo, free-ship threshold).
+ * Cached across requests (tag `settings`, expired by the admin settings save)
+ * and `React.cache`d within one: the storefront layout and several pages each
+ * call this during the same render.
+ */
+export const getStoreSettings = cache(
+  unstable_cache(
+    async (): Promise<StoreSettings> => {
+      const { data, error } = await publicClient
+        .from("setting")
+        .select(
+          "store_name, support_email, phone, gstin, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
+        )
+        .maybeSingle();
 
-  if (error) {
-    throw new Error(`getStoreSettings failed: ${error.message}`);
-  }
+      if (error) {
+        throw new Error(`getStoreSettings failed: ${error.message}`);
+      }
 
-  return {
+      return {
     storeName: data?.store_name ?? "JR Jewellers",
     supportEmail: data?.support_email ?? null,
     phone: data?.phone ?? null,
@@ -136,5 +145,9 @@ export async function getStoreSettings(): Promise<StoreSettings> {
     flatRatePaise: data?.flat_rate_paise ?? DEFAULT_FLAT_RATE_PAISE,
     codEnabled: data?.cod_enabled ?? true,
     razorpayLive: data?.razorpay_live ?? false,
-  };
-}
+      };
+    },
+    ["getStoreSettings"],
+    { tags: [CACHE_TAGS.settings], revalidate: CATALOG_REVALIDATE_SECONDS },
+  ),
+);

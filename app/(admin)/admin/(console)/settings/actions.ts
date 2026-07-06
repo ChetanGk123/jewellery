@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { CACHE_TAGS } from "@/lib/db/cache";
 import { formValuesToPayload, settingsFormSchema } from "@/lib/admin/settings";
 import { createServerClient } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
@@ -36,8 +37,9 @@ export async function updateStoreSettings(
     return { ok: false, error: "Couldn't save settings. Please try again." };
   }
 
-  // Storefront reads settings per request (banner/promo/shipping) — revalidate
-  // the whole tree so the change is live, plus this admin page.
+  // Settings are cached cross-request (TASKS 4.18) — expire the tag so the
+  // banner/promo/shipping figures change live, plus re-render this admin page.
+  updateTag(CACHE_TAGS.settings);
   revalidatePath("/", "layout");
   revalidatePath(ROUTES.adminSettings);
   return { ok: true };

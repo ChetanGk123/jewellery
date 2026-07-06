@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { CACHE_TAGS } from "@/lib/db/cache";
 import { createServerClient } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
 
@@ -46,6 +47,9 @@ export async function upsertCategory(
   }
 
   revalidatePath(ROUTES.adminCategories);
+  // Category names are embedded in cached product listing rows too.
+  updateTag(CACHE_TAGS.categories);
+  updateTag(CACHE_TAGS.products);
   return { ok: true };
 }
 
@@ -74,5 +78,7 @@ export async function deleteCategory(
   }
 
   revalidatePath(ROUTES.adminCategories);
+  updateTag(CACHE_TAGS.categories);
+  updateTag(CACHE_TAGS.products);
   return { ok: true };
 }

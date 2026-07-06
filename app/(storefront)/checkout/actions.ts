@@ -1,5 +1,6 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { z } from "zod";
 import {
   type CheckoutFormValues,
@@ -10,6 +11,7 @@ import {
   type PlacedOrder,
   toPlacedOrder,
 } from "@/lib/checkout/order";
+import { CACHE_TAGS } from "@/lib/db/cache";
 import { upsertCustomerProfile } from "@/lib/db/profile";
 import { createServerClient, getCurrentUser } from "@/lib/db/server";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -151,6 +153,10 @@ export async function submitCheckout(
     state: contact.state,
     pincode: contact.pincode,
   });
+
+  // The order decremented stock — expire cached catalog reads so sold-out
+  // states show without waiting out the revalidate window.
+  updateTag(CACHE_TAGS.products);
 
   return { ok: true, order };
 }

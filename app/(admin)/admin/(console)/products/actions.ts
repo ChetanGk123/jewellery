@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { CACHE_TAGS } from "@/lib/db/cache";
 import { PLATING_OPTIONS, type ProductImage } from "@/lib/admin/product-status";
 import { createServerClient } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
@@ -189,5 +190,6 @@ export async function upsertProduct(
   }
 
   revalidatePath(ROUTES.adminProducts);
+  updateTag(CACHE_TAGS.products);
   return { ok: true };
 }
