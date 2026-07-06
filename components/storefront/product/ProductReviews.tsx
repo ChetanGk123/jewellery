@@ -23,8 +23,6 @@ function formatReviewDate(iso: string): string {
 type Props = {
   reviews: Review[];
   productId: string;
-  productSlug: string;
-  isSignedIn: boolean;
   hasPurchased: boolean;
   prefillName: string;
 };
@@ -32,8 +30,6 @@ type Props = {
 export function ProductReviews({
   reviews,
   productId,
-  productSlug,
-  isSignedIn,
   hasPurchased,
   prefillName,
 }: Props) {
@@ -84,8 +80,6 @@ export function ProductReviews({
 
       <ReviewForm
         productId={productId}
-        productSlug={productSlug}
-        isSignedIn={isSignedIn}
         hasPurchased={hasPurchased}
         prefillName={prefillName}
       />

@@ -1,35 +1,26 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
-import { ROUTES } from "@/lib/routes";
 import { REVIEW_BODY_MIN } from "@/lib/review/schema";
 import { submitReview } from "@/app/(storefront)/product/[slug]/actions";
 import { StarRatingInput } from "./StarRatingInput";
 
 type Props = {
   productId: string;
-  productSlug: string;
-  /** Signed-in only — false renders a sign-in prompt instead of the form. */
-  isSignedIn: boolean;
-  /** Verified-purchase gate — false renders a "buy it first" notice instead of the form. */
+  /** Verified-purchase gate (implies signed-in) — false renders nothing. */
   hasPurchased: boolean;
   prefillName: string;
 };
 
 /**
- * "Write a review" form on the product detail page (TASKS 4.15). Submits via
- * the `submitReview` action into the existing moderation queue (0014) — a
- * submitted review never appears immediately (it lands `pending`), so success
- * is a static confirmation, not a list update.
+ * "Write a review" form on the product detail page (TASKS 4.15). Only ever
+ * shown to a customer with a Delivered order for this product — no sign-in
+ * prompt or "buy it first" notice for anyone else, the section simply isn't
+ * there. Submits via the `submitReview` action into the existing moderation
+ * queue (0014) — a submitted review never appears immediately (it lands
+ * `pending`), so success is a static confirmation, not a list update.
  */
-export function ReviewForm({
-  productId,
-  productSlug,
-  isSignedIn,
-  hasPurchased,
-  prefillName,
-}: Props) {
+export function ReviewForm({ productId, hasPurchased, prefillName }: Props) {
   const [name, setName] = useState(prefillName);
   const [rating, setRating] = useState(0);
   const [title, setTitle] = useState("");
@@ -39,30 +30,8 @@ export function ReviewForm({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  if (!isSignedIn) {
-    return (
-      <div className="mt-8 rounded-[3px] border border-[#EFE3D0] bg-cream-50 p-6 text-center">
-        <p className="m-0 text-[13.5px] leading-normal text-[#5E4A44]">
-          <Link
-            href={`${ROUTES.signIn}?next=${encodeURIComponent(ROUTES.product(productSlug))}`}
-            className="font-semibold text-maroon-700 underline-offset-4 hover:underline"
-          >
-            Sign in
-          </Link>{" "}
-          to write a review.
-        </p>
-      </div>
-    );
-  }
-
   if (!hasPurchased) {
-    return (
-      <div className="mt-8 rounded-[3px] border border-[#EFE3D0] bg-cream-50 p-6 text-center">
-        <p className="m-0 text-[13.5px] leading-normal text-[#5E4A44]">
-          Only customers who've received this product can write a review.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   if (isSubmitted) {

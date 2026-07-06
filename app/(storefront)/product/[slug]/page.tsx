@@ -180,8 +180,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <ProductReviews
         reviews={reviews}
         productId={product.id}
-        productSlug={product.slug}
-        isSignedIn={Boolean(user)}
         hasPurchased={hasPurchased}
         prefillName={profile?.fullName ?? ""}
       />
