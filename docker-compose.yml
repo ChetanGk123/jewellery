@@ -1,11 +1,15 @@
-# JR Jewellers — one-command build + run.
+# RJ Jewellers — one-command build + run.
 #
 #   docker compose up --build
 #
-# Reads values from a local .env (or .env.local — see `env_file` below). The two
-# NEXT_PUBLIC_* values are passed as *build args* because Next.js inlines them
-# into the browser bundle at build time; SUPABASE_SECRET_KEY is a runtime-only
-# server secret.
+# Env resolution:
+#   - Build args (NEXT_PUBLIC_*) are inlined into the browser bundle at build
+#     time, so they must be present in the build environment.
+#   - Runtime vars are passed into the container via `environment:` below, using
+#     ${VAR} interpolation. Locally, Docker Compose auto-loads `.env`; on Dokploy
+#     these come from the app's Environment settings (never commit secrets).
+#   - `env_file` entries are optional: a fresh clone has neither `.env` nor
+#     `.env.local` (both gitignored), and a missing file must not fail the build.
 
 services:
   web:
@@ -18,10 +22,24 @@ services:
     ports:
       - "3000:3000"
     environment:
+      # Public client config — also read server-side at runtime.
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+      # Absolute site origin (sitemap / robots / metadataBase / JSON-LD).
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
       # Server-only secret — read at runtime by lib/db/admin.ts.
-      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
+      # Transactional email (optional — no key ⇒ email is a no-op).
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      ADMIN_ALERT_EMAIL: ${ADMIN_ALERT_EMAIL:-}
     env_file:
-      - .env.local
+      # Optional: local dev may keep values in .env / .env.local. Absent files
+      # are ignored (requires Docker Compose v2.24+).
+      - path: .env
+        required: false
+      - path: .env.local
+        required: false
     restart: unless-stopped
     healthcheck:
       # Next serves this route once the server is ready; no extra tooling needed.
