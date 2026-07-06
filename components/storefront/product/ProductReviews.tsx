@@ -1,4 +1,5 @@
 import type { Review } from "@/lib/db/queries";
+import { ReviewForm } from "./ReviewForm";
 import { StarRating } from "./StarRating";
 
 const dateFormatter = new Intl.DateTimeFormat("en-IN", {
@@ -19,7 +20,21 @@ function formatReviewDate(iso: string): string {
  * (stars, title, body, name · date). Shows a gentle empty state when a product
  * has no approved reviews yet.
  */
-export function ProductReviews({ reviews }: { reviews: Review[] }) {
+type Props = {
+  reviews: Review[];
+  productId: string;
+  productSlug: string;
+  isSignedIn: boolean;
+  prefillName: string;
+};
+
+export function ProductReviews({
+  reviews,
+  productId,
+  productSlug,
+  isSignedIn,
+  prefillName,
+}: Props) {
   return (
     <section
       aria-labelledby="reviews-heading"
@@ -64,6 +79,13 @@ export function ProductReviews({ reviews }: { reviews: Review[] }) {
           No reviews yet — be the first to share your experience.
         </p>
       )}
+
+      <ReviewForm
+        productId={productId}
+        productSlug={productSlug}
+        isSignedIn={isSignedIn}
+        prefillName={prefillName}
+      />
     </section>
   );
 }

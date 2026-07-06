@@ -463,6 +463,7 @@ export type Database = {
           rating: number
           status: string
           title: string | null
+          user_id: string | null
         }
         Insert: {
           body?: string | null
@@ -473,6 +474,7 @@ export type Database = {
           rating: number
           status?: string
           title?: string | null
+          user_id?: string | null
         }
         Update: {
           body?: string | null
@@ -483,6 +485,7 @@ export type Database = {
           rating?: number
           status?: string
           title?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -596,6 +599,16 @@ export type Database = {
       customer_cancel_order: {
         Args: { p_order_no: string }
         Returns: string
+      }
+      submit_review: {
+        Args: {
+          p_body: string
+          p_name: string
+          p_product_id: string
+          p_rating: number
+          p_title: string | null
+        }
+        Returns: Json
       }
       admin_upsert_coupon: {
         Args: { p_id: string | null; p_payload: Json }

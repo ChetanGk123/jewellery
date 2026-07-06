@@ -13,6 +13,8 @@ import {
   getProductBySlug,
   getRelatedProducts,
 } from "@/lib/db/queries";
+import { getCustomerProfile } from "@/lib/db/profile";
+import { getCurrentUser } from "@/lib/db/server";
 import { getStoreSettings } from "@/lib/db/settings";
 import { ROUTES } from "@/lib/routes";
 import { discountPercent, formatPaise } from "@/lib/utils/money";
@@ -45,11 +47,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const [reviews, related, settings] = await Promise.all([
+  const [reviews, related, settings, user] = await Promise.all([
     getApprovedReviews(product.id),
     getRelatedProducts(product.category.slug, product.slug),
     getStoreSettings(),
+    getCurrentUser(),
   ]);
+  const profile = user ? await getCustomerProfile(user.id) : null;
 
   const off = discountPercent(product.price_paise, product.mrp_paise);
   const hasSale = off > 0;
@@ -171,7 +175,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       </div>
 
-      <ProductReviews reviews={reviews} />
+      <ProductReviews
+        reviews={reviews}
+        productId={product.id}
+        productSlug={product.slug}
+        isSignedIn={Boolean(user)}
+        prefillName={profile?.fullName ?? ""}
+      />
 
       {related.length > 0 && (
         <section aria-labelledby="related-heading" className="mt-[58px]">
