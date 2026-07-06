@@ -11,6 +11,11 @@ type Props = {
    * (the server recomputed it without the discount). TASKS 3.6b.
    */
   couponDropped?: boolean;
+  /**
+   * True when a transactional-email provider is configured, so a confirmation
+   * email was actually queued (TASKS 4.6). Keeps the copy honest either way.
+   */
+  emailSent?: boolean;
 };
 
 /** Static COD delivery estimate shown on the confirmation (matches the prototype). */
@@ -22,7 +27,11 @@ const ESTIMATED_DELIVERY = "4–7 days";
  * reference, and a compact summary card. Presentational — the page fetches the
  * order by its unguessable id and passes the non-sensitive confirmation in.
  */
-export function OrderConfirmation({ confirmation, couponDropped }: Props) {
+export function OrderConfirmation({
+  confirmation,
+  couponDropped,
+  emailSent,
+}: Props) {
   return (
     <main className="mx-auto flex max-w-[680px] flex-col items-center gap-[18px] px-6 pb-[90px] pt-[70px] text-center">
       <span
@@ -41,9 +50,24 @@ export function OrderConfirmation({ confirmation, couponDropped }: Props) {
         <span className="font-semibold text-maroon-700">
           {confirmation.orderNo}
         </span>{" "}
-        is confirmed. Keep this order number handy — we'll use{" "}
-        <span className="text-maroon-900">{confirmation.customerEmail}</span>{" "}
-        to reach you about it.
+        is confirmed.{" "}
+        {emailSent ? (
+          <>
+            A confirmation email is on its way to{" "}
+            <span className="text-maroon-900">
+              {confirmation.customerEmail}
+            </span>
+            .
+          </>
+        ) : (
+          <>
+            Keep this order number handy — we'll use{" "}
+            <span className="text-maroon-900">
+              {confirmation.customerEmail}
+            </span>{" "}
+            to reach you about it.
+          </>
+        )}
       </p>
 
       {couponDropped && (

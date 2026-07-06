@@ -39,6 +39,14 @@ mock.module("@/lib/rate-limit", () => ({
   checkRateLimit: () => ({ ok: true, retryAfterSec: 0 }),
 }));
 
+/** Captures the confirmation-email queue call (TASKS 4.6) — no real sends. */
+const queueOrderConfirmationEmail = mock((_input: unknown) => undefined);
+
+mock.module("@/lib/email/send", () => ({
+  isEmailEnabled: () => true,
+  queueOrderConfirmationEmail,
+}));
+
 const { submitCheckout } = await import("./actions");
 
 const validValues = {
@@ -69,6 +77,7 @@ beforeEach(() => {
   rpc.mockClear();
   rpc.mockImplementation(async () => ({ data: null, error: null }));
   upsertCustomerProfile.mockClear();
+  queueOrderConfirmationEmail.mockClear();
   session.user = {
     id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99",
     email: "asha@example.com",
@@ -174,6 +183,17 @@ test("maps a successful RPC result to a PlacedOrder", async () => {
     expect(result.order.totalPaise).toBe(507900);
     expect(result.order.shippingPaise).toBe(7900);
   }
+
+  // A confirmation email is queued for the placed order (TASKS 4.6).
+  expect(queueOrderConfirmationEmail).toHaveBeenCalledTimes(1);
+  const queued = queueOrderConfirmationEmail.mock.calls[0][0] as {
+    to: string;
+    orderNo: string;
+    totalPaise: number;
+  };
+  expect(queued.to).toBe(validValues.email);
+  expect(queued.orderNo).toBe("JR-260703-1001-AB12");
+  expect(queued.totalPaise).toBe(507900);
 });
 
 test("declines gracefully when the RPC returns an error", async () => {
@@ -186,6 +206,8 @@ test("declines gracefully when the RPC returns an error", async () => {
 
   expect(result.ok).toBe(false);
   if (!result.ok) expect(result.formError).toContain("couldn't place your order");
+  // No order → no confirmation email.
+  expect(queueOrderConfirmationEmail).not.toHaveBeenCalled();
 });
 
 test("flags a failure when the RPC returns an unexpected shape", async () => {

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { OrderConfirmation } from "@/components/storefront/order/OrderConfirmation";
 import { ORDER_NO_RE } from "@/lib/checkout/order";
 import { getOrderConfirmation } from "@/lib/db/orders";
+import { isEmailEnabled } from "@/lib/email/send";
 
 export const metadata: Metadata = {
   title: "Order confirmed",
@@ -37,6 +38,7 @@ export default async function OrderPage({
     <OrderConfirmation
       confirmation={confirmation}
       couponDropped={coupon === "dropped"}
+      emailSent={isEmailEnabled()}
     />
   );
 }

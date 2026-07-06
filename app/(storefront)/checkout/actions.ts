@@ -13,6 +13,7 @@ import {
 } from "@/lib/checkout/order";
 import { CACHE_TAGS } from "@/lib/db/cache";
 import { upsertCustomerProfile } from "@/lib/db/profile";
+import { queueOrderConfirmationEmail } from "@/lib/email/send";
 import { createServerClient, getCurrentUser } from "@/lib/db/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -152,6 +153,19 @@ export async function submitCheckout(
     city: contact.city,
     state: contact.state,
     pincode: contact.pincode,
+  });
+
+  // Confirmation email (TASKS 4.6) — queued to run after the response is
+  // sent; best-effort and skipped entirely when no provider is configured.
+  queueOrderConfirmationEmail({
+    to: contact.email,
+    orderNo: order.orderNo,
+    customerName: contact.fullName,
+    addressLine: contact.addressLine,
+    city: contact.city,
+    state: contact.state,
+    pincode: contact.pincode,
+    totalPaise: order.totalPaise,
   });
 
   // The order decremented stock — expire cached catalog reads so sold-out
