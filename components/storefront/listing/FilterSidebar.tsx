@@ -50,6 +50,11 @@ export function FilterSidebar({
   const [priceRupees, setPriceRupees] = useState(maxRupees);
   useEffect(() => setPriceRupees(maxRupees), [maxRupees]);
 
+  // Facets are collapsed behind a disclosure on mobile (TASKS 4.8) — the full
+  // stack pushed the product grid ~2 viewports down. Ignored at `lg`, where
+  // the sidebar is always visible.
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
   function pushParams(mutate: (params: URLSearchParams) => void) {
     const params = new URLSearchParams(searchParams.toString());
     mutate(params);
@@ -87,76 +92,95 @@ export function FilterSidebar({
       : `Up to ${formatPaise(priceRupees * 100)}`;
 
   return (
-    <aside className="flex w-full flex-col gap-[30px] lg:sticky lg:top-[130px] lg:w-[230px] lg:flex-none">
-      <FacetGroup title="Category">
-        <FacetRow
-          as="link"
-          href={ROUTES.shop}
-          label="All Jewellery"
-          isActive={!activeCategorySlug}
-        />
-        {categories.map((category) => (
-          <FacetRow
-            key={category.slug}
-            as="link"
-            href={ROUTES.category(category.slug)}
-            label={category.name}
-            count={category.productCount}
-            isActive={category.slug === activeCategorySlug}
-          />
-        ))}
-      </FacetGroup>
-
-      {materials.length > 0 && (
-        <>
-          <Divider />
-          <FacetGroup title="Material">
-            {materials.map((material) => (
-              <FacetRow
-                key={material}
-                as="button"
-                label={material}
-                dot
-                isActive={material === selectedMaterial}
-                onClick={() => toggleMaterial(material)}
-              />
-            ))}
-          </FacetGroup>
-        </>
-      )}
-
-      <Divider />
-      <div className="flex flex-col gap-3.5">
-        <div className="text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-maroon-900">
-          Price
-        </div>
-        <input
-          type="range"
-          min={PRICE_MIN_RUPEES}
-          max={PRICE_MAX_RUPEES}
-          step={PRICE_STEP_RUPEES}
-          value={priceRupees}
-          aria-label="Maximum price"
-          onChange={(event) => setPriceRupees(Number(event.target.value))}
-          onMouseUp={() => commitPrice(priceRupees)}
-          onTouchEnd={() => commitPrice(priceRupees)}
-          onKeyUp={() => commitPrice(priceRupees)}
-          className="w-full cursor-pointer accent-maroon-700"
-        />
-        <div className="text-[13px] leading-none text-[#7A655F]">
-          {priceLabel}
-        </div>
-      </div>
-
-      {hasActiveFilters && (
-        <button
-          type="button"
-          onClick={clearAll}
-          className="self-start p-0 text-[12px] font-medium leading-none tracking-[0.06em] text-gold-600 underline"
+    <aside className="flex w-full flex-col gap-3.5 lg:sticky lg:top-[130px] lg:w-[230px] lg:flex-none lg:gap-[30px]">
+      <button
+        type="button"
+        onClick={() => setIsMobileOpen((open) => !open)}
+        aria-expanded={isMobileOpen}
+        className="flex items-center justify-between rounded-sm border border-[#E7D9C2] bg-white px-4 py-3 text-[12px] font-semibold uppercase leading-none tracking-[0.1em] text-maroon-900 lg:hidden"
+      >
+        <span>Filters{hasActiveFilters ? " · Active" : ""}</span>
+        <span
+          aria-hidden
+          className={`text-[10px] transition-transform ${isMobileOpen ? "rotate-180" : ""}`}
         >
-          Clear all filters
-        </button>
-      )}
+          ▾
+        </span>
+      </button>
+
+      <div
+        className={`flex-col gap-[30px] ${isMobileOpen ? "flex" : "hidden"} lg:flex`}
+      >
+        <FacetGroup title="Category">
+          <FacetRow
+            as="link"
+            href={ROUTES.shop}
+            label="All Jewellery"
+            isActive={!activeCategorySlug}
+          />
+          {categories.map((category) => (
+            <FacetRow
+              key={category.slug}
+              as="link"
+              href={ROUTES.category(category.slug)}
+              label={category.name}
+              count={category.productCount}
+              isActive={category.slug === activeCategorySlug}
+            />
+          ))}
+        </FacetGroup>
+
+        {materials.length > 0 && (
+          <>
+            <Divider />
+            <FacetGroup title="Material">
+              {materials.map((material) => (
+                <FacetRow
+                  key={material}
+                  as="button"
+                  label={material}
+                  dot
+                  isActive={material === selectedMaterial}
+                  onClick={() => toggleMaterial(material)}
+                />
+              ))}
+            </FacetGroup>
+          </>
+        )}
+
+        <Divider />
+        <div className="flex flex-col gap-3.5">
+          <div className="text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-maroon-900">
+            Price
+          </div>
+          <input
+            type="range"
+            min={PRICE_MIN_RUPEES}
+            max={PRICE_MAX_RUPEES}
+            step={PRICE_STEP_RUPEES}
+            value={priceRupees}
+            aria-label="Maximum price"
+            onChange={(event) => setPriceRupees(Number(event.target.value))}
+            onMouseUp={() => commitPrice(priceRupees)}
+            onTouchEnd={() => commitPrice(priceRupees)}
+            onKeyUp={() => commitPrice(priceRupees)}
+            className="w-full cursor-pointer accent-maroon-700"
+          />
+          <div className="text-[13px] leading-none text-[#7A655F]">
+            {priceLabel}
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearAll}
+            className="self-start p-0 text-[12px] font-medium leading-none tracking-[0.06em] text-gold-600 underline"
+          >
+            Clear all filters
+          </button>
+        )}
+      </div>
     </aside>
   );
 }
