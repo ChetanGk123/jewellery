@@ -25,8 +25,8 @@ services:
     # routes to it via Traefik once you add a Domain (→ service `web`, port 3000)
     # in the app's UI. For local prod testing, add `-p 3000:3000` or a
     # docker-compose.override.yml with a `ports:` mapping.
-    expose:
-      - "3000"
+    # expose:
+    #   - "3000"
     environment:
       # Public client config — also read server-side at runtime.
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
