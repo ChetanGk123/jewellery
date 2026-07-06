@@ -32,7 +32,7 @@ engineering.
 - **2.2 fixed** — `/shop` and category pages collapse `FilterSidebar` behind a "Filters" disclosure on mobile; the first product card now renders in the first viewport instead of at y≈1471px below the full facet stack.
 - **2.3 fixed** — the corner badge and sale-flag no longer overlap on narrow (2-col grid) cards; the flag stacks under the badge below `sm`, unchanged at `sm:` and up. Phase 4B (mobile funnel) is now complete.
 - **3.2 fixed** — checkout and contact are no longer honeypot-only; both now call the existing `checkRateLimit` utility (checkout per-account, contact per-IP), same as the newsletter. Still an in-memory/per-instance limiter — an edge store is a deploy-time follow-up (`TASKS.md` 4.13).
-- **2.5 partially fixed** — My Orders rows now open a real detail page (`/account/orders/[orderNo]`) with items, delivery address, and a status timeline. Customer cancel-while-Pending is coded (new `customer_cancel_order` RPC) but **not yet applied to production** — the user chose to skip the migration for now, so the Cancel button currently fails with a friendly decline message. See `TASKS.md` 4.14.
+- **2.5 fixed** — My Orders rows now open a real detail page (`/account/orders/[orderNo]`) with items, delivery address, and a status timeline, plus a working cancel-while-Pending action (`customer_cancel_order` RPC, applied + verified — SQL probes and a live browser click-through both confirmed the happy path and every rejection case). See `TASKS.md` 4.14.
 
 See `TASKS.md` Phase 4 for the complete task-by-task breakdown and status.
 
