@@ -1,4 +1,5 @@
 import "server-only";
+import { PRODUCTS_PAGE_SIZE } from "@/lib/listing";
 import { createServerClient } from "./server";
 import type { Database } from "./types";
 
@@ -100,6 +101,22 @@ function pickPrimaryImage(
   return { url: primary.url, bg: primary.bg };
 }
 
+/** Shared row → `ProductListItem` mapper for `getProducts`/`getProductsPage`. */
+function mapProductRows(data: unknown[] | null): ProductListItem[] {
+  return (data ?? []).map((row) => {
+    const record = row as Record<string, unknown> & {
+      images?: EmbeddedImage[] | null;
+      category: Pick<Category, "name" | "slug">;
+    };
+    const { images, category, ...rest } = record;
+    return {
+      ...(rest as Omit<ProductListItem, "image" | "category">),
+      category,
+      image: pickPrimaryImage(images),
+    };
+  });
+}
+
 /** All categories, in display order. */
 export async function getCategories(): Promise<Category[]> {
   const supabase = await createServerClient();
@@ -179,18 +196,119 @@ export async function getProducts(
     throw new Error(`getProducts failed: ${error.message}`);
   }
 
-  return (data ?? []).map((row) => {
-    const record = row as Record<string, unknown> & {
-      images?: EmbeddedImage[] | null;
-      category: Pick<Category, "name" | "slug">;
-    };
-    const { images, category, ...rest } = record;
-    return {
-      ...(rest as Omit<ProductListItem, "image" | "category">),
-      category,
-      image: pickPrimaryImage(images),
-    };
-  });
+  return mapProductRows(data);
+}
+
+/** One page of the storefront listing, plus the total count for pagination. */
+export type ProductsPage = {
+  items: ProductListItem[];
+  total: number;
+  pageCount: number;
+  /** The page actually served — may differ from the requested page if it was
+   * clamped into range (e.g. a stale `?page=99` after a filter shrank the
+   * result set). */
+  page: number;
+};
+
+/**
+ * Paginated storefront listing (TASKS 4.17) — same filters as `getProducts`,
+ * but always ranged to `PRODUCTS_PAGE_SIZE` and paired with an exact total
+ * count so `/shop` and category pages never run an unbounded query as the
+ * catalog grows. Kept as its own function (some duplicated filter-building
+ * with `getProducts`) rather than changing that widely-used function's
+ * return shape for its five other unpaginated callers.
+ */
+export async function getProductsPage(
+  filters: Omit<ProductFilters, "limit" | "offset">,
+  page: number,
+): Promise<ProductsPage> {
+  const supabase = await createServerClient();
+  const pageSize = PRODUCTS_PAGE_SIZE;
+
+  // Count first and clamp the page to it — PostgREST raises "Requested range
+  // not satisfiable" (a hard error, not an empty result) when `.range()`'s
+  // offset exceeds the total row count, e.g. a stale/hand-edited `?page=99`
+  // once a filter has shrunk the result set. Clamping avoids ever asking for
+  // an out-of-range offset instead of catching the error after the fact.
+  let countQuery = supabase
+    .from("product")
+    .select("id, category:category!inner(slug)", { count: "exact", head: true })
+    .in("status", STOREFRONT_VISIBLE_STATUSES);
+
+  if (filters.categorySlug) {
+    countQuery = countQuery.eq("category.slug", filters.categorySlug);
+  }
+  if (filters.material) {
+    countQuery = countQuery.eq("material", filters.material);
+  }
+  if (filters.featured) {
+    countQuery = countQuery.eq("is_featured", true);
+  }
+  if (filters.fresh) {
+    countQuery = countQuery.eq("is_fresh", true);
+  }
+  if (typeof filters.minPaise === "number") {
+    countQuery = countQuery.gte("price_paise", filters.minPaise);
+  }
+  if (typeof filters.maxPaise === "number") {
+    countQuery = countQuery.lte("price_paise", filters.maxPaise);
+  }
+  if (filters.search) {
+    countQuery = countQuery.textSearch("search", filters.search, { type: "websearch" });
+  }
+
+  const { count, error: countError } = await countQuery;
+  if (countError) {
+    throw new Error(`getProductsPage count failed: ${countError.message}`);
+  }
+
+  const total = count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+  const from = (safePage - 1) * pageSize;
+
+  if (total === 0) {
+    return { items: [], total: 0, pageCount: 1, page: 1 };
+  }
+
+  let query = supabase
+    .from("product")
+    .select(
+      `${LIST_COLUMNS}, category:category!inner(name, slug), images:product_image(url, bg, is_primary, sort_order)`,
+    )
+    .in("status", STOREFRONT_VISIBLE_STATUSES);
+
+  if (filters.categorySlug) {
+    query = query.eq("category.slug", filters.categorySlug);
+  }
+  if (filters.material) {
+    query = query.eq("material", filters.material);
+  }
+  if (filters.featured) {
+    query = query.eq("is_featured", true);
+  }
+  if (filters.fresh) {
+    query = query.eq("is_fresh", true);
+  }
+  if (typeof filters.minPaise === "number") {
+    query = query.gte("price_paise", filters.minPaise);
+  }
+  if (typeof filters.maxPaise === "number") {
+    query = query.lte("price_paise", filters.maxPaise);
+  }
+  if (filters.search) {
+    query = query.textSearch("search", filters.search, { type: "websearch" });
+  }
+
+  applySort(query, filters.sort);
+  query = query.range(from, from + pageSize - 1);
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`getProductsPage failed: ${error.message}`);
+  }
+
+  return { items: mapProductRows(data), total, pageCount, page: safePage };
 }
 
 function applySort<

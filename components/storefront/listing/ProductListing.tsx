@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/storefront/product/ProductCard";
 import type { ProductListItem } from "@/lib/db/queries";
-import type { ListingParams } from "@/lib/listing";
+import { buildListingHref, type ListingParams } from "@/lib/listing";
 import { ROUTES } from "@/lib/routes";
 import { FilterSidebar, type CategoryFacet } from "./FilterSidebar";
 import { SortSelect } from "./SortSelect";
@@ -17,8 +17,11 @@ type ProductListingProps = {
   params: ListingParams;
   /** True when any facet/sort is applied — drives "Clear all" + reset UI. */
   hasActiveFilters: boolean;
-  /** Where "Clear filters" in the empty state points (bare page path). */
+  /** Where "Clear filters" in the empty state points (bare page path); also
+   * the base path pagination links are built from (TASKS 4.17). */
   resetHref: string;
+  /** Total pages at `PRODUCTS_PAGE_SIZE` — 1 hides the pager entirely. */
+  pageCount: number;
 };
 
 /**
@@ -38,6 +41,7 @@ export function ProductListing({
   params,
   hasActiveFilters,
   resetHref,
+  pageCount,
 }: ProductListingProps) {
   return (
     <main className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]">
@@ -77,11 +81,16 @@ export function ProductListing({
 
         <div className="min-w-0 flex-1">
           {products.length > 0 ? (
-            <div className="grid grid-cols-2 gap-[22px] sm:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-[22px] sm:grid-cols-3">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+              {pageCount > 1 && (
+                <Pager resetHref={resetHref} params={params} pageCount={pageCount} />
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center gap-3.5 rounded-md border border-dashed border-[#E0CFB4] bg-cream-50 px-5 py-20 text-center">
               <span className="text-[34px] text-gold-400" aria-hidden>
@@ -104,5 +113,75 @@ export function ProductListing({
         </div>
       </div>
     </main>
+  );
+}
+
+/** Prev/numbered/Next pager (TASKS 4.17), storefront-styled mirror of the admin console's. */
+function Pager({
+  resetHref,
+  params,
+  pageCount,
+}: {
+  resetHref: string;
+  params: ListingParams;
+  pageCount: number;
+}) {
+  const current = params.page;
+  return (
+    <nav
+      aria-label="Pagination"
+      className="mt-10 flex flex-wrap items-center justify-center gap-1.5"
+    >
+      <PagerLink resetHref={resetHref} params={params} page={current - 1} disabled={current <= 1}>
+        ‹ Prev
+      </PagerLink>
+      {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+        <Link
+          key={n}
+          href={buildListingHref(resetHref, params, n)}
+          aria-current={n === current ? "page" : undefined}
+          className={`min-w-[36px] rounded-sm border px-2.5 py-2 text-center text-[12.5px] font-semibold leading-none transition-colors ${
+            n === current
+              ? "border-maroon-700 bg-maroon-700 text-cream-200"
+              : "border-[#E7D9C2] bg-white text-maroon-700 hover:border-gold-400"
+          }`}
+        >
+          {n}
+        </Link>
+      ))}
+      <PagerLink
+        resetHref={resetHref}
+        params={params}
+        page={current + 1}
+        disabled={current >= pageCount}
+      >
+        Next ›
+      </PagerLink>
+    </nav>
+  );
+}
+
+function PagerLink({
+  resetHref,
+  params,
+  page,
+  disabled,
+  children,
+}: {
+  resetHref: string;
+  params: ListingParams;
+  page: number;
+  disabled: boolean;
+  children: React.ReactNode;
+}) {
+  const className =
+    "rounded-sm border border-[#E7D9C2] bg-white px-3.5 py-2 text-[12.5px] font-medium leading-none text-maroon-700 transition-colors hover:border-gold-400";
+  if (disabled) {
+    return <span className={`${className} cursor-not-allowed opacity-40`}>{children}</span>;
+  }
+  return (
+    <Link href={buildListingHref(resetHref, params, page)} className={className}>
+      {children}
+    </Link>
   );
 }

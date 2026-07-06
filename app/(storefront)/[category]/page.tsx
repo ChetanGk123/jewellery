@@ -5,7 +5,7 @@ import {
   getCategoryBySlug,
   getCategoryTiles,
   getMaterials,
-  getProducts,
+  getProductsPage,
 } from "@/lib/db/queries";
 import { parseListingParams, type RawSearchParams } from "@/lib/listing";
 import { ROUTES } from "@/lib/routes";
@@ -41,19 +41,27 @@ export default async function CategoryPage({
   const { category: slug } = await params;
   const listing = parseListingParams(await searchParams);
 
-  const [category, products, categories, materials] = await Promise.all([
+  const [category, productsPage, categories, materials] = await Promise.all([
     getCategoryBySlug(slug),
-    getProducts({
-      categorySlug: slug,
-      material: listing.material,
-      maxPaise: listing.maxPaise,
-      sort: listing.sort,
-    }),
+    getProductsPage(
+      {
+        categorySlug: slug,
+        material: listing.material,
+        maxPaise: listing.maxPaise,
+        sort: listing.sort,
+      },
+      listing.page,
+    ),
     getCategoryTiles(),
     getMaterials(),
   ]);
 
   if (!category) notFound();
+
+  const { items: products, total, pageCount, page: servedPage } = productsPage;
+  // See shop/page.tsx's identical comment: the pager needs the page actually
+  // served, not the raw (possibly out-of-range) request param.
+  const listingParams = { ...listing, page: servedPage };
 
   const hasActiveFilters = Boolean(
     listing.material ||
@@ -61,20 +69,20 @@ export default async function CategoryPage({
       listing.sort !== "featured",
   );
 
-  const count = products.length;
-  const noun = count === 1 ? "product" : "products";
+  const noun = total === 1 ? "product" : "products";
 
   return (
     <ProductListing
       title={category.name}
-      subtitle={`${count} ${noun}`}
+      subtitle={`${total} ${noun}`}
       products={products}
       categories={categories}
       materials={materials}
       activeCategorySlug={category.slug}
-      params={listing}
+      params={listingParams}
       hasActiveFilters={hasActiveFilters}
       resetHref={ROUTES.category(category.slug)}
+      pageCount={pageCount}
     />
   );
 }

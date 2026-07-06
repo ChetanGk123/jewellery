@@ -58,6 +58,9 @@ export function FilterSidebar({
   function pushParams(mutate: (params: URLSearchParams) => void) {
     const params = new URLSearchParams(searchParams.toString());
     mutate(params);
+    // A filter change can invalidate the current page (fewer results, fewer
+    // pages) — always land back on page 1 (TASKS 4.17).
+    params.delete(LISTING_PARAMS.page);
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { ProductListing } from "@/components/storefront/listing/ProductListing";
-import { getCategoryTiles, getMaterials, getProducts } from "@/lib/db/queries";
+import {
+  getCategoryTiles,
+  getMaterials,
+  getProductsPage,
+} from "@/lib/db/queries";
 import { parseListingParams, type RawSearchParams } from "@/lib/listing";
 import { ROUTES } from "@/lib/routes";
 
@@ -28,16 +32,24 @@ export async function generateMetadata({
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = parseListingParams(await searchParams);
 
-  const [products, categories, materials] = await Promise.all([
-    getProducts({
-      material: params.material,
-      maxPaise: params.maxPaise,
-      search: params.query,
-      sort: params.sort,
-    }),
+  const [productsPage, categories, materials] = await Promise.all([
+    getProductsPage(
+      {
+        material: params.material,
+        maxPaise: params.maxPaise,
+        search: params.query,
+        sort: params.sort,
+      },
+      params.page,
+    ),
     getCategoryTiles(),
     getMaterials(),
   ]);
+  const { items: products, total, pageCount, page: servedPage } = productsPage;
+  // The pager needs the page actually served, not the raw (possibly
+  // out-of-range) request param — otherwise a clamped ?page=99 would render
+  // page 1's products under a pager that still thinks it's on page 99.
+  const listingParams = { ...params, page: servedPage };
 
   const hasActiveFilters = Boolean(
     params.material ||
@@ -46,11 +58,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       params.sort !== "featured",
   );
 
-  const count = products.length;
-  const noun = count === 1 ? "product" : "products";
+  const noun = total === 1 ? "product" : "products";
   const subtitle = params.query
-    ? `${count} ${count === 1 ? "result" : "results"} for “${params.query}”`
-    : `${count} ${noun}`;
+    ? `${total} ${total === 1 ? "result" : "results"} for “${params.query}”`
+    : `${total} ${noun}`;
 
   return (
     <ProductListing
@@ -59,9 +70,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       products={products}
       categories={categories}
       materials={materials}
-      params={params}
+      params={listingParams}
       hasActiveFilters={hasActiveFilters}
       resetHref={ROUTES.shop}
+      pageCount={pageCount}
     />
   );
 }

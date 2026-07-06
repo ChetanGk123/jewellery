@@ -30,6 +30,9 @@ export function SortSelect({ value }: { value: ProductSort }) {
     } else {
       params.set(LISTING_PARAMS.sort, next);
     }
+    // A re-sort can land the current page past the end (or just confuse the
+    // user) — always back to page 1 (TASKS 4.17).
+    params.delete(LISTING_PARAMS.page);
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
