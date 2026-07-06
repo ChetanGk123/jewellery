@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 type Props = {
-  email: string;
+  /** Accessible label for the dialog + heading text. */
+  title: string;
+  /** Explanatory copy — plain text or rich nodes (e.g. a highlighted name). */
+  body: ReactNode;
+  /** Label on the destructive confirm button (e.g. "Cancel order"). */
+  confirmLabel: string;
+  /** Label shown on the confirm button while the action runs. */
+  pendingLabel: string;
+  /** Label on the dismiss button. Defaults to "Keep it". */
+  dismissLabel?: string;
   isPending: boolean;
   error: string | null;
   onConfirm: () => void;
@@ -11,21 +20,28 @@ type Props = {
 };
 
 /**
- * Confirmation dialog before revoking an admin (the destructive step on the Team
- * page). Mirrors `CouponModal`'s overlay + card shell; focuses Cancel on open and
- * closes on Escape. The RPC still blocks self-revoke / last-admin regardless.
+ * Shared confirmation dialog for destructive admin actions (TASKS 5.4). An
+ * overlay + card `alertdialog` that mirrors the Coupon/Category modal shell;
+ * focuses the dismiss button on open and closes on Escape (both blocked while
+ * the action is pending). The server RPC remains the real authority — this only
+ * guards against a single-click misfire. Reused by Team revoke, order cancel,
+ * and subscriber remove.
  */
-export function ConfirmRemoveDialog({
-  email,
+export function ConfirmDialog({
+  title,
+  body,
+  confirmLabel,
+  pendingLabel,
+  dismissLabel = "Keep it",
   isPending,
   error,
   onConfirm,
   onClose,
 }: Props) {
-  const cancelRef = useRef<HTMLButtonElement>(null);
+  const dismissRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    cancelRef.current?.focus();
+    dismissRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isPending) onClose();
     };
@@ -35,24 +51,24 @@ export function ConfirmRemoveDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-[rgba(42,10,18,0.45)] p-6"
-      onClick={onClose}
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(42,10,18,0.45)] p-6"
+      onClick={() => {
+        if (!isPending) onClose();
+      }}
     >
       <div
         role="alertdialog"
         aria-modal="true"
-        aria-label="Remove admin access"
+        aria-label={title}
         className="w-[420px] max-w-full overflow-hidden rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col gap-2.5 px-[26px] py-6">
           <h2 className="font-heading text-[22px] leading-tight text-[#2A1F1A]">
-            Remove admin access?
+            {title}
           </h2>
           <p className="font-body text-[13.5px] leading-relaxed text-[#5E4A40]">
-            <span className="font-semibold text-maroon-700">{email}</span> will
-            lose access to the admin console on their next sign-in. You can grant
-            it again any time.
+            {body}
           </p>
 
           {error && (
@@ -64,13 +80,13 @@ export function ConfirmRemoveDialog({
 
         <div className="flex items-center justify-end gap-2.5 border-t border-[#E7E0D4] bg-white px-[26px] py-[18px]">
           <button
-            ref={cancelRef}
+            ref={dismissRef}
             type="button"
             onClick={onClose}
             disabled={isPending}
             className="rounded-lg border border-[#DAD0C2] bg-white px-5 py-[11px] font-body text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-60"
           >
-            Cancel
+            {dismissLabel}
           </button>
           <button
             type="button"
@@ -78,7 +94,7 @@ export function ConfirmRemoveDialog({
             disabled={isPending}
             className="rounded-lg bg-[#C0392F] px-6 py-[11px] font-body text-[12px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {isPending ? "Removing…" : "Remove access"}
+            {isPending ? pendingLabel : confirmLabel}
           </button>
         </div>
       </div>

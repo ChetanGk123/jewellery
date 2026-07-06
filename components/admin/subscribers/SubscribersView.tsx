@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { removeSubscriber } from "@/app/(admin)/admin/(console)/subscribers/actions";
+import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
 import {
   type AdminSubscriberRow,
   type SubscriberKpi,
@@ -27,7 +28,10 @@ export function SubscribersView({ subscribers, kpis }: Props) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [, startTransition] = useTransition();
+  // Removing is permanent — hold the row pending a confirm dialog rather than
+  // deleting on the single × click (TASKS 5.4).
+  const [confirming, setConfirming] = useState<AdminSubscriberRow | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -35,13 +39,19 @@ export function SubscribersView({ subscribers, kpis }: Props) {
     return subscribers.filter((s) => s.email.toLowerCase().includes(q));
   }, [subscribers, search]);
 
-  const remove = (row: AdminSubscriberRow) => {
+  const confirmRemove = () => {
+    if (!confirming) return;
+    const row = confirming;
     setError(null);
     setPendingId(row.id);
     startTransition(async () => {
       const res = await removeSubscriber(row.id);
       setPendingId(null);
-      if (!res.ok) setError(res.error ?? "Couldn't remove the subscriber.");
+      if (res.ok) {
+        setConfirming(null);
+      } else {
+        setError(res.error ?? "Couldn't remove the subscriber.");
+      }
     });
   };
 
@@ -186,7 +196,10 @@ export function SubscribersView({ subscribers, kpis }: Props) {
                     </span>
                     <button
                       type="button"
-                      onClick={() => remove(s)}
+                      onClick={() => {
+                        setError(null);
+                        setConfirming(s);
+                      }}
                       disabled={isBusy}
                       title="Remove subscriber"
                       aria-label={`Remove ${s.email}`}
@@ -201,6 +214,33 @@ export function SubscribersView({ subscribers, kpis }: Props) {
           </div>
         </div>
       </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title="Remove subscriber?"
+          body={
+            <>
+              <span className="font-semibold text-maroon-700">
+                {confirming.email}
+              </span>{" "}
+              will be removed from the mailing list. They&rsquo;d need to
+              re-subscribe to receive future updates.
+            </>
+          }
+          confirmLabel="Remove"
+          pendingLabel="Removing…"
+          dismissLabel="Keep"
+          isPending={isPending}
+          error={error}
+          onConfirm={confirmRemove}
+          onClose={() => {
+            if (!isPending) {
+              setConfirming(null);
+              setError(null);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

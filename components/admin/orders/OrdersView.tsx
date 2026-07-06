@@ -16,6 +16,7 @@ import type {
 } from "@/lib/db/admin-orders";
 import { ROUTES } from "@/lib/routes";
 import { formatPaise } from "@/lib/utils/money";
+import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
 import { OrderDrawer } from "./OrderDrawer";
 
 const TABS: OrderFilter[] = ["All", ...ORDER_STATUSES];
@@ -34,6 +35,9 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
   // moves the order out of the active filter. Only the backdrop / × close it.
   const [selected, setSelected] = useState<AdminOrderRow | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Cancel is terminal (restores stock, can't be undone) — gate it behind a
+  // confirm dialog so it can't fire on a single misclick (TASKS 5.4).
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const openOrder = (order: AdminOrderRow) => {
@@ -43,6 +47,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
   const closeOrder = () => {
     setSelected(null);
     setError(null);
+    setConfirmingCancel(false);
   };
 
   const runChange = (next: string) => {
@@ -51,6 +56,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
       const res = await setOrderStatus(selected.id, next);
       if (res.ok) {
         setError(null);
+        setConfirmingCancel(false);
         // Keep the drawer open; reflect the confirmed new status in place.
         setSelected((prev) => (prev ? { ...prev, status: next } : prev));
       } else {
@@ -202,10 +208,37 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         isOpen={selected !== null}
         onClose={closeOrder}
         onAdvance={onAdvance}
-        onCancel={() => runChange("Cancelled")}
+        onCancel={() => {
+          setError(null);
+          setConfirmingCancel(true);
+        }}
         isPending={isPending}
         error={error}
       />
+
+      {confirmingCancel && selected && (
+        <ConfirmDialog
+          title="Cancel this order?"
+          body={
+            <>
+              <span className="font-semibold text-maroon-700">
+                {selected.orderNo}
+              </span>{" "}
+              will be marked Cancelled and its stock returned. This can&rsquo;t
+              be undone.
+            </>
+          }
+          confirmLabel="Cancel order"
+          pendingLabel="Cancelling…"
+          dismissLabel="Keep order"
+          isPending={isPending}
+          error={error}
+          onConfirm={() => runChange("Cancelled")}
+          onClose={() => {
+            if (!isPending) setConfirmingCancel(false);
+          }}
+        />
+      )}
     </div>
   );
 }

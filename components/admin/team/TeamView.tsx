@@ -12,7 +12,7 @@ import {
   adminInitial,
   roleAuditSummary,
 } from "@/lib/admin/team";
-import { ConfirmRemoveDialog } from "./ConfirmRemoveDialog";
+import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
 
 type Props = {
   admins: AdminUser[];
@@ -186,8 +186,20 @@ export function TeamView({ admins, audit }: Props) {
       </section>
 
       {removing && (
-        <ConfirmRemoveDialog
-          email={removing.email}
+        <ConfirmDialog
+          title="Remove admin access?"
+          body={
+            <>
+              <span className="font-semibold text-maroon-700">
+                {removing.email}
+              </span>{" "}
+              will lose access to the admin console on their next sign-in. You
+              can grant it again any time.
+            </>
+          }
+          confirmLabel="Remove access"
+          pendingLabel="Removing…"
+          dismissLabel="Cancel"
           isPending={isRevoking}
           error={revokeError}
           onConfirm={onConfirmRemove}
