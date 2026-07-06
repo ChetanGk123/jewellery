@@ -36,7 +36,7 @@ export async function generateMetadata({
   if (!product) return { title: "Product not found" };
   const description =
     product.blurb ??
-    `${product.name} — handcrafted artificial bridal jewellery from JR Jewellers.`;
+    `${product.name} — handcrafted artificial bridal jewellery from RJ Jewellers.`;
   const productImages = product.images
     .map((image) => image.url)
     .filter((url): url is string => Boolean(url));

@@ -20,7 +20,7 @@ export async function generateMetadata({
   return {
     title: query ? `Search: ${query}` : "All Jewellery",
     description:
-      "Browse the full JR Jewellers range of handcrafted artificial bridal jewellery — bridal sets, necklaces, earrings and more.",
+      "Browse the full RJ Jewellers range of handcrafted artificial bridal jewellery — bridal sets, necklaces, earrings and more.",
   };
 }
 

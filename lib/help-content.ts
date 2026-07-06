@@ -205,7 +205,7 @@ export const FAQ_ITEMS: FaqItem[] = [
 ];
 
 export const ABOUT_INTRO =
-  "JR Jewellers began with a simple belief — that every bride deserves to feel like royalty, without the weight of a gold budget. From our studio in Jaipur, we craft artificial bridal jewellery that carries the soul of traditional Kundan, Polki and temple work, reimagined for the modern celebration.";
+  "RJ Jewellers began with a simple belief — that every bride deserves to feel like royalty, without the weight of a gold budget. From our studio in Jaipur, we craft artificial bridal jewellery that carries the soul of traditional Kundan, Polki and temple work, reimagined for the modern celebration.";
 
 export const ABOUT_VALUES: IconItem[] = [
   {

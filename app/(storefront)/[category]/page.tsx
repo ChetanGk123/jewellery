@@ -25,7 +25,7 @@ export async function generateMetadata({
     title: category.name,
     description:
       category.description ??
-      `Shop ${category.name} — handcrafted artificial bridal jewellery from JR Jewellers.`,
+      `Shop ${category.name} — handcrafted artificial bridal jewellery from RJ Jewellers.`,
   };
 }
 

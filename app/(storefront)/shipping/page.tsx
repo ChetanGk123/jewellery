@@ -20,7 +20,7 @@ import { ROUTES } from "@/lib/routes";
 export const metadata: Metadata = {
   title: "Shipping & Returns",
   description:
-    "How your JR Jewellers order reaches you — dispatch times, delivery windows, COD, shipping rates, and our 7-day returns & exchange policy.",
+    "How your RJ Jewellers order reaches you — dispatch times, delivery windows, COD, shipping rates, and our 7-day returns & exchange policy.",
 };
 
 /**

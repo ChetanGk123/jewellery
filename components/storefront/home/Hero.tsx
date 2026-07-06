@@ -61,7 +61,7 @@ export function Hero() {
             <circle cx="60" cy="60" r="3.6" fill="#9C7526" stroke="none" />
           </svg>
           <div className="mt-[18px] font-display text-[13px] leading-none tracking-[0.34em] text-[#8A6620]">
-            JR JEWELLERS
+            RJ JEWELLERS
           </div>
           <div className="mt-[9px] text-[11px] uppercase leading-none tracking-[0.12em] text-[#A88A55]">
             Your photo here

@@ -31,7 +31,7 @@ export default async function SignInPage({
       subtitle="Sign in to check out, view your orders and manage your details."
       footer={
         <>
-          New to JR Jewellers?{" "}
+          New to RJ Jewellers?{" "}
           <AuthLink
             href={`${ROUTES.signUp}?next=${encodeURIComponent(target)}`}
           >

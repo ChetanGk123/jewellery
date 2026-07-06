@@ -28,7 +28,10 @@ const jost = Jost({
   display: "swap",
 });
 
-const DEFAULT_TITLE = "JR Jewellers — Bridal & Fine Jewellery";
+// Brand name is derived from STORE_INFO (single source of truth) so tab titles
+// can't drift from the sidebar/emails again (TASKS 5.6). The descriptive suffix
+// is editorial SEO copy, not brand identity.
+const DEFAULT_TITLE = `${STORE_INFO.name} — Bridal & Fine Jewellery`;
 const DEFAULT_DESCRIPTION =
   "Handcrafted Kundan, Polki and temple jewellery for the Indian bride. Cash on delivery across India.";
 
@@ -36,7 +39,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: DEFAULT_TITLE,
-    template: "%s · JR Jewellers",
+    template: `%s · ${STORE_INFO.name}`,
   },
   description: DEFAULT_DESCRIPTION,
   openGraph: {

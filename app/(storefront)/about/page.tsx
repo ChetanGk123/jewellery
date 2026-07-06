@@ -8,7 +8,7 @@ import { ROUTES } from "@/lib/routes";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "JR Jewellers crafts artificial bridal jewellery from Jaipur — heritage Kundan, Polki and temple artistry reimagined for the modern celebration, at honest value.",
+    "RJ Jewellers crafts artificial bridal jewellery from Jaipur — heritage Kundan, Polki and temple artistry reimagined for the modern celebration, at honest value.",
 };
 
 /**
@@ -22,7 +22,7 @@ export default function AboutPage() {
       <HelpHeader
         crumb="About Us"
         eyebrow="Our story"
-        title="About JR Jewellers"
+        title="About RJ Jewellers"
         intro="Heritage bridal artistry, reimagined for the modern celebration — crafted in Jaipur, worn nationwide."
       />
 

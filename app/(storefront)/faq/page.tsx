@@ -7,7 +7,7 @@ import { ROUTES } from "@/lib/routes";
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
-    "Answers to common questions about JR Jewellers — materials, delivery, Cash on Delivery, returns, plating care, and custom bridal sets.",
+    "Answers to common questions about RJ Jewellers — materials, delivery, Cash on Delivery, returns, plating care, and custom bridal sets.",
 };
 
 /**

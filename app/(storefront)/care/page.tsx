@@ -16,7 +16,7 @@ import {
 export const metadata: Metadata = {
   title: "Jewellery Care Guide",
   description:
-    "Keep your JR Jewellers pieces bright and sparkling — the four golden rules, do's and don'ts, plus cleaning and storage tips for anti-tarnish artificial jewellery.",
+    "Keep your RJ Jewellers pieces bright and sparkling — the four golden rules, do's and don'ts, plus cleaning and storage tips for anti-tarnish artificial jewellery.",
 };
 
 /**

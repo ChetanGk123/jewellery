@@ -134,7 +134,7 @@ export const getStoreSettings = cache(
       }
 
       return {
-    storeName: data?.store_name ?? "JR Jewellers",
+    storeName: data?.store_name ?? "RJ Jewellers",
     supportEmail: data?.support_email ?? null,
     phone: data?.phone ?? null,
     gstin: data?.gstin ?? null,

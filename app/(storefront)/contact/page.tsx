@@ -10,7 +10,7 @@ import {
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
-    "Questions about an order, sizing, or a custom bridal set? Call, email, or WhatsApp JR Jewellers — we usually reply within a few hours.",
+    "Questions about an order, sizing, or a custom bridal set? Call, email, or WhatsApp RJ Jewellers — we usually reply within a few hours.",
 };
 
 const channelCardClass =
