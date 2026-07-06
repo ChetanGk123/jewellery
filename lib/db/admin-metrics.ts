@@ -44,7 +44,8 @@ export async function getAdminNavCounts(): Promise<AdminNavCounts> {
       reviews: reviews.count ?? 0,
       messages: messages.count ?? 0,
     };
-  } catch {
+  } catch (err) {
+    console.error("[admin-read] nav-counts failed:", err);
     return ZERO_COUNTS;
   }
 }

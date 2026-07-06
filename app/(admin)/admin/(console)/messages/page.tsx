@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MessagesView } from "@/components/admin/messages/MessagesView";
+import { AdminErrorBanner } from "@/components/admin/ui/AdminErrorBanner";
 import { ADMIN_PAGE_META } from "@/lib/admin/nav";
 import { listAdminMessages } from "@/lib/db/admin-messages";
 import { ROUTES } from "@/lib/routes";
@@ -14,6 +15,14 @@ export const metadata: Metadata = {
  * which owns the tab filter and the Start / Resolve / Reopen transitions.
  */
 export default async function AdminMessagesPage() {
-  const { rows, counts } = await listAdminMessages();
-  return <MessagesView messages={rows} counts={counts} />;
+  const {
+    data: { rows, counts },
+    error,
+  } = await listAdminMessages();
+  return (
+    <div className="flex flex-col gap-6">
+      {error && <AdminErrorBanner />}
+      <MessagesView messages={rows} counts={counts} />
+    </div>
+  );
 }

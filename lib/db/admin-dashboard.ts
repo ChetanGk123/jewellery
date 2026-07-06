@@ -1,5 +1,6 @@
 import "server-only";
 import { statusChip, type StatusChip } from "@/lib/admin/order-status";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 /**
@@ -82,8 +83,8 @@ function deltaPct(current: number, previous: number): number | null {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
-  try {
+export async function getDashboardData(): Promise<AdminRead<DashboardData>> {
+  return loadAdmin("dashboard", async () => {
     const supabase = await createServerClient();
     const now = new Date();
     const windowStart = new Date(now.getTime() - 7 * DAY_MS);
@@ -210,7 +211,5 @@ export async function getDashboardData(): Promise<DashboardData> {
       lowStock,
       topSellers,
     };
-  } catch {
-    return EMPTY;
-  }
+  }, EMPTY);
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ReviewsView } from "@/components/admin/reviews/ReviewsView";
+import { AdminErrorBanner } from "@/components/admin/ui/AdminErrorBanner";
 import { ADMIN_PAGE_META } from "@/lib/admin/nav";
 import { listAdminReviews } from "@/lib/db/admin-reviews";
 import { ROUTES } from "@/lib/routes";
@@ -14,6 +15,14 @@ export const metadata: Metadata = {
  * which owns the tab filter and the approve/reject actions.
  */
 export default async function AdminReviewsPage() {
-  const { rows, counts } = await listAdminReviews();
-  return <ReviewsView reviews={rows} counts={counts} />;
+  const {
+    data: { rows, counts },
+    error,
+  } = await listAdminReviews();
+  return (
+    <div className="flex flex-col gap-6">
+      {error && <AdminErrorBanner />}
+      <ReviewsView reviews={rows} counts={counts} />
+    </div>
+  );
 }

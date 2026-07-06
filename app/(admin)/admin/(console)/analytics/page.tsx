@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AnalyticsView } from "@/components/admin/analytics/AnalyticsView";
+import { AdminErrorBanner } from "@/components/admin/ui/AdminErrorBanner";
 import { ADMIN_PAGE_META } from "@/lib/admin/nav";
 import { getProductAnalytics } from "@/lib/db/admin-analytics";
 import { ROUTES } from "@/lib/routes";
@@ -15,6 +16,14 @@ export const metadata: Metadata = {
  * toggle.
  */
 export default async function AdminAnalyticsPage() {
-  const { kpis, products } = await getProductAnalytics();
-  return <AnalyticsView kpis={kpis} products={products} />;
+  const {
+    data: { kpis, products },
+    error,
+  } = await getProductAnalytics();
+  return (
+    <div className="flex flex-col gap-6">
+      {error && <AdminErrorBanner />}
+      <AnalyticsView kpis={kpis} products={products} />
+    </div>
+  );
 }

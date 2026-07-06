@@ -4,6 +4,7 @@ import type {
   ReviewCounts,
   ReviewStatus,
 } from "@/lib/admin/review";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 export type AdminReviewsData = {
@@ -24,8 +25,8 @@ const EMPTY: AdminReviewsData = {
  * on an embedded join). Writes go through the `admin_set_review_status` RPC
  * (0014). Degrades to empty on error so the console chrome still renders.
  */
-export async function listAdminReviews(): Promise<AdminReviewsData> {
-  try {
+export async function listAdminReviews(): Promise<AdminRead<AdminReviewsData>> {
+  return loadAdmin("reviews", async () => {
     const supabase = await createServerClient();
     const [{ data: reviews }, { data: products }] = await Promise.all([
       supabase
@@ -55,7 +56,5 @@ export async function listAdminReviews(): Promise<AdminReviewsData> {
     };
 
     return { rows, counts };
-  } catch {
-    return EMPTY;
-  }
+  }, EMPTY);
 }

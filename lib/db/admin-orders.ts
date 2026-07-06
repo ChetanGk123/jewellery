@@ -4,6 +4,7 @@ import {
   ORDERS_PAGE_SIZE,
   type OrderStatus,
 } from "@/lib/admin/order-status";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 /**
@@ -65,7 +66,10 @@ export type AdminOrdersPage = {
 };
 
 const IST = "Asia/Kolkata";
-const PAYMENT_LABELS: Record<string, string> = { cod: "COD", razorpay: "Razorpay" };
+const PAYMENT_LABELS: Record<string, string> = {
+  cod: "COD",
+  razorpay: "Razorpay",
+};
 
 /** IST date, e.g. "04 Jul 2026". */
 function istDate(iso: string): string {
@@ -100,85 +104,94 @@ const EMPTY_COUNTS: OrderCounts = {
 };
 
 function emptyPage(filter: OrderFilter, page: number): AdminOrdersPage {
-  return { rows: [], counts: EMPTY_COUNTS, filter, page, pageCount: 0, total: 0 };
+  return {
+    rows: [],
+    counts: EMPTY_COUNTS,
+    filter,
+    page,
+    pageCount: 0,
+    total: 0,
+  };
 }
 
 export async function listAdminOrders(opts: {
   filter: OrderFilter;
   page: number;
-}): Promise<AdminOrdersPage> {
+}): Promise<AdminRead<AdminOrdersPage>> {
   const filter = opts.filter;
   const page = Math.max(1, opts.page);
 
-  try {
-    const supabase = await createServerClient();
+  return loadAdmin(
+    "orders",
+    async () => {
+      const supabase = await createServerClient();
 
-    // One exact head-count per status (scale-safe vs. tallying fetched rows) +
-    // the current page of full rows — all in parallel.
-    const from = (page - 1) * ORDERS_PAGE_SIZE;
-    let rowsQuery = supabase
-      .from("order")
-      .select(SELECT)
-      .order("created_at", { ascending: false })
-      .range(from, from + ORDERS_PAGE_SIZE - 1);
-    if (filter !== "All") rowsQuery = rowsQuery.eq("status", filter);
+      // One exact head-count per status (scale-safe vs. tallying fetched rows) +
+      // the current page of full rows — all in parallel.
+      const from = (page - 1) * ORDERS_PAGE_SIZE;
+      let rowsQuery = supabase
+        .from("order")
+        .select(SELECT)
+        .order("created_at", { ascending: false })
+        .range(from, from + ORDERS_PAGE_SIZE - 1);
+      if (filter !== "All") rowsQuery = rowsQuery.eq("status", filter);
 
-    const [rowsRes, ...countRes] = await Promise.all([
-      rowsQuery,
-      ...ORDER_STATUSES.map((s) =>
-        supabase
-          .from("order")
-          .select("*", { count: "exact", head: true })
-          .eq("status", s),
-      ),
-    ]);
+      const [rowsRes, ...countRes] = await Promise.all([
+        rowsQuery,
+        ...ORDER_STATUSES.map((s) =>
+          supabase
+            .from("order")
+            .select("*", { count: "exact", head: true })
+            .eq("status", s),
+        ),
+      ]);
 
-    const counts = { ...EMPTY_COUNTS };
-    let all = 0;
-    ORDER_STATUSES.forEach((s, i) => {
-      const c = countRes[i].count ?? 0;
-      counts[s] = c;
-      all += c;
-    });
-    counts.All = all;
+      const counts = { ...EMPTY_COUNTS };
+      let all = 0;
+      ORDER_STATUSES.forEach((s, i) => {
+        const c = countRes[i].count ?? 0;
+        counts[s] = c;
+        all += c;
+      });
+      counts.All = all;
 
-    const total = counts[filter];
-    const pageCount = Math.max(1, Math.ceil(total / ORDERS_PAGE_SIZE));
+      const total = counts[filter];
+      const pageCount = Math.max(1, Math.ceil(total / ORDERS_PAGE_SIZE));
 
-    const rows: AdminOrderRow[] = (rowsRes.data ?? []).map((o) => {
-      const items = o.order_item ?? [];
-      return {
-        id: o.id,
-        orderNo: o.order_no,
-        status: o.status,
-        createdAt: o.created_at,
-        dateLabel: istDate(o.created_at),
-        customerName: o.customer_name,
-        phone: o.customer_phone,
-        email: o.customer_email,
-        addressLine: o.address_line,
-        city: o.city,
-        state: o.state,
-        pincode: o.pincode,
-        paymentMethod: o.payment_method,
-        paymentLabel: PAYMENT_LABELS[o.payment_method] ?? o.payment_method,
-        subtotalPaise: o.subtotal_paise,
-        discountPaise: o.discount_paise,
-        shippingPaise: o.shipping_paise,
-        totalPaise: o.total_paise,
-        itemCount: items.reduce((n, it) => n + it.qty, 0),
-        items: items.map((it) => ({
-          name: it.name,
-          tone: it.tone,
-          qty: it.qty,
-          lineTotalPaise: it.line_total_paise,
-        })),
-        awb: o.awb,
-      };
-    });
+      const rows: AdminOrderRow[] = (rowsRes.data ?? []).map((o) => {
+        const items = o.order_item ?? [];
+        return {
+          id: o.id,
+          orderNo: o.order_no,
+          status: o.status,
+          createdAt: o.created_at,
+          dateLabel: istDate(o.created_at),
+          customerName: o.customer_name,
+          phone: o.customer_phone,
+          email: o.customer_email,
+          addressLine: o.address_line,
+          city: o.city,
+          state: o.state,
+          pincode: o.pincode,
+          paymentMethod: o.payment_method,
+          paymentLabel: PAYMENT_LABELS[o.payment_method] ?? o.payment_method,
+          subtotalPaise: o.subtotal_paise,
+          discountPaise: o.discount_paise,
+          shippingPaise: o.shipping_paise,
+          totalPaise: o.total_paise,
+          itemCount: items.reduce((n, it) => n + it.qty, 0),
+          items: items.map((it) => ({
+            name: it.name,
+            tone: it.tone,
+            qty: it.qty,
+            lineTotalPaise: it.line_total_paise,
+          })),
+          awb: o.awb,
+        };
+      });
 
-    return { rows, counts, filter, page, pageCount, total };
-  } catch {
-    return emptyPage(filter, page);
-  }
+      return { rows, counts, filter, page, pageCount, total };
+    },
+    emptyPage(filter, page),
+  );
 }

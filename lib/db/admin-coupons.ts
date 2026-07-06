@@ -1,6 +1,7 @@
 import "server-only";
 import type { AdminCouponRow } from "@/lib/admin/coupon";
 import type { CouponKind } from "@/lib/coupons";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 /**
@@ -10,8 +11,8 @@ import { createServerClient } from "./server";
  * through the `admin_upsert_coupon` / `admin_toggle_coupon` RPCs, never a direct
  * table write. Degrades to an empty list on error so the console still renders.
  */
-export async function listAdminCoupons(): Promise<AdminCouponRow[]> {
-  try {
+export async function listAdminCoupons(): Promise<AdminRead<AdminCouponRow[]>> {
+  return loadAdmin("coupons", async () => {
     const supabase = await createServerClient();
     const { data } = await supabase
       .from("coupon")
@@ -32,7 +33,5 @@ export async function listAdminCoupons(): Promise<AdminCouponRow[]> {
       expiresAt: c.expires_at,
       isActive: c.is_active,
     }));
-  } catch {
-    return [];
-  }
+  }, []);
 }

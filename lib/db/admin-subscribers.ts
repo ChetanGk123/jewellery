@@ -4,6 +4,7 @@ import type {
   SubscriberKpi,
   SubscriberSource,
 } from "@/lib/admin/subscriber";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 export type AdminSubscribersData = {
@@ -29,8 +30,10 @@ const EMPTY: AdminSubscribersData = {
  * `subscribe_email` / `admin_remove_subscriber` RPCs (0017). Degrades to an
  * empty list on error so the console chrome still renders.
  */
-export async function listAdminSubscribers(): Promise<AdminSubscribersData> {
-  try {
+export async function listAdminSubscribers(): Promise<
+  AdminRead<AdminSubscribersData>
+> {
+  return loadAdmin("subscribers", async () => {
     const supabase = await createServerClient();
     const { data } = await supabase
       .from("subscriber")
@@ -45,9 +48,7 @@ export async function listAdminSubscribers(): Promise<AdminSubscribersData> {
     }));
 
     return { rows, kpis: buildKpis(rows) };
-  } catch {
-    return EMPTY;
-  }
+  }, EMPTY);
 }
 
 /** Total, joined-this-week, and the leading source with its count. */

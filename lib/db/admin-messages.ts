@@ -4,6 +4,7 @@ import type {
   MessageCounts,
   MessageStatus,
 } from "@/lib/admin/message";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 export type AdminMessagesData = {
@@ -23,8 +24,10 @@ const EMPTY: AdminMessagesData = {
  * `admin_set_message_status` RPC (0015). Degrades to empty on error so the
  * console chrome still renders.
  */
-export async function listAdminMessages(): Promise<AdminMessagesData> {
-  try {
+export async function listAdminMessages(): Promise<
+  AdminRead<AdminMessagesData>
+> {
+  return loadAdmin("messages", async () => {
     const supabase = await createServerClient();
     const { data } = await supabase
       .from("contact_message")
@@ -53,7 +56,5 @@ export async function listAdminMessages(): Promise<AdminMessagesData> {
     };
 
     return { rows, counts };
-  } catch {
-    return EMPTY;
-  }
+  }, EMPTY);
 }

@@ -5,6 +5,7 @@ import {
   type ProductImage,
   type ProductStatusFilter,
 } from "@/lib/admin/product-status";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 /** Coerce the stored `gallery` jsonb into a clean ProductImage[]. */
@@ -145,7 +146,8 @@ export async function getAdminProductById(
       .eq("id", id)
       .maybeSingle();
     return data ? mapProductRow(data as ProductSelectRow) : null;
-  } catch {
+  } catch (err) {
+    console.error("[admin-read] product-by-id failed:", err);
     return null;
   }
 }
@@ -167,7 +169,8 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
       .select("id, name")
       .order("sort_order", { ascending: true });
     return (data ?? []).map((c) => ({ id: c.id, name: c.name }));
-  } catch {
+  } catch (err) {
+    console.error("[admin-read] product-categories failed:", err);
     return [];
   }
 }
@@ -177,7 +180,7 @@ export async function listAdminProducts(opts: {
   categoryId: string;
   status: ProductStatusFilter;
   page: number;
-}): Promise<AdminProductsPage> {
+}): Promise<AdminRead<AdminProductsPage>> {
   const { search, categoryId, status } = opts;
   const page = Math.max(1, opts.page);
   const from = (page - 1) * ADMIN_PRODUCTS_PAGE_SIZE;
@@ -193,49 +196,54 @@ export async function listAdminProducts(opts: {
     total: 0,
   };
 
-  try {
-    const supabase = await createServerClient();
+  return loadAdmin(
+    "products",
+    async () => {
+      const supabase = await createServerClient();
 
-    let query = supabase
-      .from("product")
-      .select(SELECT, { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(from, from + ADMIN_PRODUCTS_PAGE_SIZE - 1);
+      let query = supabase
+        .from("product")
+        .select(SELECT, { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, from + ADMIN_PRODUCTS_PAGE_SIZE - 1);
 
-    if (search.trim()) {
-      const q = search.trim().replace(/[%,]/g, " ");
-      query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%`);
-    }
-    if (categoryId !== "All") query = query.eq("category_id", categoryId);
+      if (search.trim()) {
+        const q = search.trim().replace(/[%,]/g, " ");
+        query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%`);
+      }
+      if (categoryId !== "All") query = query.eq("category_id", categoryId);
 
-    // Status filter is a hybrid of stored status and stock level.
-    if (status === "Active") query = query.eq("status", "Active");
-    else if (status === "Draft") query = query.eq("status", "Draft");
-    else if (status === "Low stock")
-      query = query.gt("stock", 0).lte("stock", LOW_STOCK_THRESHOLD);
-    else if (status === "Out of stock") query = query.lte("stock", 0);
+      // Status filter is a hybrid of stored status and stock level.
+      if (status === "Active") query = query.eq("status", "Active");
+      else if (status === "Draft") query = query.eq("status", "Draft");
+      else if (status === "Low stock")
+        query = query.gt("stock", 0).lte("stock", LOW_STOCK_THRESHOLD);
+      else if (status === "Out of stock") query = query.lte("stock", 0);
 
-    const [{ data, count }, categories] = await Promise.all([
-      query,
-      getAdminCategories(),
-    ]);
+      const [{ data, count }, categories] = await Promise.all([
+        query,
+        getAdminCategories(),
+      ]);
 
-    const total = count ?? 0;
-    const pageCount = Math.max(1, Math.ceil(total / ADMIN_PRODUCTS_PAGE_SIZE));
+      const total = count ?? 0;
+      const pageCount = Math.max(
+        1,
+        Math.ceil(total / ADMIN_PRODUCTS_PAGE_SIZE),
+      );
 
-    const rows: AdminProductRow[] = (data ?? []).map(mapProductRow);
+      const rows: AdminProductRow[] = (data ?? []).map(mapProductRow);
 
-    return {
-      rows,
-      categories,
-      search,
-      categoryId,
-      status,
-      page,
-      pageCount,
-      total,
-    };
-  } catch {
-    return empty;
-  }
+      return {
+        rows,
+        categories,
+        search,
+        categoryId,
+        status,
+        page,
+        pageCount,
+        total,
+      };
+    },
+    empty,
+  );
 }

@@ -7,6 +7,7 @@ import type {
 } from "@/lib/admin/analytics";
 import { productDisplayChip } from "@/lib/admin/product-status";
 import { formatPaise } from "@/lib/utils/money";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 /** How many months of history the view covers. */
@@ -39,8 +40,8 @@ const EMPTY: AnalyticsData = {
  * ones with no sales just carry zeros. Degrades to empty on error so the
  * console chrome still renders.
  */
-export async function getProductAnalytics(): Promise<AnalyticsData> {
-  try {
+export async function getProductAnalytics(): Promise<AdminRead<AnalyticsData>> {
+  return loadAdmin("analytics", async () => {
     const supabase = await createServerClient();
     const buckets = buildBuckets(new Date());
     const cutoffIso = windowCutoffIso(buckets);
@@ -117,9 +118,7 @@ export async function getProductAnalytics(): Promise<AnalyticsData> {
     });
 
     return { kpis: buildKpis(rows), products: rows };
-  } catch {
-    return EMPTY;
-  }
+  }, EMPTY);
 }
 
 /** Recent-half vs prior-half units change, %; null when there's no baseline. */

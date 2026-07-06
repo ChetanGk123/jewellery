@@ -1,5 +1,6 @@
 import "server-only";
 import type { AdminCategoryRow } from "@/lib/admin/category";
+import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
 /**
@@ -11,8 +12,10 @@ import { createServerClient } from "./server";
  * client-safe `lib/admin/category` so the client views can share them.
  */
 
-export async function listAdminCategories(): Promise<AdminCategoryRow[]> {
-  try {
+export async function listAdminCategories(): Promise<
+  AdminRead<AdminCategoryRow[]>
+> {
+  return loadAdmin("categories", async () => {
     const supabase = await createServerClient();
 
     const [cats, products] = await Promise.all([
@@ -38,7 +41,5 @@ export async function listAdminCategories(): Promise<AdminCategoryRow[]> {
       sortOrder: c.sort_order,
       productCount: counts.get(c.id) ?? 0,
     }));
-  } catch {
-    return [];
-  }
+  }, []);
 }

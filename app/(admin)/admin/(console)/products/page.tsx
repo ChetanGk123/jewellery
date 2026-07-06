@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ProductsView } from "@/components/admin/products/ProductsView";
+import { AdminErrorBanner } from "@/components/admin/ui/AdminErrorBanner";
 import { ADMIN_PAGE_META } from "@/lib/admin/nav";
 import {
   getAdminProductById,
@@ -27,7 +28,7 @@ export default async function AdminProductsPage({
   // `?edit=<id>` (e.g. the Analytics "Edit product" deep link) opens that
   // product's modal on load — fetched directly so it works regardless of the
   // current list page/filter.
-  const [data, initialEdit] = await Promise.all([
+  const [{ data, error }, initialEdit] = await Promise.all([
     listAdminProducts({
       search: sp.search ?? "",
       categoryId: sp.category ?? "All",
@@ -36,5 +37,10 @@ export default async function AdminProductsPage({
     }),
     sp.edit ? getAdminProductById(sp.edit) : Promise.resolve(null),
   ]);
-  return <ProductsView page={data} initialEdit={initialEdit} />;
+  return (
+    <div className="flex flex-col gap-6">
+      {error && <AdminErrorBanner />}
+      <ProductsView page={data} initialEdit={initialEdit} />
+    </div>
+  );
 }

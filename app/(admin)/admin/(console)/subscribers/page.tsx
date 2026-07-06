@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SubscribersView } from "@/components/admin/subscribers/SubscribersView";
+import { AdminErrorBanner } from "@/components/admin/ui/AdminErrorBanner";
 import { ADMIN_PAGE_META } from "@/lib/admin/nav";
 import { listAdminSubscribers } from "@/lib/db/admin-subscribers";
 import { ROUTES } from "@/lib/routes";
@@ -14,6 +15,14 @@ export const metadata: Metadata = {
  * `SubscribersView`, which owns search, Copy emails, Export CSV and remove.
  */
 export default async function AdminSubscribersPage() {
-  const { rows, kpis } = await listAdminSubscribers();
-  return <SubscribersView subscribers={rows} kpis={kpis} />;
+  const {
+    data: { rows, kpis },
+    error,
+  } = await listAdminSubscribers();
+  return (
+    <div className="flex flex-col gap-6">
+      {error && <AdminErrorBanner />}
+      <SubscribersView subscribers={rows} kpis={kpis} />
+    </div>
+  );
 }
