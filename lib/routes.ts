@@ -53,6 +53,7 @@ export const ROUTES = {
   adminMessages: "/admin/messages",
   adminSubscribers: "/admin/subscribers",
   adminSettings: "/admin/settings",
+  adminTeam: "/admin/team",
   /** Admin auth — the ungated `(auth)` group, outside the console gate. */
   adminSignIn: "/admin/sign-in",
   adminForgotPassword: "/admin/forgot-password",

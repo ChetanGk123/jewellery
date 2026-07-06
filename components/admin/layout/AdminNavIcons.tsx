@@ -55,6 +55,13 @@ const ICON_PATHS: Record<AdminIconKey, ReactNode> = {
       <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" />
     </>
   ),
+  team: (
+    <>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
+      <path d="M16 5.2a3.2 3.2 0 0 1 0 5.9M17.5 14.6A5.5 5.5 0 0 1 20.5 20" />
+    </>
+  ),
 };
 
 export function AdminNavIcon({ icon }: { icon: AdminIconKey }) {

@@ -129,12 +129,26 @@ export async function proxy(request: NextRequest) {
     path === ROUTES.adminSignIn ||
     path === ROUTES.adminForgotPassword ||
     path === ROUTES.adminResetPassword;
+  // Note: redirecting an already-signed-in admin OFF the sign-in page is handled
+  // authoritatively by the sign-in page itself (getCurrentUser → getUser). Doing
+  // it here from the locally-verified `claims` would trust a stale role claim
+  // after a hard revoke (session deleted, JWT not yet expired) and fight the
+  // layout's requireAdmin redirect — an infinite loop.
   if (isAdminArea && !isAdminPublic && !isAdmin(claims)) {
     const signIn = new URL(ROUTES.adminSignIn, request.url);
     signIn.searchParams.set("next", path);
     const redirectRes = NextResponse.redirect(signIn);
     redirectRes.headers.set("Content-Security-Policy", csp);
+    redirectRes.headers.set("Cache-Control", "no-store, must-revalidate");
     return redirectRes;
+  }
+
+  // Never let the browser cache a console document. Without this, a revoked admin
+  // could hit Back and have bfcache resurrect the fully-rendered console without
+  // re-hitting the gate; `no-store` excludes these pages from bfcache so Back
+  // forces a fresh request (which the checks above + `requireAdmin` re-run on).
+  if (isAdminArea) {
+    response.headers.set("Cache-Control", "no-store, must-revalidate");
   }
 
   response.headers.set("Content-Security-Policy", csp);

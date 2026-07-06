@@ -21,7 +21,8 @@ export type AdminIconKey =
   | "reviews"
   | "messages"
   | "subscribers"
-  | "settings";
+  | "settings"
+  | "team";
 
 export type AdminNavItem = {
   href: string;
@@ -56,6 +57,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   },
   { href: ROUTES.adminSubscribers, label: "Subscribers", icon: "subscribers" },
   { href: ROUTES.adminSettings, label: "Settings", icon: "settings" },
+  { href: ROUTES.adminTeam, label: "Team", icon: "team" },
 ];
 
 /** Topbar page heading + subtitle, keyed by route path. */
@@ -98,6 +100,10 @@ export const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
   [ROUTES.adminSettings]: {
     title: "Settings",
     subtitle: "Store configuration",
+  },
+  [ROUTES.adminTeam]: {
+    title: "Team",
+    subtitle: "Manage who can access the admin console",
   },
 };
 

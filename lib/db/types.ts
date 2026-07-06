@@ -563,6 +563,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_role_audit: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          id: string
+          target_email: string | null
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          target_email?: string | null
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          target_email?: string | null
+          target_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -571,6 +601,23 @@ export type Database = {
       admin_delete_category: {
         Args: { p_id: string }
         Returns: undefined
+      }
+      admin_list_admins: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          granted_at: string
+          is_self: boolean
+        }[]
+      }
+      admin_grant_role: {
+        Args: { p_email: string }
+        Returns: string
+      }
+      admin_revoke_role: {
+        Args: { p_user_id: string }
+        Returns: string
       }
       admin_set_order_status: {
         Args: { p_order_id: string; p_status: string }
