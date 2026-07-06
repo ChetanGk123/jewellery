@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Marcellus, Cormorant_Garamond, Jost } from "next/font/google";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { getNonce } from "@/lib/csp-nonce";
+import { buildOrganizationJsonLd } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site-url";
+import { STORE_INFO } from "@/lib/store-info";
 import "./globals.css";
 
 const marcellus = Marcellus({
@@ -23,13 +28,29 @@ const jost = Jost({
   display: "swap",
 });
 
+const DEFAULT_TITLE = "JR Jewellers — Bridal & Fine Jewellery";
+const DEFAULT_DESCRIPTION =
+  "Handcrafted Kundan, Polki and temple jewellery for the Indian bride. Cash on delivery across India.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "JR Jewellers — Bridal & Fine Jewellery",
+    default: DEFAULT_TITLE,
     template: "%s · JR Jewellers",
   },
-  description:
-    "Handcrafted Kundan, Polki and temple jewellery for the Indian bride. Cash on delivery across India.",
+  description: DEFAULT_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: STORE_INFO.name,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
 };
 
 export default async function RootLayout({
@@ -43,13 +64,17 @@ export default async function RootLayout({
   // bootstrap/hydration scripts, so `script-src 'nonce-…' 'strict-dynamic'`
   // allows them without ever falling back to `'unsafe-inline'`.
   await headers();
+  const nonce = await getNonce();
 
   return (
     <html
       lang="en"
       className={`${marcellus.variable} ${cormorant.variable} ${jost.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <JsonLd data={buildOrganizationJsonLd()} nonce={nonce} />
+        {children}
+      </body>
     </html>
   );
 }

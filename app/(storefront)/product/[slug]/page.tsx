@@ -17,7 +17,11 @@ import { hasDeliveredPurchase } from "@/lib/db/orders";
 import { getCustomerProfile } from "@/lib/db/profile";
 import { getCurrentUser } from "@/lib/db/server";
 import { getStoreSettings } from "@/lib/db/settings";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { getNonce } from "@/lib/csp-nonce";
 import { ROUTES } from "@/lib/routes";
+import { buildProductJsonLd } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site-url";
 import { discountPercent, formatPaise } from "@/lib/utils/money";
 
 type ProductPageProps = {
@@ -30,11 +34,28 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Product not found" };
+  const description =
+    product.blurb ??
+    `${product.name} — handcrafted artificial bridal jewellery from JR Jewellers.`;
+  const productImages = product.images
+    .map((image) => image.url)
+    .filter((url): url is string => Boolean(url));
+  // Next.js replaces the parent's openGraph object wholesale per segment (no
+  // deep-merge), so this must always be set with an explicit image — falling
+  // back to the site default (app/opengraph-image.tsx) for products that
+  // still show the seed gradient (TASKS 1.1) rather than silently losing it.
+  const ogImages =
+    productImages.length > 0 ? productImages : [`${SITE_URL}/opengraph-image`];
+
   return {
     title: product.name,
-    description:
-      product.blurb ??
-      `${product.name} — handcrafted artificial bridal jewellery from JR Jewellers.`,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      type: "website",
+      images: ogImages,
+    },
   };
 }
 
@@ -72,8 +93,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ? `${proto}://${host}${ROUTES.product(product.slug)}`
     : undefined;
 
+  const nonce = await getNonce();
+
   return (
     <main className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]">
+      <JsonLd data={buildProductJsonLd(product)} nonce={nonce} />
       <nav aria-label="Breadcrumb" className="mb-[26px]">
         <ol className="flex flex-wrap items-center gap-2 text-[12px] leading-none text-[#9C8A84]">
           <li>
