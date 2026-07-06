@@ -12,12 +12,13 @@ export const metadata: Metadata = {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; page?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const filter = toOrderFilter(sp.status);
   const page = Math.max(1, Number(sp.page) || 1);
-  const { data, error } = await listAdminOrders({ filter, page });
+  const search = sp.q ?? "";
+  const { data, error } = await listAdminOrders({ filter, page, search });
   return (
     <div className="flex flex-col gap-6">
       {error && <AdminErrorBanner />}

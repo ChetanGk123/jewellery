@@ -1,17 +1,27 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { adminPageMeta } from "@/lib/admin/nav";
+import { ROUTES } from "@/lib/routes";
 
 /**
  * Admin topbar (prototype-matched): mobile menu button, per-view page title +
- * subtitle (derived from the route), a global search box and a notification
- * bell. Search and bell are presentational for the foundation — they wire up in
- * later Phase 3 views (global search) once there's data behind them.
+ * subtitle (derived from the route), an order search box and a notification
+ * bell. Submitting the search jumps to the orders queue filtered by `?q=`
+ * (TASKS 5.5); the bell is still presentational until 5.14 wires real events.
  */
 export function AdminTopbar({ onMenuClick }: { onMenuClick: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [query, setQuery] = useState("");
   const { title, subtitle } = adminPageMeta(pathname);
+
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    router.push(q ? `${ROUTES.adminOrders}?q=${encodeURIComponent(q)}` : ROUTES.adminOrders);
+  };
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-[#E7E0D4] bg-[#F5F1EA]/90 px-5 py-[18px] backdrop-blur-md sm:gap-5 sm:px-8">
@@ -43,7 +53,11 @@ export function AdminTopbar({ onMenuClick }: { onMenuClick: () => void }) {
         </span>
       </div>
 
-      <div className="ml-auto hidden max-w-[340px] flex-1 items-center rounded-lg border border-[#E7E0D4] bg-white px-3 md:flex">
+      <form
+        role="search"
+        onSubmit={onSearch}
+        className="ml-auto hidden max-w-[340px] flex-1 items-center rounded-lg border border-[#E7E0D4] bg-white px-3 md:flex"
+      >
         <svg
           width="15"
           height="15"
@@ -58,11 +72,14 @@ export function AdminTopbar({ onMenuClick }: { onMenuClick: () => void }) {
         </svg>
         <input
           type="search"
-          aria-label="Search orders and products"
-          placeholder="Search orders, products..."
+          name="q"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search orders by number, customer, phone or email"
+          placeholder="Search orders..."
           className="w-full flex-1 border-none bg-transparent px-2 py-[9px] text-[13px] text-[#2A1F1A] outline-none placeholder:text-[#9C8A7E]"
         />
-      </div>
+      </form>
 
       <button
         type="button"

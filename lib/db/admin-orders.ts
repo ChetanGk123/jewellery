@@ -60,6 +60,7 @@ export type AdminOrdersPage = {
   rows: AdminOrderRow[];
   counts: OrderCounts;
   filter: OrderFilter;
+  search: string;
   page: number;
   pageCount: number;
   total: number;
@@ -103,23 +104,46 @@ const EMPTY_COUNTS: OrderCounts = {
   Cancelled: 0,
 };
 
-function emptyPage(filter: OrderFilter, page: number): AdminOrdersPage {
+function emptyPage(
+  filter: OrderFilter,
+  search: string,
+  page: number,
+): AdminOrdersPage {
   return {
     rows: [],
     counts: EMPTY_COUNTS,
     filter,
+    search,
     page,
     pageCount: 0,
     total: 0,
   };
 }
 
+// Columns an operator would recognise an order by when a customer calls: the
+// order number, name, phone, or email. `%`/`,`/`()` are stripped first — they'd
+// otherwise act as ilike wildcards or break PostgREST's `or()` filter grammar.
+// Returns null when nothing searchable survives sanitisation.
+function buildOrderSearchOr(raw: string): string | null {
+  const q = raw.replace(/[%,()]/g, " ").trim();
+  if (!q) return null;
+  return [
+    `order_no.ilike.%${q}%`,
+    `customer_name.ilike.%${q}%`,
+    `customer_phone.ilike.%${q}%`,
+    `customer_email.ilike.%${q}%`,
+  ].join(",");
+}
+
 export async function listAdminOrders(opts: {
   filter: OrderFilter;
   page: number;
+  search?: string;
 }): Promise<AdminRead<AdminOrdersPage>> {
   const filter = opts.filter;
   const page = Math.max(1, opts.page);
+  const search = (opts.search ?? "").trim();
+  const orFilter = buildOrderSearchOr(search);
 
   return loadAdmin(
     "orders",
@@ -127,7 +151,9 @@ export async function listAdminOrders(opts: {
       const supabase = await createServerClient();
 
       // One exact head-count per status (scale-safe vs. tallying fetched rows) +
-      // the current page of full rows — all in parallel.
+      // the current page of full rows — all in parallel. When a search is
+      // active it's applied to every query so the tab counts and pagination
+      // reflect the filtered result set, not the whole queue.
       const from = (page - 1) * ORDERS_PAGE_SIZE;
       let rowsQuery = supabase
         .from("order")
@@ -135,15 +161,18 @@ export async function listAdminOrders(opts: {
         .order("created_at", { ascending: false })
         .range(from, from + ORDERS_PAGE_SIZE - 1);
       if (filter !== "All") rowsQuery = rowsQuery.eq("status", filter);
+      if (orFilter) rowsQuery = rowsQuery.or(orFilter);
 
       const [rowsRes, ...countRes] = await Promise.all([
         rowsQuery,
-        ...ORDER_STATUSES.map((s) =>
-          supabase
+        ...ORDER_STATUSES.map((s) => {
+          let q = supabase
             .from("order")
             .select("*", { count: "exact", head: true })
-            .eq("status", s),
-        ),
+            .eq("status", s);
+          if (orFilter) q = q.or(orFilter);
+          return q;
+        }),
       ]);
 
       const counts = { ...EMPTY_COUNTS };
@@ -190,8 +219,8 @@ export async function listAdminOrders(opts: {
         };
       });
 
-      return { rows, counts, filter, page, pageCount, total };
+      return { rows, counts, filter, search, page, pageCount, total };
     },
-    emptyPage(filter, page),
+    emptyPage(filter, search, page),
   );
 }

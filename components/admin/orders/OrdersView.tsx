@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { setOrderStatus } from "@/app/(admin)/admin/(console)/orders/actions";
 import {
   nextStatus,
@@ -21,15 +22,27 @@ import { OrderDrawer } from "./OrderDrawer";
 
 const TABS: OrderFilter[] = ["All", ...ORDER_STATUSES];
 
-function hrefFor(filter: OrderFilter, page: number): string {
+function hrefFor(filter: OrderFilter, page: number, search: string): string {
   const params = new URLSearchParams();
   if (filter !== "All") params.set("status", filter);
   if (page > 1) params.set("page", String(page));
+  if (search) params.set("q", search);
   const qs = params.toString();
   return qs ? `${ROUTES.adminOrders}?${qs}` : ROUTES.adminOrders;
 }
 
 export function OrdersView({ page }: { page: AdminOrdersPage }) {
+  const router = useRouter();
+  // Search box is URL-driven (`?q=`) like the status/page params, so a search
+  // is shareable and survives refresh. Seed the input from the served value.
+  const [query, setQuery] = useState(page.search);
+
+  const submitSearch = (raw: string) => {
+    const next = raw.trim();
+    // Preserve the active status tab; drop the page so results start at 1.
+    router.push(hrefFor(page.filter, 1, next));
+  };
+
   // A snapshot of the open order — held locally (not derived from page.rows) so
   // the drawer survives revalidation and stays open even when a status change
   // moves the order out of the active filter. Only the backdrop / × close it.
@@ -76,6 +89,66 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {/* Search — order no / customer / phone / email */}
+      <form
+        role="search"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submitSearch(query);
+        }}
+        className="flex flex-wrap items-center gap-2"
+      >
+        <div className="flex min-w-[220px] flex-1 items-center rounded-lg border border-[#E7E0D4] bg-white px-3">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9C8A7E"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3-3" />
+          </svg>
+          <input
+            type="search"
+            name="q"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search orders by number, customer, phone or email"
+            placeholder="Search order no, customer, phone, email…"
+            className="w-full flex-1 border-none bg-transparent px-2 py-[9px] text-[13px] text-[#2A1F1A] outline-none placeholder:text-[#9C8A7E]"
+          />
+        </div>
+        <button
+          type="submit"
+          className="rounded-lg bg-maroon-700 px-[18px] py-[10px] text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90"
+        >
+          Search
+        </button>
+        {page.search && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              submitSearch("");
+            }}
+            className="rounded-lg border border-[#E7E0D4] bg-white px-[18px] py-[10px] text-[12px] font-semibold text-[#5E4A40] transition-colors hover:border-[#D8CDB9]"
+          >
+            Clear
+          </button>
+        )}
+      </form>
+
+      {page.search && (
+        <p className="-mt-2 text-[12.5px] text-[#8A7E74]">
+          {page.total === 0
+            ? `No orders match “${page.search}”.`
+            : `${page.total} ${page.total === 1 ? "order" : "orders"} matching “${page.search}”.`}
+        </p>
+      )}
+
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         {TABS.map((tab) => {
@@ -83,7 +156,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
           return (
             <Link
               key={tab}
-              href={hrefFor(tab, 1)}
+              href={hrefFor(tab, 1, page.search)}
               aria-current={active ? "page" : undefined}
               className={`rounded-full border px-4 py-[9px] text-[12.5px] font-medium transition-colors ${
                 active
@@ -173,6 +246,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
               <PagerLink
                 filter={page.filter}
                 page={page.page - 1}
+                search={page.search}
                 disabled={page.page <= 1}
               >
                 ‹ Prev
@@ -180,7 +254,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
               {Array.from({ length: page.pageCount }, (_, i) => i + 1).map((n) => (
                 <Link
                   key={n}
-                  href={hrefFor(page.filter, n)}
+                  href={hrefFor(page.filter, n, page.search)}
                   aria-current={n === page.page ? "page" : undefined}
                   className={`min-w-[34px] rounded-md border px-2.5 py-[7px] text-center text-[12px] font-semibold ${
                     n === page.page
@@ -194,6 +268,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
               <PagerLink
                 filter={page.filter}
                 page={page.page + 1}
+                search={page.search}
                 disabled={page.page >= page.pageCount}
               >
                 Next ›
@@ -246,11 +321,13 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
 function PagerLink({
   filter,
   page,
+  search,
   disabled,
   children,
 }: {
   filter: OrderFilter;
   page: number;
+  search: string;
   disabled: boolean;
   children: React.ReactNode;
 }) {
@@ -264,7 +341,10 @@ function PagerLink({
     );
   }
   return (
-    <Link href={hrefFor(filter, page)} className={`${cls} hover:border-[#D8CDB9]`}>
+    <Link
+      href={hrefFor(filter, page, search)}
+      className={`${cls} hover:border-[#D8CDB9]`}
+    >
       {children}
     </Link>
   );
