@@ -12,6 +12,7 @@ import {
 } from "@/lib/checkout/order";
 import { upsertCustomerProfile } from "@/lib/db/profile";
 import { createServerClient, getCurrentUser } from "@/lib/db/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export type CheckoutActionResult =
   | { ok: true; order: PlacedOrder }
@@ -39,6 +40,11 @@ const submitInputSchema = z.object({
 /** Generic failure message shown when we decline to place an order. */
 const DECLINE_MESSAGE =
   "We couldn't place your order just now. Please try again in a moment.";
+const RATE_LIMITED_MESSAGE =
+  "Too many order attempts — please wait a few minutes and try again.";
+
+/** Checkout throttle: at most 5 order attempts per account per 10 minutes. */
+const RATE_LIMIT = { limit: 5, windowMs: 10 * 60 * 1000 } as const;
 
 /**
  * Authoritative checkout gate (TASKS 2.5). Re-validates the SAME form schema
@@ -76,6 +82,10 @@ export async function submitCheckout(
       fieldErrors: {},
       formError: "Your session has expired. Please sign in and try again.",
     };
+  }
+
+  if (!checkRateLimit(`checkout:${user.id}`, RATE_LIMIT).ok) {
+    return { ok: false, fieldErrors: {}, formError: RATE_LIMITED_MESSAGE };
   }
 
   const parsed = checkoutSchema.safeParse(wrapper.data.values);

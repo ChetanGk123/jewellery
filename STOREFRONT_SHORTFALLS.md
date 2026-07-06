@@ -31,6 +31,7 @@ engineering.
 - **2.1 fixed** — mobile header now collapses the 7-item nav into a hamburger drawer ≤`md`; the hero renders in the first viewport at 375 instead of below a 4-row-wrapped nav strip. See `TASKS.md` 4.7 for the `backdrop-filter` containing-block bug found and fixed during verification.
 - **2.2 fixed** — `/shop` and category pages collapse `FilterSidebar` behind a "Filters" disclosure on mobile; the first product card now renders in the first viewport instead of at y≈1471px below the full facet stack.
 - **2.3 fixed** — the corner badge and sale-flag no longer overlap on narrow (2-col grid) cards; the flag stacks under the badge below `sm`, unchanged at `sm:` and up. Phase 4B (mobile funnel) is now complete.
+- **3.2 fixed** — checkout and contact are no longer honeypot-only; both now call the existing `checkRateLimit` utility (checkout per-account, contact per-IP), same as the newsletter. Still an in-memory/per-instance limiter — an edge store is a deploy-time follow-up (`TASKS.md` 4.13).
 
 See `TASKS.md` Phase 4 for the complete task-by-task breakdown and status.
 

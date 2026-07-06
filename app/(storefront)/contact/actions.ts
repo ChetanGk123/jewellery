@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { contactMessageSchema } from "@/lib/contact/schema";
 import { createServerClient } from "@/lib/db/server";
+import { checkRateLimit, clientRateKey } from "@/lib/rate-limit";
 
 type ContactField = "name" | "email" | "phone" | "subject" | "message";
 
@@ -24,6 +25,11 @@ const submitInputSchema = z.object({
 
 const DECLINE_MESSAGE =
   "We couldn't send your message just now. Please try again in a moment.";
+const RATE_LIMITED_MESSAGE =
+  "Too many messages sent — please try again in a few minutes.";
+
+/** Contact throttle: at most 5 submissions per client per 10 minutes. */
+const RATE_LIMIT = { limit: 5, windowMs: 10 * 60 * 1000 } as const;
 
 /**
  * Contact-form submit (TASKS 3.8). Re-validates the shared schema server-side,
@@ -44,6 +50,11 @@ export async function submitContactMessage(
   // we don't hint at the trap, and never reach the DB.
   if (wrapper.data.honeypot && wrapper.data.honeypot.trim().length > 0) {
     return { ok: false, fieldErrors: {}, formError: DECLINE_MESSAGE };
+  }
+
+  const key = await clientRateKey("contact");
+  if (!checkRateLimit(key, RATE_LIMIT).ok) {
+    return { ok: false, fieldErrors: {}, formError: RATE_LIMITED_MESSAGE };
   }
 
   const parsed = contactMessageSchema.safeParse(wrapper.data.values);

@@ -2,10 +2,11 @@ import "server-only";
 import { headers } from "next/headers";
 
 /**
- * Best-effort in-memory fixed-window rate limiter (TASKS 3.9).
+ * Best-effort in-memory fixed-window rate limiter (TASKS 3.9, 4.10).
  *
- * Guards anon-callable server actions (e.g. the newsletter subscribe) from
- * rapid abuse. It's a single-process Map, so it's per-instance — good enough to
+ * Guards server actions from rapid abuse — the newsletter subscribe, contact
+ * form, and checkout (`place_order`) all call `checkRateLimit`. It's a
+ * single-process Map, so it's per-instance — good enough to
  * blunt a burst from one client on a single Node server, NOT a distributed
  * guarantee. If this ever runs across many serverless instances, swap the store
  * for Redis/Upstash behind the same `checkRateLimit` signature. The DB unique
