@@ -5,6 +5,7 @@ import { ROUTES } from "@/lib/routes";
 import { PRIMARY_NAV } from "@/lib/navigation";
 import { STORE_INFO } from "@/lib/store-info";
 import { CartBadge } from "./CartBadge";
+import { MobileNavDrawer } from "./MobileNavDrawer";
 
 /**
  * Storefront header, matched to `refereces/JR Jewellers Storefront.html`:
@@ -62,6 +63,12 @@ export async function Header({ banner }: { banner: BannerSetting }) {
 
       <div className="sticky top-0 z-40 border-b border-[#E7D9C2] bg-cream-100/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-[22px] gap-y-3 px-6 py-3.5">
+          <MobileNavDrawer
+            links={PRIMARY_NAV}
+            accountHref={accountHref}
+            accountLabel={accountLabel}
+          />
+
           <Link href={ROUTES.home} className="flex flex-none flex-col leading-none">
             <span className="font-display text-[clamp(20px,5.5vw,26px)] leading-none tracking-[0.14em] text-maroon-700">
               {STORE_INFO.wordmark}
@@ -108,7 +115,10 @@ export async function Header({ banner }: { banner: BannerSetting }) {
           </div>
         </div>
 
-        <nav aria-label="Primary" className="border-t border-[#EFE3D0] bg-cream-50/60">
+        <nav
+          aria-label="Primary"
+          className="hidden border-t border-[#EFE3D0] bg-cream-50/60 md:block"
+        >
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-center gap-x-[26px] gap-y-1 px-6">
             {PRIMARY_NAV.map((link) => (
               <Link

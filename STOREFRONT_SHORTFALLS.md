@@ -28,6 +28,7 @@ engineering.
 - **1.6 fixed** — branded 404/error pages at both the storefront and root levels, plus loading skeletons for listing/product routes.
 - **1.2 fixed** — `place_order` now checks and decrements `product.stock` (row-locked against overselling); admin cancel restores it. Storefront UI shows a disabled "Sold Out"/"Out of Stock" state.
 - **New finding, fixed in the same migration:** while rewriting `place_order` for stock enforcement, found that its `auth.uid()` gate and `user_id` stamping (added in `0004_customer_auth.sql`) had been silently dropped by the `0012_admin_coupons.sql` coupon-table rewrite, undetected through `0013`/`0018`. `execute` was never re-granted to `anon`, so this was never an anonymous-write hole — but authenticated customers' orders since 0012 weren't tagged to their account (`user_id = null`), which would have made "My Orders" silently incomplete for any non-admin customer. Restored. See `TASKS.md` 4.4 for the full verification trail.
+- **2.1 fixed** — mobile header now collapses the 7-item nav into a hamburger drawer ≤`md`; the hero renders in the first viewport at 375 instead of below a 4-row-wrapped nav strip. See `TASKS.md` 4.7 for the `backdrop-filter` containing-block bug found and fixed during verification.
 
 See `TASKS.md` Phase 4 for the complete task-by-task breakdown and status.
 
