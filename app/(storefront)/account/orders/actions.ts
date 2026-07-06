@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/db/cache";
 import { createServerClient, getCurrentUser } from "@/lib/db/server";
+import { queueOrderStatusEmail } from "@/lib/email/send";
 import { ROUTES } from "@/lib/routes";
 
 export type CancelOrderResult = { ok: true } | { ok: false; error: string };
@@ -37,6 +38,23 @@ export async function cancelMyOrder(orderNo: string): Promise<CancelOrderResult>
       };
     }
     return { ok: false, error: DECLINE_MESSAGE };
+  }
+
+  // Confirm the cancellation by email (TASKS 5.2). Best-effort: read the order
+  // authoritatively (own-row RLS) and queue — never fail the completed cancel.
+  const { data: order } = await supabase
+    .from("order")
+    .select("order_no, customer_email, customer_name, total_paise")
+    .eq("order_no", orderNo)
+    .maybeSingle();
+  if (order?.customer_email) {
+    queueOrderStatusEmail({
+      to: order.customer_email,
+      kind: "Cancelled",
+      orderNo: order.order_no,
+      customerName: order.customer_name,
+      totalPaise: order.total_paise,
+    });
   }
 
   revalidatePath(ROUTES.accountOrder(orderNo));

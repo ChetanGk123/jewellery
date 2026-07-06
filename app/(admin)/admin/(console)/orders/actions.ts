@@ -5,11 +5,16 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { CACHE_TAGS } from "@/lib/db/cache";
 import { ORDER_STATUSES } from "@/lib/db/admin-orders";
 import { createServerClient } from "@/lib/db/server";
+import type { OrderStatusEmailKind } from "@/lib/email/order-status";
+import { queueOrderStatusEmail } from "@/lib/email/send";
 import { ROUTES } from "@/lib/routes";
 
 export type StatusActionResult = { ok: boolean; error?: string };
 
 const VALID = new Set<string>(ORDER_STATUSES);
+
+/** The statuses that notify the customer by email (TASKS 5.2). */
+const NOTIFY = new Set<string>(["Shipped", "Delivered", "Cancelled"]);
 
 /** Friendly messages for the RPC's raised exceptions (see 0007). */
 function messageFor(raw: string): string {
@@ -46,6 +51,26 @@ export async function setOrderStatus(
 
   if (error) {
     return { ok: false, error: messageFor(error.message) };
+  }
+
+  // Notify the customer on the statuses that matter to them (TASKS 5.2).
+  // Best-effort: read the order authoritatively (admin RLS) and queue — an
+  // email hiccup must never fail an already-applied status change.
+  if (NOTIFY.has(nextStatus)) {
+    const { data: order } = await supabase
+      .from("order")
+      .select("order_no, customer_email, customer_name, total_paise")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (order?.customer_email) {
+      queueOrderStatusEmail({
+        to: order.customer_email,
+        kind: nextStatus as OrderStatusEmailKind,
+        orderNo: order.order_no,
+        customerName: order.customer_name,
+        totalPaise: order.total_paise,
+      });
+    }
   }
 
   revalidatePath(ROUTES.adminOrders);

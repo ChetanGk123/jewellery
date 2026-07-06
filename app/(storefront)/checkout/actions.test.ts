@@ -41,10 +41,12 @@ mock.module("@/lib/rate-limit", () => ({
 
 /** Captures the confirmation-email queue call (TASKS 4.6) — no real sends. */
 const queueOrderConfirmationEmail = mock((_input: unknown) => undefined);
+const queueNewOrderAdminEmail = mock((_input: unknown) => undefined);
 
 mock.module("@/lib/email/send", () => ({
   isEmailEnabled: () => true,
   queueOrderConfirmationEmail,
+  queueNewOrderAdminEmail,
 }));
 
 const { submitCheckout } = await import("./actions");
@@ -78,6 +80,7 @@ beforeEach(() => {
   rpc.mockImplementation(async () => ({ data: null, error: null }));
   upsertCustomerProfile.mockClear();
   queueOrderConfirmationEmail.mockClear();
+  queueNewOrderAdminEmail.mockClear();
   session.user = {
     id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99",
     email: "asha@example.com",
@@ -186,6 +189,7 @@ test("maps a successful RPC result to a PlacedOrder", async () => {
 
   // A confirmation email is queued for the placed order (TASKS 4.6).
   expect(queueOrderConfirmationEmail).toHaveBeenCalledTimes(1);
+  expect(queueNewOrderAdminEmail).toHaveBeenCalledTimes(1);
   const queued = queueOrderConfirmationEmail.mock.calls[0][0] as {
     to: string;
     orderNo: string;
@@ -208,6 +212,7 @@ test("declines gracefully when the RPC returns an error", async () => {
   if (!result.ok) expect(result.formError).toContain("couldn't place your order");
   // No order → no confirmation email.
   expect(queueOrderConfirmationEmail).not.toHaveBeenCalled();
+  expect(queueNewOrderAdminEmail).not.toHaveBeenCalled();
 });
 
 test("flags a failure when the RPC returns an unexpected shape", async () => {

@@ -13,7 +13,10 @@ import {
 } from "@/lib/checkout/order";
 import { CACHE_TAGS } from "@/lib/db/cache";
 import { upsertCustomerProfile } from "@/lib/db/profile";
-import { queueOrderConfirmationEmail } from "@/lib/email/send";
+import {
+  queueNewOrderAdminEmail,
+  queueOrderConfirmationEmail,
+} from "@/lib/email/send";
 import { createServerClient, getCurrentUser } from "@/lib/db/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -165,6 +168,16 @@ export async function submitCheckout(
     city: contact.city,
     state: contact.state,
     pincode: contact.pincode,
+    totalPaise: order.totalPaise,
+  });
+
+  // New-order alert to the store inbox (TASKS 5.2) — same best-effort queue.
+  queueNewOrderAdminEmail({
+    orderNo: order.orderNo,
+    customerName: contact.fullName,
+    city: contact.city,
+    state: contact.state,
+    itemCount: wrapper.data.items.reduce((n, item) => n + item.qty, 0),
     totalPaise: order.totalPaise,
   });
 

@@ -1,10 +1,18 @@
 import "server-only";
 import { after } from "next/server";
 import {
+  buildNewOrderAdminEmail,
+  type NewOrderAdminEmailInput,
+} from "./admin-alert";
+import {
   buildOrderConfirmationEmail,
   type EmailMessage,
   type OrderConfirmationEmailInput,
 } from "./order-confirmation";
+import {
+  buildOrderStatusEmail,
+  type OrderStatusEmailKind,
+} from "./order-status";
 import { ROUTES } from "@/lib/routes";
 import { SITE_URL } from "@/lib/site-url";
 import { STORE_INFO } from "@/lib/store-info";
@@ -66,32 +74,85 @@ async function sendEmail(to: string, message: EmailMessage): Promise<void> {
   }
 }
 
-export type QueueOrderConfirmationInput = Omit<
-  OrderConfirmationEmailInput,
-  "orderUrl"
-> & { to: string };
-
 /**
- * Queue the order-confirmation email to run after the checkout response is
- * sent (`after()`), so the customer never waits on the mail provider. Falls
- * back to a detached send outside a request scope (unit tests). Never throws —
- * an email hiccup must not fail an already-placed order.
+ * Schedule a send to run after the response is flushed (`after()`), so the
+ * customer/operator never waits on the mail provider. Falls back to a detached
+ * send outside a request scope (unit tests). Never throws — an email hiccup
+ * must not fail an already-committed order or status change.
  */
-export function queueOrderConfirmationEmail(
-  input: QueueOrderConfirmationInput,
-): void {
-  if (!isEmailEnabled()) return;
-
-  const { to, ...fields } = input;
-  const message = buildOrderConfirmationEmail({
-    ...fields,
-    orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}`,
-  });
-
+function queue(to: string, message: EmailMessage): void {
   try {
     after(() => sendEmail(to, message));
   } catch {
     // No request scope (e.g. tests) — send detached instead.
     void sendEmail(to, message);
   }
+}
+
+export type QueueOrderConfirmationInput = Omit<
+  OrderConfirmationEmailInput,
+  "orderUrl"
+> & { to: string };
+
+/** Queue the order-confirmation email on successful checkout (TASKS 4.6). */
+export function queueOrderConfirmationEmail(
+  input: QueueOrderConfirmationInput,
+): void {
+  if (!isEmailEnabled()) return;
+
+  const { to, ...fields } = input;
+  queue(
+    to,
+    buildOrderConfirmationEmail({
+      ...fields,
+      orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}`,
+    }),
+  );
+}
+
+export type QueueOrderStatusInput = {
+  to: string;
+  kind: OrderStatusEmailKind;
+  orderNo: string;
+  customerName: string;
+  totalPaise: number;
+};
+
+/**
+ * Queue a Shipped / Delivered / Cancelled notification to the customer
+ * (TASKS 5.2). Links to the public order page; a no-op without a provider.
+ */
+export function queueOrderStatusEmail(input: QueueOrderStatusInput): void {
+  if (!isEmailEnabled()) return;
+
+  const { to, ...fields } = input;
+  queue(
+    to,
+    buildOrderStatusEmail({
+      ...fields,
+      orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}`,
+    }),
+  );
+}
+
+export type QueueNewOrderAdminInput = Omit<NewOrderAdminEmailInput, "adminUrl">;
+
+/** Where new-order alerts go — a dedicated inbox, else the store email. */
+const ADMIN_ALERT_TO =
+  process.env.ADMIN_ALERT_EMAIL ?? STORE_INFO.email.display;
+
+/**
+ * Queue the internal new-order alert to the store inbox (TASKS 5.2 / C2), so
+ * orders are pushed rather than discovered by polling the console.
+ */
+export function queueNewOrderAdminEmail(input: QueueNewOrderAdminInput): void {
+  if (!isEmailEnabled()) return;
+
+  queue(
+    ADMIN_ALERT_TO,
+    buildNewOrderAdminEmail({
+      ...input,
+      adminUrl: `${SITE_URL}${ROUTES.adminOrders}`,
+    }),
+  );
 }

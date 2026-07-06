@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_rethrow } from "next/navigation";
 
 /**
  * Result envelope for every admin console read (TASKS 5.1). Carries the loaded
@@ -22,6 +23,9 @@ export async function loadAdmin<T>(
   try {
     return { data: await load(), error: false };
   } catch (err) {
+    // Let Next's control-flow signals (DynamicServerError during static-gen
+    // probing, redirect, notFound) propagate — only real read failures degrade.
+    unstable_rethrow(err);
     console.error(`[admin-read] ${label} failed:`, err);
     return { data: fallback, error: true };
   }
