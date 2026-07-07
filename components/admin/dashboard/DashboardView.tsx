@@ -59,7 +59,16 @@ function KpiRow({ kpis }: { kpis: DashboardKpis }) {
           </>
         }
         iconStroke="#A87A1E"
-        foot={<Delta pct={kpis.ordersDeltaPct} />}
+        foot={
+          <div className="flex flex-col gap-1">
+            <Delta pct={kpis.ordersDeltaPct} />
+            {kpis.cancelledToday > 0 && (
+              <span className="text-[12px] font-medium text-[#C0392F]">
+                {kpis.cancelledToday} cancelled
+              </span>
+            )}
+          </div>
+        }
       />
       <KpiCard
         label="Revenue Today"

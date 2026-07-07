@@ -18,7 +18,11 @@ const LOW_STOCK_THRESHOLD = 5;
 const IST = "Asia/Kolkata";
 
 export type DashboardKpis = {
+  /** Orders *placed* today, all statuses (activity headline). */
   ordersToday: number;
+  /** How many of today's orders are cancelled — surfaced so the revenue gap is
+   * explained (Revenue Today excludes cancelled). 0 when none. */
+  cancelledToday: number;
   /** % change vs yesterday, or null when yesterday had none (no baseline). */
   ordersDeltaPct: number | null;
   revenueTodayPaise: number;
@@ -50,6 +54,7 @@ export type DashboardData = {
 const EMPTY: DashboardData = {
   kpis: {
     ordersToday: 0,
+    cancelledToday: 0,
     ordersDeltaPct: null,
     revenueTodayPaise: 0,
     revenueDeltaPct: null,
@@ -128,13 +133,19 @@ export async function getDashboardData(): Promise<AdminRead<DashboardData>> {
         .neq("status", "Cancelled"),
     ]);
 
-    // Revenue + order counts bucketed by IST day.
+    // Revenue + order counts bucketed by IST day. `ordersByDay` counts every
+    // order placed that day (activity); `revenueByDay` and `cancelledByDay`
+    // split out cancelled ones so Revenue Today and the "N cancelled" note stay
+    // consistent with each other.
     const revenueByDay = new Map<string, number>();
     const ordersByDay = new Map<string, number>();
+    const cancelledByDay = new Map<string, number>();
     for (const o of windowRes.data ?? []) {
       const key = istKey(new Date(o.created_at));
       ordersByDay.set(key, (ordersByDay.get(key) ?? 0) + 1);
-      if (o.status !== "Cancelled") {
+      if (o.status === "Cancelled") {
+        cancelledByDay.set(key, (cancelledByDay.get(key) ?? 0) + 1);
+      } else {
         revenueByDay.set(key, (revenueByDay.get(key) ?? 0) + o.total_paise);
       }
     }
@@ -200,6 +211,7 @@ export async function getDashboardData(): Promise<AdminRead<DashboardData>> {
     return {
       kpis: {
         ordersToday,
+        cancelledToday: cancelledByDay.get(todayKey) ?? 0,
         ordersDeltaPct: deltaPct(ordersToday, ordersByDay.get(yKey) ?? 0),
         revenueTodayPaise,
         revenueDeltaPct: deltaPct(revenueTodayPaise, revenueByDay.get(yKey) ?? 0),
