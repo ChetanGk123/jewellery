@@ -1,60 +1,110 @@
 import "server-only";
-import type {
-  AdminMessageRow,
-  MessageCounts,
-  MessageStatus,
+import {
+  ADMIN_MESSAGES_PAGE_SIZE,
+  type AdminMessageRow,
+  type MessageCounts,
+  type MessageFilter,
+  MESSAGE_STATUSES,
+  type MessageStatus,
 } from "@/lib/admin/message";
 import { type AdminRead, loadAdmin } from "./admin-read";
 import { createServerClient } from "./server";
 
-export type AdminMessagesData = {
+export type AdminMessagesPage = {
   rows: AdminMessageRow[];
   counts: MessageCounts;
+  filter: MessageFilter;
+  page: number;
+  pageCount: number;
+  total: number;
 };
 
-const EMPTY: AdminMessagesData = {
-  rows: [],
-  counts: { All: 0, New: 0, "In Progress": 0, Resolved: 0 },
+const EMPTY_COUNTS: MessageCounts = {
+  All: 0,
+  New: 0,
+  "In Progress": 0,
+  Resolved: 0,
 };
+
+function emptyPage(filter: MessageFilter, page: number): AdminMessagesPage {
+  return {
+    rows: [],
+    counts: EMPTY_COUNTS,
+    filter,
+    page,
+    pageCount: 1,
+    total: 0,
+  };
+}
 
 /**
- * Admin contact messages (TASKS 3.8). Reads every `contact_message` row through
- * the admin's cookie session (0015 `contact_message_admin_read` RLS policy),
- * newest first, and derives the per-status tab counts. Writes go through the
- * `admin_set_message_status` RPC (0015). Degrades to empty on error so the
- * console chrome still renders.
+ * Admin contact messages (TASKS 3.8, paginated in 5.10). Reads one page of
+ * `contact_message` rows through the admin's cookie session (0015
+ * `contact_message_admin_read` RLS policy), newest first. The status-tab counts
+ * come from exact head-counts per status (scale-safe as the table grows
+ * monotonically). Writes go through the `admin_set_message_status` RPC (0015).
  */
-export async function listAdminMessages(): Promise<
-  AdminRead<AdminMessagesData>
-> {
-  return loadAdmin("messages", async () => {
-    const supabase = await createServerClient();
-    const { data } = await supabase
-      .from("contact_message")
-      .select(
-        "id, ticket_no, subject, body, name, email, phone, status, created_at",
-      )
-      .order("created_at", { ascending: false });
+export async function listAdminMessages(opts: {
+  filter: MessageFilter;
+  page: number;
+}): Promise<AdminRead<AdminMessagesPage>> {
+  const filter = opts.filter;
+  const page = Math.max(1, opts.page);
 
-    const rows: AdminMessageRow[] = (data ?? []).map((m) => ({
-      id: m.id,
-      ticketNo: m.ticket_no,
-      subject: m.subject,
-      body: m.body,
-      name: m.name,
-      email: m.email,
-      phone: m.phone,
-      status: m.status as MessageStatus,
-      createdAt: m.created_at,
-    }));
+  return loadAdmin(
+    "messages",
+    async () => {
+      const supabase = await createServerClient();
+      const from = (page - 1) * ADMIN_MESSAGES_PAGE_SIZE;
 
-    const counts: MessageCounts = {
-      All: rows.length,
-      New: rows.filter((r) => r.status === "New").length,
-      "In Progress": rows.filter((r) => r.status === "In Progress").length,
-      Resolved: rows.filter((r) => r.status === "Resolved").length,
-    };
+      let rowsQuery = supabase
+        .from("contact_message")
+        .select(
+          "id, ticket_no, subject, body, name, email, phone, status, created_at",
+        )
+        .order("created_at", { ascending: false })
+        .range(from, from + ADMIN_MESSAGES_PAGE_SIZE - 1);
+      if (filter !== "All") rowsQuery = rowsQuery.eq("status", filter);
 
-    return { rows, counts };
-  }, EMPTY);
+      const [rowsRes, ...countRes] = await Promise.all([
+        rowsQuery,
+        ...MESSAGE_STATUSES.map((s) =>
+          supabase
+            .from("contact_message")
+            .select("*", { count: "exact", head: true })
+            .eq("status", s),
+        ),
+      ]);
+
+      const counts: MessageCounts = { ...EMPTY_COUNTS };
+      let all = 0;
+      MESSAGE_STATUSES.forEach((s, i) => {
+        const c = countRes[i].count ?? 0;
+        counts[s] = c;
+        all += c;
+      });
+      counts.All = all;
+
+      const rows: AdminMessageRow[] = (rowsRes.data ?? []).map((m) => ({
+        id: m.id,
+        ticketNo: m.ticket_no,
+        subject: m.subject,
+        body: m.body,
+        name: m.name,
+        email: m.email,
+        phone: m.phone,
+        status: m.status as MessageStatus,
+        createdAt: m.created_at,
+      }));
+
+      const total = counts[filter];
+      const pageCount = Math.max(
+        1,
+        Math.ceil(total / ADMIN_MESSAGES_PAGE_SIZE),
+      );
+
+      return { rows, counts, filter, page, pageCount, total };
+    },
+    emptyPage(filter, page),
+  );
 }

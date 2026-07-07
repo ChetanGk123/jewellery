@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import type { AdminSubscriberRow } from "@/lib/admin/subscriber";
+import { getAllSubscribers } from "@/lib/db/admin-subscribers";
 import { createServerClient } from "@/lib/db/server";
 import { ROUTES } from "@/lib/routes";
 
@@ -33,4 +35,14 @@ export async function removeSubscriber(
 
   revalidatePath(ROUTES.adminSubscribers);
   return { ok: true };
+}
+
+/**
+ * The full mailing list for the Copy emails / Export CSV bulk actions. The list
+ * table itself paginates (5.10), so these actions read the whole list on demand
+ * — behind the admin gate + admin-read RLS, capped in `getAllSubscribers`.
+ */
+export async function exportSubscribers(): Promise<AdminSubscriberRow[]> {
+  await requireAdmin(ROUTES.adminSubscribers);
+  return getAllSubscribers();
 }

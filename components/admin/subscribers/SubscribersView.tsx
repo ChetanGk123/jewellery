@@ -1,43 +1,54 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { removeSubscriber } from "@/app/(admin)/admin/(console)/subscribers/actions";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  exportSubscribers,
+  removeSubscriber,
+} from "@/app/(admin)/admin/(console)/subscribers/actions";
+import { AdminPager } from "@/components/admin/ui/AdminPager";
 import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
 import {
+  ADMIN_SUBSCRIBERS_PAGE_SIZE,
   type AdminSubscriberRow,
-  type SubscriberKpi,
   subscriberDateLabel,
   subscriberInitial,
   subscriberSourceChip,
 } from "@/lib/admin/subscriber";
+import type { AdminSubscribersPage } from "@/lib/db/admin-subscribers";
+import { ROUTES } from "@/lib/routes";
 
-type Props = {
-  subscribers: AdminSubscriberRow[];
-  kpis: SubscriberKpi[];
-};
+function hrefFor(search: string, page: number): string {
+  const params = new URLSearchParams();
+  if (search) params.set("q", search);
+  if (page > 1) params.set("page", String(page));
+  const qs = params.toString();
+  return qs ? `${ROUTES.adminSubscribers}?${qs}` : ROUTES.adminSubscribers;
+}
 
 /**
- * Subscribers console (TASKS 3.9, prototype-matched): three KPI cards over a
- * "Mailing list" card with an email search, Copy emails + Export CSV actions,
- * and a table (avatar · email · joined · source pill · × remove). Search
- * filters client-side; Copy/Export act on the currently-visible rows; remove
- * goes through the `removeSubscriber` server action.
+ * Subscribers console (TASKS 3.9, prototype-matched; paginated 5.10): three KPI
+ * cards (computed from aggregate counts, so true for the whole list) over a
+ * "Mailing list" card with a URL-driven email search (`?q`), Copy emails + Export
+ * CSV, and a paginated table (avatar · email · joined · source pill · × remove).
+ * Copy/Export pull the **entire** list on demand via `exportSubscribers` (not
+ * just the current page); remove goes through the `removeSubscriber` action.
  */
-export function SubscribersView({ subscribers, kpis }: Props) {
-  const [search, setSearch] = useState("");
+export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
+  const router = useRouter();
+  const [query, setQuery] = useState(page.search);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   // Removing is permanent — hold the row pending a confirm dialog rather than
   // deleting on the single × click (TASKS 5.4).
   const [confirming, setConfirming] = useState<AdminSubscriberRow | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const visible = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return subscribers;
-    return subscribers.filter((s) => s.email.toLowerCase().includes(q));
-  }, [subscribers, search]);
+  const submitSearch = (raw: string) => {
+    router.push(hrefFor(raw.trim(), 1));
+  };
 
   const confirmRemove = () => {
     if (!confirming) return;
@@ -56,35 +67,53 @@ export function SubscribersView({ subscribers, kpis }: Props) {
   };
 
   const copyEmails = async () => {
-    const text = visible.map((s) => s.email).join("\n");
+    setError(null);
+    setIsExporting(true);
     try {
-      await navigator.clipboard.writeText(text);
+      const all = await exportSubscribers();
+      await navigator.clipboard.writeText(all.map((s) => s.email).join("\n"));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
       setError("Couldn't copy to the clipboard.");
+    } finally {
+      setIsExporting(false);
     }
   };
 
-  const exportCsv = () => {
-    const header = "email,source,joined\n";
-    const body = visible
-      .map((s) => `${csvCell(s.email)},${csvCell(s.source)},${csvCell(s.createdAt)}`)
-      .join("\n");
-    const blob = new Blob([header + body], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "subscribers.csv";
-    link.click();
-    URL.revokeObjectURL(url);
+  const exportCsv = async () => {
+    setError(null);
+    setIsExporting(true);
+    try {
+      const all = await exportSubscribers();
+      const header = "email,source,joined\n";
+      const body = all
+        .map(
+          (s) =>
+            `${csvCell(s.email)},${csvCell(s.source)},${csvCell(s.createdAt)}`,
+        )
+        .join("\n");
+      const blob = new Blob([header + body], {
+        type: "text/csv;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "subscribers.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Couldn't export the list.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
     <div className="flex flex-col gap-[18px]">
       {/* KPI cards */}
       <div className="grid gap-[18px] [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
-        {kpis.map((k) => (
+        {page.kpis.map((k) => (
           <div
             key={k.label}
             className="flex flex-col gap-2 rounded-xl border border-[#EAE3D7] bg-white p-5"
@@ -114,20 +143,29 @@ export function SubscribersView({ subscribers, kpis }: Props) {
           <span className="font-body text-[15px] font-semibold text-[#2A1F1A]">
             Mailing list
           </span>
-          <div className="ml-auto flex min-w-[170px] max-w-[300px] items-center rounded-lg border border-[#E7E0D4] bg-[#FBF8F2] px-3">
+          <form
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitSearch(query);
+            }}
+            className="ml-auto flex min-w-[170px] max-w-[300px] items-center rounded-lg border border-[#E7E0D4] bg-[#FBF8F2] px-3"
+          >
             <SearchIcon />
             <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              type="search"
+              name="q"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
               placeholder="Search email"
               aria-label="Search email"
               className="flex-1 border-none bg-transparent px-2 py-[9px] font-body text-[13px] text-[#2A1F1A] outline-none"
             />
-          </div>
+          </form>
           <button
             type="button"
             onClick={copyEmails}
-            disabled={visible.length === 0}
+            disabled={isExporting}
             className="inline-flex items-center gap-[7px] rounded-lg border border-[#E7E0D4] bg-white px-[15px] py-2.5 font-body text-[12px] font-semibold text-[#5E4A40] transition-colors hover:border-[#C9A24B] hover:text-[#71182B] disabled:opacity-50"
           >
             <CopyIcon />
@@ -136,7 +174,7 @@ export function SubscribersView({ subscribers, kpis }: Props) {
           <button
             type="button"
             onClick={exportCsv}
-            disabled={visible.length === 0}
+            disabled={isExporting}
             className="inline-flex items-center gap-[7px] rounded-lg border-none bg-[#71182B] px-[15px] py-2.5 font-body text-[12px] font-semibold text-[#F3E3C7] transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             <ExportIcon />
@@ -153,14 +191,14 @@ export function SubscribersView({ subscribers, kpis }: Props) {
               <span className="w-11" />
             </div>
 
-            {visible.length === 0 ? (
+            {page.rows.length === 0 ? (
               <div className="px-[22px] py-[50px] text-center font-body text-[13px] text-[#A99C90]">
-                {subscribers.length === 0
-                  ? "No subscribers yet."
-                  : "No subscribers match your search."}
+                {page.search
+                  ? "No subscribers match your search."
+                  : "No subscribers yet."}
               </div>
             ) : (
-              visible.map((s) => {
+              page.rows.map((s) => {
                 const chip = subscriberSourceChip(s.source);
                 const isBusy = pendingId === s.id;
                 return (
@@ -214,6 +252,14 @@ export function SubscribersView({ subscribers, kpis }: Props) {
           </div>
         </div>
       </div>
+
+      <AdminPager
+        page={page.page}
+        pageCount={page.pageCount}
+        total={page.total}
+        pageSize={ADMIN_SUBSCRIBERS_PAGE_SIZE}
+        hrefForPage={(n) => hrefFor(page.search, n)}
+      />
 
       {confirming && (
         <ConfirmDialog

@@ -9,12 +9,19 @@ export const metadata: Metadata = {
   title: ADMIN_PAGE_META[ROUTES.adminCategories].title,
 };
 
-export default async function AdminCategoriesPage() {
-  const { data: categories, error } = await listAdminCategories();
+export default async function AdminCategoriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const sp = await searchParams;
+  const { data, error } = await listAdminCategories({
+    page: Math.max(1, Number(sp.page) || 1),
+  });
   return (
     <div className="flex flex-col gap-6">
       {error && <AdminErrorBanner />}
-      <CategoriesView categories={categories} />
+      <CategoriesView page={data} />
     </div>
   );
 }

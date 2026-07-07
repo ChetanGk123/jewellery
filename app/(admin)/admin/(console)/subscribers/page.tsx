@@ -10,19 +10,25 @@ export const metadata: Metadata = {
 };
 
 /**
- * Subscribers page (TASKS 3.9). Reads the whole mailing list (admin RLS) plus
- * the three derived KPI cards server-side and hands them to the client
+ * Subscribers page (TASKS 3.9, paginated 5.10). Reads one page of the mailing
+ * list (admin RLS) plus the three KPI cards (from aggregate counts) server-side,
+ * driven by URL params (`?q`/`?page`), and hands the page to the client
  * `SubscribersView`, which owns search, Copy emails, Export CSV and remove.
  */
-export default async function AdminSubscribersPage() {
-  const {
-    data: { rows, kpis },
-    error,
-  } = await listAdminSubscribers();
+export default async function AdminSubscribersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  const sp = await searchParams;
+  const { data, error } = await listAdminSubscribers({
+    search: sp.q ?? "",
+    page: Math.max(1, Number(sp.page) || 1),
+  });
   return (
     <div className="flex flex-col gap-6">
       {error && <AdminErrorBanner />}
-      <SubscribersView subscribers={rows} kpis={kpis} />
+      <SubscribersView page={data} />
     </div>
   );
 }

@@ -1,25 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { AdminPager } from "@/components/admin/ui/AdminPager";
 import {
+  ADMIN_CATEGORIES_PAGE_SIZE,
   categoryCountLabel,
   type AdminCategoryRow,
 } from "@/lib/admin/category";
+import type { AdminCategoriesPage } from "@/lib/db/admin-categories";
+import { ROUTES } from "@/lib/routes";
 import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
 import { CategoryModal } from "./CategoryModal";
 
 type ModalState = { open: boolean; category: AdminCategoryRow | null };
 
+function hrefForPage(page: number): string {
+  return page > 1
+    ? `${ROUTES.adminCategories}?page=${page}`
+    : ROUTES.adminCategories;
+}
+
 /**
- * Categories manager (Phase 3.5, prototype-matched): a "New Category" button
- * above a responsive card grid, each card an icon tile + name + product count
- * with an edit pencil. Add/edit/delete all run through the CategoryModal.
+ * Categories manager (Phase 3.5, prototype-matched; paginated 5.10): a "New
+ * Category" button above a responsive card grid, each card an icon tile + name +
+ * product count with an edit pencil. The list is a single URL-driven page
+ * (`?page`). Add/edit/delete all run through the CategoryModal.
  */
-export function CategoriesView({
-  categories,
-}: {
-  categories: AdminCategoryRow[];
-}) {
+export function CategoriesView({ page }: { page: AdminCategoriesPage }) {
   const [modal, setModal] = useState<ModalState>({
     open: false,
     category: null,
@@ -43,7 +50,7 @@ export function CategoriesView({
         New Category
       </button>
 
-      {categories.length === 0 ? (
+      {page.rows.length === 0 ? (
         <div className="rounded-xl border border-[#EAE3D7] bg-white px-6 py-[50px] text-center">
           <p className="font-body text-[13px] text-[#A99C90]">
             No categories yet. Create your first collection to organise products.
@@ -51,7 +58,7 @@ export function CategoriesView({
         </div>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
-          {categories.map((c) => (
+          {page.rows.map((c) => (
             <div
               key={c.id}
               className="flex items-center gap-3.5 rounded-xl border border-[#EAE3D7] bg-white p-[18px]"
@@ -87,6 +94,14 @@ export function CategoriesView({
           ))}
         </div>
       )}
+
+      <AdminPager
+        page={page.page}
+        pageCount={page.pageCount}
+        total={page.total}
+        pageSize={ADMIN_CATEGORIES_PAGE_SIZE}
+        hrefForPage={hrefForPage}
+      />
 
       {modal.open && (
         <CategoryModal category={modal.category} onClose={close} />

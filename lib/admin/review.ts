@@ -14,6 +14,19 @@ export type ReviewFilter = "Pending" | "Approved" | "All";
 
 export const REVIEW_FILTERS: ReviewFilter[] = ["Pending", "Approved", "All"];
 
+/** Reviews shown per page in the admin moderation grid (TASKS 5.10). */
+export const ADMIN_REVIEWS_PAGE_SIZE = 12;
+
+/**
+ * Coerce an untrusted `?status=` value to a valid filter. Defaults to `Pending`
+ * (no param → the moderation queue, matching where the view used to land).
+ */
+export function toReviewFilter(value: string | undefined): ReviewFilter {
+  return value && (REVIEW_FILTERS as string[]).includes(value)
+    ? (value as ReviewFilter)
+    : "Pending";
+}
+
 /** Per-tab counts for the filter pills (mirrors the orders `counts[tab]` shape). */
 export type ReviewCounts = Record<ReviewFilter, number>;
 

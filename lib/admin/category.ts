@@ -5,6 +5,9 @@
  * without dragging the Supabase server client into the browser bundle.
  */
 
+/** Categories shown per page in the admin card grid (TASKS 5.10). */
+export const ADMIN_CATEGORIES_PAGE_SIZE = 12;
+
 export type AdminCategoryRow = {
   id: string;
   name: string;

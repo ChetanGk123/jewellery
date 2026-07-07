@@ -17,6 +17,9 @@ export type AdminSubscriberRow = {
   createdAt: string;
 };
 
+/** Subscribers shown per page in the admin mailing-list table (TASKS 5.10). */
+export const ADMIN_SUBSCRIBERS_PAGE_SIZE = 20;
+
 /** One KPI card at the top of the view. */
 export type SubscriberKpi = {
   label: string;

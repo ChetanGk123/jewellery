@@ -11,6 +11,9 @@ import { formatPaise } from "@/lib/utils/money";
 
 export type { CouponKind };
 
+/** Coupons shown per page in the admin table (TASKS 5.10). */
+export const ADMIN_COUPONS_PAGE_SIZE = 10;
+
 /** A `coupon` row as the admin console needs it (all columns, active or not). */
 export type AdminCouponRow = {
   id: string;

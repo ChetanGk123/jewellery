@@ -1,39 +1,43 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { setMessageStatus } from "@/app/(admin)/admin/(console)/messages/actions";
+import { AdminPager } from "@/components/admin/ui/AdminPager";
 import {
+  ADMIN_MESSAGES_PAGE_SIZE,
   type AdminMessageRow,
-  type MessageCounts,
   type MessageFilter,
   type MessageStatus,
   MESSAGE_FILTERS,
   messageDateLabel,
   messageStatusChip,
 } from "@/lib/admin/message";
+import type { AdminMessagesPage } from "@/lib/db/admin-messages";
+import { ROUTES } from "@/lib/routes";
 
-type Props = {
-  messages: AdminMessageRow[];
-  counts: MessageCounts;
-};
+/** Build a URL for a filter tab / page. Omits the default `New` filter + page 1. */
+function hrefFor(filter: MessageFilter, page: number): string {
+  const params = new URLSearchParams();
+  if (filter !== "New") params.set("status", filter);
+  if (page > 1) params.set("page", String(page));
+  const qs = params.toString();
+  return qs ? `${ROUTES.adminMessages}?${qs}` : ROUTES.adminMessages;
+}
 
 /**
- * Contact messages queue (TASKS 3.8, prototype-matched): All / New / In Progress
- * / Resolved filter pills with live counts over a responsive card grid. Each
- * ticket card shows its number, status pill, subject, sender, message and date,
- * with context actions — Start (New → In Progress), ✓ Resolve (→ Resolved) and
- * Reopen (Resolved → In Progress) — driven through the `setMessageStatus` server
- * action. Lands on New (the fresh-enquiry queue).
+ * Contact messages queue (TASKS 3.8, prototype-matched; paginated 5.10): All /
+ * New / In Progress / Resolved filter pills with live counts over a responsive
+ * card grid. The filter + page live in the URL (`?status`/`?page`), so the read
+ * is bounded and the view is shareable. Each ticket card shows its number, status
+ * pill, subject, sender, message and date, with context actions — Start (New → In
+ * Progress), ✓ Resolve (→ Resolved) and Reopen (Resolved → In Progress) — driven
+ * through the `setMessageStatus` server action.
  */
-export function MessagesView({ messages, counts }: Props) {
-  const [filter, setFilter] = useState<MessageFilter>("New");
+export function MessagesView({ page }: { page: AdminMessagesPage }) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
-
-  const visible = messages.filter((m) =>
-    filter === "All" ? true : m.status === filter,
-  );
 
   const move = (row: AdminMessageRow, status: MessageStatus) => {
     setError(null);
@@ -50,21 +54,20 @@ export function MessagesView({ messages, counts }: Props) {
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         {MESSAGE_FILTERS.map((tab) => {
-          const active = filter === tab;
+          const active = page.filter === tab;
           return (
-            <button
+            <Link
               key={tab}
-              type="button"
-              onClick={() => setFilter(tab)}
-              aria-pressed={active}
+              href={hrefFor(tab, 1)}
+              aria-current={active ? "page" : undefined}
               className={`rounded-full border px-4 py-[9px] text-[12.5px] font-medium transition-colors ${
                 active
                   ? "border-maroon-700 bg-maroon-700 text-cream-200"
                   : "border-[#EAE3D7] bg-white text-[#5E4A40] hover:border-[#D8CDB9]"
               }`}
             >
-              {tab} <span className="opacity-70">{counts[tab]}</span>
-            </button>
+              {tab} <span className="opacity-70">{page.counts[tab]}</span>
+            </Link>
           );
         })}
       </div>
@@ -75,13 +78,13 @@ export function MessagesView({ messages, counts }: Props) {
         </p>
       )}
 
-      {visible.length === 0 ? (
+      {page.rows.length === 0 ? (
         <p className="rounded-xl border border-[#EAE3D7] bg-white px-[22px] py-[50px] text-center font-body text-[13px] text-[#A99C90]">
           No messages with this status.
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {visible.map((m) => {
+          {page.rows.map((m) => {
             const chip = messageStatusChip(m.status);
             const isBusy = pendingId === m.id;
             return (
@@ -165,6 +168,14 @@ export function MessagesView({ messages, counts }: Props) {
           })}
         </div>
       )}
+
+      <AdminPager
+        page={page.page}
+        pageCount={page.pageCount}
+        total={page.total}
+        pageSize={ADMIN_MESSAGES_PAGE_SIZE}
+        hrefForPage={(n) => hrefFor(page.filter, n)}
+      />
     </div>
   );
 }

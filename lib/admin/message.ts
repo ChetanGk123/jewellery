@@ -18,6 +18,26 @@ export const MESSAGE_FILTERS: MessageFilter[] = [
   "Resolved",
 ];
 
+/** The real ticket statuses (the tabs minus the catch-all "All"). */
+export const MESSAGE_STATUSES: MessageStatus[] = [
+  "New",
+  "In Progress",
+  "Resolved",
+];
+
+/** Messages shown per page in the admin queue (TASKS 5.10). */
+export const ADMIN_MESSAGES_PAGE_SIZE = 12;
+
+/**
+ * Coerce an untrusted `?status=` value to a valid filter. Defaults to `New`
+ * (no param → the fresh-enquiry queue, matching where the view used to land).
+ */
+export function toMessageFilter(value: string | undefined): MessageFilter {
+  return value && (MESSAGE_FILTERS as string[]).includes(value)
+    ? (value as MessageFilter)
+    : "New";
+}
+
 /** Per-tab counts for the filter pills. */
 export type MessageCounts = Record<MessageFilter, number>;
 

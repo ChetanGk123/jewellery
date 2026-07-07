@@ -2,22 +2,31 @@
 
 import { useState, useTransition } from "react";
 import { toggleCoupon } from "@/app/(admin)/admin/(console)/coupons/actions";
+import { AdminPager } from "@/components/admin/ui/AdminPager";
 import {
+  ADMIN_COUPONS_PAGE_SIZE,
   type AdminCouponRow,
   couponDiscountLabel,
   couponExpiryLabel,
   couponMinOrderLabel,
   couponUsageLabel,
 } from "@/lib/admin/coupon";
+import type { AdminCouponsPage } from "@/lib/db/admin-coupons";
+import { ROUTES } from "@/lib/routes";
 import { CouponModal } from "./CouponModal";
 
+function hrefForPage(page: number): string {
+  return page > 1 ? `${ROUTES.adminCoupons}?page=${page}` : ROUTES.adminCoupons;
+}
+
 /**
- * Coupons manager (TASKS 3.6, prototype-matched): a "Create Coupon" button over
- * a table (code, discount, min order, usage, expiry, active). Each row's active
- * state flips inline through the `toggleCoupon` action; creating goes through
- * the CouponModal. Mirrors the prototype, which offers create + toggle only.
+ * Coupons manager (TASKS 3.6, prototype-matched; paginated 5.10): a "Create
+ * Coupon" button over a table (code, discount, min order, usage, expiry, active,
+ * edit). The list is a single URL-driven page (`?page`). Each row's active state
+ * flips inline through the `toggleCoupon` action; create/edit go through the
+ * CouponModal.
  */
-export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
+export function CouponsView({ page }: { page: AdminCouponsPage }) {
   // `null` = closed; "new" = create; an object = edit that coupon.
   const [modal, setModal] = useState<"new" | AdminCouponRow | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -67,12 +76,12 @@ export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
               <span className="w-[60px] text-center">Edit</span>
             </div>
 
-            {coupons.length === 0 ? (
+            {page.rows.length === 0 ? (
               <p className="px-[22px] py-[50px] text-center font-body text-[13px] text-[#A99C90]">
                 No coupons yet. Create your first discount code.
               </p>
             ) : (
-              coupons.map((c) => (
+              page.rows.map((c) => (
                 <div
                   key={c.id}
                   className="flex items-center gap-3.5 border-b border-[#F3EEE4] px-[22px] py-[15px] last:border-b-0"
@@ -131,11 +140,13 @@ export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
         </div>
       </div>
 
-      {coupons.length > 0 && (
-        <span className="font-body text-[12px] text-[#8A7E74]">
-          Showing 1—{coupons.length} of {coupons.length}
-        </span>
-      )}
+      <AdminPager
+        page={page.page}
+        pageCount={page.pageCount}
+        total={page.total}
+        pageSize={ADMIN_COUPONS_PAGE_SIZE}
+        hrefForPage={hrefForPage}
+      />
 
       {modal !== null && (
         <CouponModal
