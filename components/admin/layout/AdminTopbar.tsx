@@ -72,6 +72,7 @@ export function AdminTopbar({ onMenuClick }: { onMenuClick: () => void }) {
         </svg>
         <input
           type="search"
+          id="admin-order-search"
           name="q"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

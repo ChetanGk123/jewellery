@@ -13,6 +13,7 @@ import type { AdminProductRow, AdminProductsPage } from "@/lib/db/admin-products
 import { ROUTES } from "@/lib/routes";
 import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
 import { formatPaise } from "@/lib/utils/money";
+import { AdminPager } from "@/components/admin/ui/AdminPager";
 import { ProductModal } from "./ProductModal";
 
 type ModalState = { open: boolean; product: AdminProductRow | null };
@@ -30,7 +31,6 @@ export function ProductsView({
   const [modal, setModal] = useState<ModalState>(
     initialEdit ? { open: true, product: initialEdit } : { open: false, product: null },
   );
-  const [notice, setNotice] = useState<string | null>(null);
 
   const hrefFor = (over: Partial<Record<"search" | "category" | "status" | "page", string>>) => {
     const params = new URLSearchParams();
@@ -47,9 +47,6 @@ export function ProductsView({
   };
 
   const go = (over: Parameters<typeof hrefFor>[0]) => router.push(hrefFor(over));
-
-  const rangeStart = page.total === 0 ? 0 : (page.page - 1) * ADMIN_PRODUCTS_PAGE_SIZE + 1;
-  const rangeEnd = Math.min(page.page * ADMIN_PRODUCTS_PAGE_SIZE, page.total);
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -102,16 +99,6 @@ export function ProductsView({
         <div className="ml-auto flex gap-2.5">
           <button
             type="button"
-            onClick={() => setNotice("CSV import is coming soon.")}
-            className="inline-flex items-center gap-2 rounded-lg border border-maroon-700 bg-white px-[18px] py-[11px] text-[12px] font-semibold tracking-[0.04em] text-maroon-700 transition-colors hover:bg-[#FBF4F0]"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path d="M12 15V3M8 7l4-4 4 4M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />
-            </svg>
-            Import CSV
-          </button>
-          <button
-            type="button"
             onClick={() => setModal({ open: true, product: null })}
             className="inline-flex items-center gap-2 rounded-lg bg-maroon-700 px-[18px] py-[11px] text-[12px] font-semibold tracking-[0.04em] text-cream-200 transition-opacity hover:opacity-90"
           >
@@ -122,20 +109,6 @@ export function ProductsView({
           </button>
         </div>
       </div>
-
-      {notice && (
-        <div className="flex items-center justify-between rounded-lg border border-[#E7D9BE] bg-[#FBF4E4] px-4 py-2.5 text-[12.5px] text-[#8A6A2A]">
-          <span>{notice}</span>
-          <button
-            type="button"
-            onClick={() => setNotice(null)}
-            aria-label="Dismiss"
-            className="text-[16px] leading-none text-[#B69663] hover:text-[#8A6A2A]"
-          >
-            ×
-          </button>
-        </div>
-      )}
 
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-[#EAE3D7] bg-white">
@@ -206,7 +179,7 @@ export function ProductsView({
                     </span>
                     <span className="flex w-[56px] items-center justify-end gap-3">
                       <Link
-                        href={ROUTES.adminAnalytics}
+                        href={`${ROUTES.adminAnalytics}?product=${p.id}`}
                         title="View analytics"
                         className="inline-flex text-[#8A7E74] transition-colors hover:text-maroon-700"
                       >
@@ -234,42 +207,13 @@ export function ProductsView({
         </div>
       </div>
 
-      {/* Pagination */}
-      {page.total > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-[12px] text-[#8A7E74]">
-            Showing {rangeStart}–{rangeEnd} of {page.total}
-          </span>
-          {page.pageCount > 1 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <PagerArrow
-                label="‹ Prev"
-                href={hrefFor({ page: String(page.page - 1) })}
-                disabled={page.page <= 1}
-              />
-              {Array.from({ length: page.pageCount }, (_, i) => i + 1).map((n) => (
-                <Link
-                  key={n}
-                  href={hrefFor({ page: String(n) })}
-                  aria-current={n === page.page ? "page" : undefined}
-                  className={`min-w-[34px] rounded-md border px-2.5 py-[7px] text-center text-[12px] font-semibold ${
-                    n === page.page
-                      ? "border-maroon-700 bg-maroon-700 text-cream-200"
-                      : "border-[#E7E0D4] bg-white text-maroon-700 hover:border-[#D8CDB9]"
-                  }`}
-                >
-                  {n}
-                </Link>
-              ))}
-              <PagerArrow
-                label="Next ›"
-                href={hrefFor({ page: String(page.page + 1) })}
-                disabled={page.page >= page.pageCount}
-              />
-            </div>
-          )}
-        </div>
-      )}
+      <AdminPager
+        page={page.page}
+        pageCount={page.pageCount}
+        total={page.total}
+        pageSize={ADMIN_PRODUCTS_PAGE_SIZE}
+        hrefForPage={(n) => hrefFor({ page: String(n) })}
+      />
 
       {modal.open && (
         <ProductModal
@@ -280,27 +224,5 @@ export function ProductsView({
         />
       )}
     </div>
-  );
-}
-
-/** Prev / Next pager control — a Link when active, an inert dimmed span at the ends. */
-function PagerArrow({
-  label,
-  href,
-  disabled,
-}: {
-  label: string;
-  href: string;
-  disabled: boolean;
-}) {
-  const cls =
-    "rounded-md border border-[#E7E0D4] bg-white px-[13px] py-[7px] text-[12px] font-semibold text-maroon-700";
-  if (disabled) {
-    return <span className={`${cls} cursor-default opacity-40`}>{label}</span>;
-  }
-  return (
-    <Link href={href} className={`${cls} hover:border-[#D8CDB9]`}>
-      {label}
-    </Link>
   );
 }

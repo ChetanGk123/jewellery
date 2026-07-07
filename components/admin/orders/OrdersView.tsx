@@ -17,6 +17,7 @@ import type {
 } from "@/lib/db/admin-orders";
 import { ROUTES } from "@/lib/routes";
 import { formatPaise } from "@/lib/utils/money";
+import { AdminPager } from "@/components/admin/ui/AdminPager";
 import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
 import { OrderDrawer } from "./OrderDrawer";
 
@@ -84,8 +85,6 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
     if (next) runChange(next);
   };
 
-  const rangeStart = page.total === 0 ? 0 : (page.page - 1) * ORDERS_PAGE_SIZE + 1;
-  const rangeEnd = Math.min(page.page * ORDERS_PAGE_SIZE, page.total);
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -235,48 +234,13 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         </div>
       </div>
 
-      {/* Pagination */}
-      {page.total > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-[12px] text-[#8A7E74]">
-            Showing {rangeStart}–{rangeEnd} of {page.total}
-          </span>
-          {page.pageCount > 1 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <PagerLink
-                filter={page.filter}
-                page={page.page - 1}
-                search={page.search}
-                disabled={page.page <= 1}
-              >
-                ‹ Prev
-              </PagerLink>
-              {Array.from({ length: page.pageCount }, (_, i) => i + 1).map((n) => (
-                <Link
-                  key={n}
-                  href={hrefFor(page.filter, n, page.search)}
-                  aria-current={n === page.page ? "page" : undefined}
-                  className={`min-w-[34px] rounded-md border px-2.5 py-[7px] text-center text-[12px] font-semibold ${
-                    n === page.page
-                      ? "border-maroon-700 bg-maroon-700 text-cream-200"
-                      : "border-[#E7E0D4] bg-white text-maroon-700 hover:border-[#D8CDB9]"
-                  }`}
-                >
-                  {n}
-                </Link>
-              ))}
-              <PagerLink
-                filter={page.filter}
-                page={page.page + 1}
-                search={page.search}
-                disabled={page.page >= page.pageCount}
-              >
-                Next ›
-              </PagerLink>
-            </div>
-          )}
-        </div>
-      )}
+      <AdminPager
+        page={page.page}
+        pageCount={page.pageCount}
+        total={page.total}
+        pageSize={ORDERS_PAGE_SIZE}
+        hrefForPage={(n) => hrefFor(page.filter, n, page.search)}
+      />
 
       <OrderDrawer
         order={selected}
@@ -315,37 +279,5 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         />
       )}
     </div>
-  );
-}
-
-function PagerLink({
-  filter,
-  page,
-  search,
-  disabled,
-  children,
-}: {
-  filter: OrderFilter;
-  page: number;
-  search: string;
-  disabled: boolean;
-  children: React.ReactNode;
-}) {
-  const cls =
-    "rounded-md border border-[#E7E0D4] bg-white px-3.5 py-[7px] text-[12px] font-semibold text-maroon-700";
-  if (disabled) {
-    return (
-      <span className={`${cls} cursor-not-allowed opacity-40`} aria-disabled>
-        {children}
-      </span>
-    );
-  }
-  return (
-    <Link
-      href={hrefFor(filter, page, search)}
-      className={`${cls} hover:border-[#D8CDB9]`}
-    >
-      {children}
-    </Link>
   );
 }

@@ -19,6 +19,8 @@ import { formatPaise } from "@/lib/utils/money";
 type Props = {
   kpis: AnalyticsKpi[];
   products: AnalyticsProduct[];
+  /** Product to open the detail view for on load (products-row `?product=` deep link). */
+  initialProductId?: string | null;
 };
 
 /**
@@ -28,9 +30,9 @@ type Props = {
  * an Edit-product link back to the catalogue). List ↔ detail is client state, so
  * the whole dataset loads once server-side and no route change is needed.
  */
-export function AnalyticsView({ kpis, products }: Props) {
+export function AnalyticsView({ kpis, products, initialProductId = null }: Props) {
   const [sort, setSort] = useState<AnalyticsSort>("units");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialProductId);
 
   const sorted = useMemo(() => sortAnalytics(products, sort), [products, sort]);
   const selected = selectedId
