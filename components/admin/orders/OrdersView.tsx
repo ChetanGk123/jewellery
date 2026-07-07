@@ -13,6 +13,7 @@ import {
 import type {
   AdminOrderRow,
   AdminOrdersPage,
+  OrderEvent,
   OrderFilter,
 } from "@/lib/db/admin-orders";
 import { ROUTES } from "@/lib/routes";
@@ -71,12 +72,40 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
       if (res.ok) {
         setError(null);
         setConfirmingCancel(false);
-        // Keep the drawer open; reflect the confirmed new status in place.
-        setSelected((prev) => (prev ? { ...prev, status: next } : prev));
+        // Keep the drawer open; reflect the confirmed new status in place,
+        // including a timeline entry mirroring what the audit trigger just
+        // wrote (the served rows carry the real one after revalidation).
+        setSelected((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: next,
+                events: [
+                  ...prev.events,
+                  {
+                    id: `local-${prev.id}-${prev.events.length}`,
+                    kind: "status",
+                    summary: `${prev.status} → ${next}`,
+                    actorEmail: null,
+                    atLabel: "Just now",
+                    createdAt: new Date().toISOString(),
+                  },
+                ],
+              }
+            : prev,
+        );
       } else {
         setError(res.error ?? "Couldn't update the order.");
       }
     });
+  };
+
+  // A saved note comes back as its real audit row — append it to the open
+  // drawer's snapshot so the timeline updates without a refetch.
+  const onNoteAdded = (event: OrderEvent) => {
+    setSelected((prev) =>
+      prev ? { ...prev, events: [...prev.events, event] } : prev,
+    );
   };
 
   const onAdvance = () => {
@@ -251,6 +280,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
           setError(null);
           setConfirmingCancel(true);
         }}
+        onNoteAdded={onNoteAdded}
         isPending={isPending}
         error={error}
       />

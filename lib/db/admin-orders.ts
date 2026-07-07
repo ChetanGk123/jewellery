@@ -55,6 +55,21 @@ export type AdminOrderRow = {
   customerOrderCount: number;
   /** How many of those were cancelled — the COD-risk signal. */
   customerCancelledCount: number;
+  /** Chronological who/when history: placed → status changes → notes (5.16). */
+  events: OrderEvent[];
+};
+
+/** One drawer-timeline entry. */
+export type OrderEvent = {
+  id: string;
+  kind: "placed" | "status" | "note";
+  /** "Order placed", "Pending → Confirmed", or the note text. */
+  summary: string;
+  /** Admin who acted; null for the synthetic "placed" entry. */
+  actorEmail: string | null;
+  /** IST date + time, e.g. "04 Jul 2026, 6:32 pm". */
+  atLabel: string;
+  createdAt: string;
 };
 
 /** Tab counts: one per status plus the "All" total. */
@@ -83,6 +98,19 @@ function istDate(iso: string): string {
     day: "2-digit",
     month: "short",
     year: "numeric",
+  });
+}
+
+/** IST date + time for timeline entries, e.g. "04 Jul 2026, 6:32 pm". */
+function istDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("en-GB", {
+    timeZone: IST,
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
   });
 }
 
@@ -166,6 +194,50 @@ type OrderSelectRow = {
   }[];
 };
 
+/** The audit-log columns the timeline needs (5.16). */
+const AUDIT_SELECT = "id, entity_id, action, actor_email, summary, created_at";
+
+/** Timeline actions we surface — status changes (0026) + notes (0028). */
+const TIMELINE_ACTIONS = ["order.status", "order.note"];
+
+type AuditSelectRow = {
+  id: string;
+  entity_id: string | null;
+  action: string;
+  actor_email: string | null;
+  summary: string | null;
+  created_at: string;
+};
+
+/** Map an audit row (already known to be a timeline action) to an event. */
+export function toOrderEvent(row: {
+  id: string;
+  action: string;
+  actor_email: string | null;
+  summary: string | null;
+  created_at: string;
+}): OrderEvent {
+  return {
+    id: row.id,
+    kind: row.action === "order.note" ? "note" : "status",
+    summary: row.summary ?? "",
+    actorEmail: row.actor_email,
+    atLabel: istDateTime(row.created_at),
+    createdAt: row.created_at,
+  };
+}
+
+/** Group timeline audit rows by order number (`entity_id`). */
+function groupEvents(rows: AuditSelectRow[]): Map<string, OrderEvent[]> {
+  const byOrder = new Map<string, OrderEvent[]>();
+  for (const row of rows) {
+    if (!row.entity_id) continue;
+    const list = byOrder.get(row.entity_id) ?? [];
+    byOrder.set(row.entity_id, [...list, toOrderEvent(row)]);
+  }
+  return byOrder;
+}
+
 /** Per-customer order history (keyed by phone — stable across guest edits). */
 type CustomerHistory = { orders: number; cancelled: number };
 
@@ -185,8 +257,21 @@ function tallyHistory(
 }
 
 /** Map a `SELECT` row to the camelCase `AdminOrderRow` the console uses. */
-function mapOrderRow(o: OrderSelectRow, history?: CustomerHistory): AdminOrderRow {
+function mapOrderRow(
+  o: OrderSelectRow,
+  history?: CustomerHistory,
+  auditEvents: OrderEvent[] = [],
+): AdminOrderRow {
   const items = o.order_item ?? [];
+  // Every timeline starts at placement; audit rows arrive oldest-first.
+  const placed: OrderEvent = {
+    id: `placed-${o.id}`,
+    kind: "placed",
+    summary: "Order placed",
+    actorEmail: null,
+    atLabel: istDateTime(o.created_at),
+    createdAt: o.created_at,
+  };
   return {
     id: o.id,
     orderNo: o.order_no,
@@ -217,6 +302,7 @@ function mapOrderRow(o: OrderSelectRow, history?: CustomerHistory): AdminOrderRo
     // Without history context this order is at least the customer's first.
     customerOrderCount: history?.orders ?? 1,
     customerCancelledCount: history?.cancelled ?? 0,
+    events: [placed, ...auditEvents],
   };
 }
 
@@ -237,11 +323,24 @@ export async function getAdminOrderByNo(
       .maybeSingle();
     if (!data) return null;
     const row = data as OrderSelectRow;
-    const { data: hist } = await supabase
-      .from("order")
-      .select("customer_phone, status")
-      .eq("customer_phone", row.customer_phone);
-    return mapOrderRow(row, tallyHistory(hist ?? []).get(row.customer_phone));
+    const [{ data: hist }, { data: audit }] = await Promise.all([
+      supabase
+        .from("order")
+        .select("customer_phone, status")
+        .eq("customer_phone", row.customer_phone),
+      supabase
+        .from("admin_audit_log")
+        .select(AUDIT_SELECT)
+        .eq("entity_type", "order")
+        .eq("entity_id", row.order_no)
+        .in("action", TIMELINE_ACTIONS)
+        .order("created_at", { ascending: true }),
+    ]);
+    return mapOrderRow(
+      row,
+      tallyHistory(hist ?? []).get(row.customer_phone),
+      groupEvents((audit ?? []) as AuditSelectRow[]).get(row.order_no) ?? [],
+    );
   } catch (err) {
     console.error("[admin-read] order-by-no failed:", err);
     return null;
@@ -300,23 +399,41 @@ export async function listAdminOrders(opts: {
       const total = counts[filter];
       const pageCount = Math.max(1, Math.ceil(total / ORDERS_PAGE_SIZE));
 
-      // Customer context (5.15): one bounded read over just this page's
-      // distinct phone numbers → lifetime order/cancelled tallies per customer.
+      // Two bounded companion reads over just this page's rows, in parallel:
+      // customer history by phone (5.15) and the audit timeline by order no
+      // (5.16 — status changes + notes).
       const rawRows = (rowsRes.data ?? []) as OrderSelectRow[];
       const phones = [...new Set(rawRows.map((o) => o.customer_phone))].filter(
         Boolean,
       );
       let historyByPhone = new Map<string, CustomerHistory>();
-      if (phones.length > 0) {
-        const { data: hist } = await supabase
-          .from("order")
-          .select("customer_phone, status")
-          .in("customer_phone", phones);
+      let eventsByOrder = new Map<string, OrderEvent[]>();
+      if (rawRows.length > 0) {
+        const [{ data: hist }, { data: audit }] = await Promise.all([
+          phones.length > 0
+            ? supabase
+                .from("order")
+                .select("customer_phone, status")
+                .in("customer_phone", phones)
+            : Promise.resolve({ data: [] }),
+          supabase
+            .from("admin_audit_log")
+            .select(AUDIT_SELECT)
+            .eq("entity_type", "order")
+            .in("entity_id", rawRows.map((o) => o.order_no))
+            .in("action", TIMELINE_ACTIONS)
+            .order("created_at", { ascending: true }),
+        ]);
         historyByPhone = tallyHistory(hist ?? []);
+        eventsByOrder = groupEvents((audit ?? []) as AuditSelectRow[]);
       }
 
       const rows: AdminOrderRow[] = rawRows.map((o) =>
-        mapOrderRow(o, historyByPhone.get(o.customer_phone)),
+        mapOrderRow(
+          o,
+          historyByPhone.get(o.customer_phone),
+          eventsByOrder.get(o.order_no) ?? [],
+        ),
       );
 
       return { rows, counts, filter, search, page, pageCount, total };

@@ -2,8 +2,13 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { normalizeOrderNote } from "@/lib/admin/order-notes";
 import { CACHE_TAGS } from "@/lib/db/cache";
-import { ORDER_STATUSES } from "@/lib/db/admin-orders";
+import {
+  ORDER_STATUSES,
+  toOrderEvent,
+  type OrderEvent,
+} from "@/lib/db/admin-orders";
 import { createServerClient } from "@/lib/db/server";
 import type { OrderStatusEmailKind } from "@/lib/email/order-status";
 import { queueOrderStatusEmail } from "@/lib/email/send";
@@ -77,4 +82,70 @@ export async function setOrderStatus(
   // A Cancel restores stock, which the cached catalog displays.
   updateTag(CACHE_TAGS.products);
   return { ok: true };
+}
+
+export type NoteActionResult = {
+  ok: boolean;
+  /** The saved timeline entry, so the open drawer can append it in place. */
+  event?: OrderEvent;
+  error?: string;
+};
+
+/** Friendly messages for `admin_add_order_note`'s raised exceptions (0028). */
+function noteMessageFor(raw: string): string {
+  if (raw.includes("NOT_ADMIN")) return "You don't have permission to do that.";
+  if (raw.includes("ORDER_NOT_FOUND")) return "That order no longer exists.";
+  if (raw.includes("INVALID_NOTE"))
+    return "Notes must be 1–500 characters.";
+  return "Couldn't save the note. Please try again.";
+}
+
+/**
+ * Attach an internal note to an order (TASKS 5.16). Writes an `order.note`
+ * row into the audit log via the admin-only `admin_add_order_note` RPC, which
+ * re-checks admin + validity server-side; returns the created event so the UI
+ * updates without a refetch.
+ */
+export async function addOrderNote(
+  orderNo: string,
+  rawNote: string,
+): Promise<NoteActionResult> {
+  await requireAdmin(ROUTES.adminOrders);
+
+  const note = normalizeOrderNote(rawNote);
+  if (!orderNo || !note) {
+    return { ok: false, error: "Notes must be 1–500 characters." };
+  }
+
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.rpc("admin_add_order_note", {
+    p_order_no: orderNo,
+    p_note: note,
+  });
+
+  if (error) {
+    return { ok: false, error: noteMessageFor(error.message) };
+  }
+
+  const row = data as {
+    id?: string;
+    actor_email?: string | null;
+    summary?: string | null;
+    created_at?: string;
+  } | null;
+  if (!row?.id || !row.created_at) {
+    return { ok: false, error: "Couldn't save the note. Please try again." };
+  }
+
+  revalidatePath(ROUTES.adminOrders);
+  return {
+    ok: true,
+    event: toOrderEvent({
+      id: row.id,
+      action: "order.note",
+      actor_email: row.actor_email ?? null,
+      summary: row.summary ?? note,
+      created_at: row.created_at,
+    }),
+  };
 }

@@ -1,6 +1,9 @@
 "use client";
 
-import type { AdminOrderRow } from "@/lib/db/admin-orders";
+import { useState, useTransition } from "react";
+import { addOrderNote } from "@/app/(admin)/admin/(console)/orders/actions";
+import type { AdminOrderRow, OrderEvent } from "@/lib/db/admin-orders";
+import { NOTE_MAX_LEN } from "@/lib/admin/order-notes";
 import {
   advanceLabel,
   buildStepper,
@@ -20,15 +23,19 @@ type Props = {
   onClose: () => void;
   onAdvance: () => void;
   onCancel: () => void;
+  /** A note was saved — parent appends it to its drawer snapshot (5.16). */
+  onNoteAdded: (event: OrderEvent) => void;
   isPending: boolean;
   error: string | null;
 };
 
 /**
  * Right-hand fulfilment drawer (prototype-matched). Slides in over a backdrop;
- * shows the status stepper, customer + address, item lines with totals, a
- * Shiprocket AWB stub, and the advance / cancel actions. Purely presentational —
- * the parent owns the selection + the server action.
+ * shows the status stepper, customer + address, item lines with totals, the
+ * timeline + internal notes, a Shiprocket AWB stub, and the advance / cancel
+ * actions. The parent owns the selection + the status action; the note
+ * composer is self-contained but reports saves up via `onNoteAdded` so the
+ * parent's snapshot stays current.
  */
 export function OrderDrawer({
   order,
@@ -36,6 +43,7 @@ export function OrderDrawer({
   onClose,
   onAdvance,
   onCancel,
+  onNoteAdded,
   isPending,
   error,
 }: Props) {
@@ -181,6 +189,8 @@ export function OrderDrawer({
                   label="Print packing slip"
                 />
               </div>
+
+              <Timeline order={order} onNoteAdded={onNoteAdded} />
 
               <AwbStub awb={order.awb} />
             </div>
@@ -383,6 +393,124 @@ function Stepper({ steps }: { steps: OrderStep[] }) {
         );
       })}
     </div>
+  );
+}
+
+/* --------------------------- Timeline + notes ---------------------------- */
+
+const EVENT_DOTS: Record<OrderEvent["kind"], string> = {
+  placed: "#C9A24B",
+  status: "#71182B",
+  note: "#A87A1E",
+};
+
+/**
+ * Who/when history (TASKS 5.16): placement, admin status changes (from the 5.8
+ * audit trail) and internal notes, oldest first, with the note composer below.
+ * Customer self-cancels aren't audited, so they don't appear as entries — the
+ * status pill and stepper still tell that story.
+ */
+function Timeline({
+  order,
+  onNoteAdded,
+}: {
+  order: AdminOrderRow;
+  onNoteAdded: (event: OrderEvent) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-[10px] border border-[#EAE3D7] bg-white p-4">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#A99C90]">
+        Timeline &amp; notes
+      </span>
+      <ol className="flex flex-col">
+        {order.events.map((event, i) => (
+          <li key={event.id} className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <span
+                className="mt-[5px] h-2 w-2 shrink-0 rounded-full"
+                style={{ background: EVENT_DOTS[event.kind] }}
+              />
+              {i < order.events.length - 1 && (
+                <span className="w-px flex-1 bg-[#EDE5D6]" />
+              )}
+            </div>
+            <div className="flex flex-col gap-0.5 pb-3">
+              {event.kind === "note" ? (
+                <span className="whitespace-pre-line rounded-md bg-[#FBF6EE] px-2.5 py-1.5 text-[12.5px] leading-relaxed text-[#5E4A40]">
+                  {event.summary}
+                </span>
+              ) : (
+                <span className="text-[12.5px] font-medium text-[#2A1F1A]">
+                  {event.summary}
+                </span>
+              )}
+              <span className="text-[11px] text-[#A99C90]">
+                {event.atLabel}
+                {event.actorEmail && ` · ${event.actorEmail}`}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <NoteComposer orderNo={order.orderNo} onNoteAdded={onNoteAdded} />
+    </div>
+  );
+}
+
+/** Free-text internal note form — saves via the addOrderNote server action. */
+function NoteComposer({
+  orderNo,
+  onNoteAdded,
+}: {
+  orderNo: string;
+  onNoteAdded: (event: OrderEvent) => void;
+}) {
+  const [note, setNote] = useState("");
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const [isSaving, startSaving] = useTransition();
+
+  const submit = () => {
+    if (!note.trim() || isSaving) return;
+    startSaving(async () => {
+      const res = await addOrderNote(orderNo, note);
+      if (res.ok && res.event) {
+        setNote("");
+        setNoteError(null);
+        onNoteAdded(res.event);
+      } else {
+        setNoteError(res.error ?? "Couldn't save the note.");
+      }
+    });
+  };
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+      className="flex flex-col gap-2 border-t border-[#F0EADF] pt-3"
+    >
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        maxLength={NOTE_MAX_LEN}
+        rows={2}
+        placeholder='Add an internal note — e.g. "deliver after 6pm"'
+        aria-label="Internal note"
+        className="resize-none rounded-md border border-[#E7E0D4] bg-[#FFFDF8] px-2.5 py-2 text-[12.5px] text-[#2A1F1A] outline-none placeholder:text-[#B7AB9E] focus:border-[#C9A24B]"
+      />
+      {noteError && (
+        <p className="text-[12px] font-medium text-[#C0392F]">{noteError}</p>
+      )}
+      <button
+        type="submit"
+        disabled={isSaving || !note.trim()}
+        className="self-end rounded-md border border-[#DAD0C2] bg-white px-3 py-1.5 text-[11.5px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-50"
+      >
+        {isSaving ? "Saving…" : "Add note"}
+      </button>
+    </form>
   );
 }
 
