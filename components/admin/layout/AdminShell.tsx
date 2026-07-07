@@ -33,7 +33,7 @@ export function AdminShell({
         onClose={() => setIsSidebarOpen(false)}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <AdminTopbar onMenuClick={() => setIsSidebarOpen(true)} />
+        <AdminTopbar counts={counts} onMenuClick={() => setIsSidebarOpen(true)} />
         <main className="flex-1 px-5 py-7 pb-16 sm:px-8">{children}</main>
       </div>
     </div>
