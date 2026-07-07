@@ -1,3 +1,5 @@
+import type { PrintDoc } from "@/lib/admin/print";
+
 /**
  * Central route registry — the single source of truth for storefront URLs.
  * Change a path here and every link follows, so route-scheme decisions live in
@@ -45,6 +47,15 @@ export const ROUTES = {
    */
   admin: "/admin",
   adminOrders: "/admin/orders",
+  /**
+   * Print surface for one order (5.12) — chrome-free `(print)` group. Invoice
+   * and packing slip are separate documents on the same route, picked by `?doc=`
+   * (invoice is the default and carries no param).
+   */
+  adminOrderPrint: (orderNo: string, doc: PrintDoc = "invoice") =>
+    `/admin/orders/${encodeURIComponent(orderNo)}/print${
+      doc === "invoice" ? "" : `?doc=${doc}`
+    }`,
   adminProducts: "/admin/products",
   adminAnalytics: "/admin/analytics",
   adminCategories: "/admin/categories",

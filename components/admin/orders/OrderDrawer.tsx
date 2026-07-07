@@ -10,6 +10,7 @@ import {
   type StepState,
 } from "@/lib/admin/order-status";
 import { useDialog } from "@/hooks/useDialog";
+import { ROUTES } from "@/lib/routes";
 import { formatPaise } from "@/lib/utils/money";
 
 type Props = {
@@ -157,6 +158,17 @@ export function OrderDrawer({
                 </div>
               </div>
 
+              <div className="flex gap-2.5">
+                <PrintLink
+                  href={ROUTES.adminOrderPrint(order.orderNo, "invoice")}
+                  label="Print invoice"
+                />
+                <PrintLink
+                  href={ROUTES.adminOrderPrint(order.orderNo, "packing-slip")}
+                  label="Print packing slip"
+                />
+              </div>
+
               <AwbStub awb={order.awb} />
             </div>
 
@@ -216,6 +228,24 @@ function Card({ label, children }: { label: string; children: React.ReactNode })
       </span>
       {children}
     </div>
+  );
+}
+
+/** Opens one printable document (invoice or packing slip) in a new tab. */
+function PrintLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex flex-1 items-center justify-center gap-2 rounded-[10px] border border-[#DAD0C2] bg-white py-3 text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2]"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+        <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+        <path d="M6 14h12v7H6z" />
+      </svg>
+      {label}
+    </a>
   );
 }
 

@@ -135,6 +135,88 @@ function buildOrderSearchOr(raw: string): string | null {
   ].join(",");
 }
 
+/** The `SELECT` row shape (order + embedded order_item lines). */
+type OrderSelectRow = {
+  id: string;
+  order_no: string;
+  status: string;
+  created_at: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
+  address_line: string;
+  city: string;
+  state: string;
+  pincode: string;
+  payment_method: string;
+  subtotal_paise: number;
+  discount_paise: number;
+  shipping_paise: number;
+  total_paise: number;
+  awb: string | null;
+  order_item: {
+    name: string;
+    tone: string | null;
+    qty: number;
+    line_total_paise: number;
+  }[];
+};
+
+/** Map a `SELECT` row to the camelCase `AdminOrderRow` the console uses. */
+function mapOrderRow(o: OrderSelectRow): AdminOrderRow {
+  const items = o.order_item ?? [];
+  return {
+    id: o.id,
+    orderNo: o.order_no,
+    status: o.status,
+    createdAt: o.created_at,
+    dateLabel: istDate(o.created_at),
+    customerName: o.customer_name,
+    phone: o.customer_phone,
+    email: o.customer_email,
+    addressLine: o.address_line,
+    city: o.city,
+    state: o.state,
+    pincode: o.pincode,
+    paymentMethod: o.payment_method,
+    paymentLabel: PAYMENT_LABELS[o.payment_method] ?? o.payment_method,
+    subtotalPaise: o.subtotal_paise,
+    discountPaise: o.discount_paise,
+    shippingPaise: o.shipping_paise,
+    totalPaise: o.total_paise,
+    itemCount: items.reduce((n, it) => n + it.qty, 0),
+    items: items.map((it) => ({
+      name: it.name,
+      tone: it.tone,
+      qty: it.qty,
+      lineTotalPaise: it.line_total_paise,
+    })),
+    awb: o.awb,
+  };
+}
+
+/**
+ * One order by its order number (5.12 — the print invoice/packing-slip page).
+ * Same admin-RLS read path as the queue; returns null when missing so the page
+ * can 404.
+ */
+export async function getAdminOrderByNo(
+  orderNo: string,
+): Promise<AdminOrderRow | null> {
+  try {
+    const supabase = await createServerClient();
+    const { data } = await supabase
+      .from("order")
+      .select(SELECT)
+      .eq("order_no", orderNo)
+      .maybeSingle();
+    return data ? mapOrderRow(data as OrderSelectRow) : null;
+  } catch (err) {
+    console.error("[admin-read] order-by-no failed:", err);
+    return null;
+  }
+}
+
 export async function listAdminOrders(opts: {
   filter: OrderFilter;
   page: number;
@@ -187,37 +269,9 @@ export async function listAdminOrders(opts: {
       const total = counts[filter];
       const pageCount = Math.max(1, Math.ceil(total / ORDERS_PAGE_SIZE));
 
-      const rows: AdminOrderRow[] = (rowsRes.data ?? []).map((o) => {
-        const items = o.order_item ?? [];
-        return {
-          id: o.id,
-          orderNo: o.order_no,
-          status: o.status,
-          createdAt: o.created_at,
-          dateLabel: istDate(o.created_at),
-          customerName: o.customer_name,
-          phone: o.customer_phone,
-          email: o.customer_email,
-          addressLine: o.address_line,
-          city: o.city,
-          state: o.state,
-          pincode: o.pincode,
-          paymentMethod: o.payment_method,
-          paymentLabel: PAYMENT_LABELS[o.payment_method] ?? o.payment_method,
-          subtotalPaise: o.subtotal_paise,
-          discountPaise: o.discount_paise,
-          shippingPaise: o.shipping_paise,
-          totalPaise: o.total_paise,
-          itemCount: items.reduce((n, it) => n + it.qty, 0),
-          items: items.map((it) => ({
-            name: it.name,
-            tone: it.tone,
-            qty: it.qty,
-            lineTotalPaise: it.line_total_paise,
-          })),
-          awb: o.awb,
-        };
-      });
+      const rows: AdminOrderRow[] = (rowsRes.data ?? []).map((o) =>
+        mapOrderRow(o as OrderSelectRow),
+      );
 
       return { rows, counts, filter, search, page, pageCount, total };
     },
