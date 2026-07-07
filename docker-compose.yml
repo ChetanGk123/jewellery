@@ -27,6 +27,12 @@ services:
     # docker-compose.override.yml with a `ports:` mapping.
     expose:
       - "3000"
+    # Join Dokploy's shared Traefik network so the reverse proxy can reach this
+    # container once a Domain (→ service `web`, port 3000) is configured. The
+    # network is created by Dokploy on the host, so it's declared `external`
+    # below — Compose attaches to it rather than trying to create it.
+    networks:
+      - dokploy-network
     environment:
       # Public client config — also read server-side at runtime.
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
@@ -54,3 +60,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+networks:
+  # Created and managed by Dokploy on the host (shared with its Traefik proxy);
+  # `external: true` means Compose attaches to it instead of creating it.
+  dokploy-network:
+    external: true
