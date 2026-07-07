@@ -306,6 +306,69 @@ function mapOrderRow(
   };
 }
 
+/** One row of the CA-facing CSV export (5.18) — flat, no line items. */
+export type ExportOrderRow = {
+  orderNo: string;
+  /** IST calendar date, sortable: "2026-07-06". */
+  date: string;
+  status: string;
+  payment: string;
+  customer: string;
+  phone: string;
+  email: string;
+  city: string;
+  state: string;
+  pincode: string;
+  couponCode: string;
+  subtotalPaise: number;
+  discountPaise: number;
+  shippingPaise: number;
+  totalPaise: number;
+};
+
+/** Same cap as the subscribers export — far above current volume. */
+export const EXPORT_ORDERS_CAP = 5000;
+
+/**
+ * Every order (newest first, capped) for the Export CSV action (5.18) — the
+ * accountant wants the lot, not a page. Behind the admin gate + admin-read
+ * RLS like the queue; empty on error (the action surfaces a message).
+ */
+export async function getAllOrdersForExport(): Promise<ExportOrderRow[]> {
+  try {
+    const supabase = await createServerClient();
+    const { data } = await supabase
+      .from("order")
+      .select(
+        "order_no, created_at, status, payment_method, customer_name, customer_phone, customer_email, city, state, pincode, coupon_code, subtotal_paise, discount_paise, shipping_paise, total_paise",
+      )
+      .order("created_at", { ascending: false })
+      .limit(EXPORT_ORDERS_CAP);
+    return (data ?? []).map((o) => ({
+      orderNo: o.order_no,
+      date: new Date(o.created_at).toLocaleDateString("en-CA", {
+        timeZone: IST,
+      }),
+      status: o.status,
+      payment: PAYMENT_LABELS[o.payment_method] ?? o.payment_method,
+      customer: o.customer_name,
+      phone: o.customer_phone,
+      email: o.customer_email,
+      city: o.city,
+      state: o.state,
+      pincode: o.pincode,
+      couponCode: o.coupon_code ?? "",
+      subtotalPaise: o.subtotal_paise,
+      discountPaise: o.discount_paise,
+      shippingPaise: o.shipping_paise,
+      totalPaise: o.total_paise,
+    }));
+  } catch (err) {
+    console.error("[admin-read] orders export failed:", err);
+    return [];
+  }
+}
+
 /**
  * One order by its order number (5.12 — the print invoice/packing-slip page).
  * Same admin-RLS read path as the queue; returns null when missing so the page

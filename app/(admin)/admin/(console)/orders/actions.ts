@@ -5,8 +5,10 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { normalizeOrderNote } from "@/lib/admin/order-notes";
 import { CACHE_TAGS } from "@/lib/db/cache";
 import {
+  getAllOrdersForExport,
   ORDER_STATUSES,
   toOrderEvent,
+  type ExportOrderRow,
   type OrderEvent,
 } from "@/lib/db/admin-orders";
 import { createServerClient } from "@/lib/db/server";
@@ -82,6 +84,15 @@ export async function setOrderStatus(
   // A Cancel restores stock, which the cached catalog displays.
   updateTag(CACHE_TAGS.products);
   return { ok: true };
+}
+
+/**
+ * Every order for the CSV export (TASKS 5.18) — the list itself paginates, so
+ * this reads the lot on demand behind the admin gate, capped in the db layer.
+ */
+export async function exportOrders(): Promise<ExportOrderRow[]> {
+  await requireAdmin(ROUTES.adminOrders);
+  return getAllOrdersForExport();
 }
 
 export type NoteActionResult = {

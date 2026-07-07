@@ -8,6 +8,7 @@ import {
 } from "@/app/(admin)/admin/(console)/subscribers/actions";
 import { AdminPager } from "@/components/admin/ui/AdminPager";
 import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
+import { csvCell } from "@/lib/utils/csv";
 import {
   ADMIN_SUBSCRIBERS_PAGE_SIZE,
   type AdminSubscriberRow,
@@ -289,12 +290,6 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
       )}
     </div>
   );
-}
-
-/** Escape a value for a CSV cell — quote and double any embedded quotes. */
-function csvCell(value: string): string {
-  if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
-  return value;
 }
 
 function SearchIcon() {

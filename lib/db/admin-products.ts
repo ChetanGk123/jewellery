@@ -33,6 +33,8 @@ export type AdminCategory = { id: string; name: string };
 export type AdminProductRow = {
   id: string;
   name: string;
+  /** Storefront URL slug — powers the "view on storefront" link (5.18). */
+  slug: string;
   sku: string;
   categoryId: string;
   categoryName: string;
@@ -69,12 +71,13 @@ export type AdminProductsPage = {
 const LOW_STOCK_THRESHOLD = 5;
 
 const SELECT =
-  "id, name, sku, category_id, price_paise, mrp_paise, stock, status, primary_image_url, gallery, plating_options, material, badge, blurb, desc_long, details_plating, details_stones, details_care, shipping_note, is_featured, is_fresh, category(name)";
+  "id, name, slug, sku, category_id, price_paise, mrp_paise, stock, status, primary_image_url, gallery, plating_options, material, badge, blurb, desc_long, details_plating, details_stones, details_care, shipping_note, is_featured, is_fresh, category(name)";
 
 /** The `SELECT` shape; `category` embeds as an object (or a 1-row array). */
 type ProductSelectRow = {
   id: string;
   name: string;
+  slug: string;
   sku: string;
   category_id: string;
   price_paise: number;
@@ -107,6 +110,7 @@ function mapProductRow(p: ProductSelectRow): AdminProductRow {
   return {
     id: p.id,
     name: p.name,
+    slug: p.slug,
     sku: p.sku,
     categoryId: p.category_id,
     categoryName: categoryName(p.category),

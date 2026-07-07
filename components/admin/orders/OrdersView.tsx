@@ -3,13 +3,18 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { setOrderStatus } from "@/app/(admin)/admin/(console)/orders/actions";
+import {
+  exportOrders,
+  setOrderStatus,
+} from "@/app/(admin)/admin/(console)/orders/actions";
+import { pendingAge } from "@/lib/admin/order-aging";
 import {
   nextStatus,
   statusChip,
   ORDER_STATUSES,
   ORDERS_PAGE_SIZE,
 } from "@/lib/admin/order-status";
+import { csvRow } from "@/lib/utils/csv";
 import type {
   AdminOrderRow,
   AdminOrdersPage,
@@ -114,6 +119,47 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
     if (next) runChange(next);
   };
 
+  // CSV for the accountant (5.18): the whole order book (capped server-side),
+  // money in rupees with paise as decimals. Built client-side like the
+  // subscribers export.
+  const [isExporting, setIsExporting] = useState(false);
+  const exportCsv = async () => {
+    setError(null);
+    setIsExporting(true);
+    try {
+      const all = await exportOrders();
+      const inr = (paise: number) => (paise / 100).toFixed(2);
+      const lines = [
+        csvRow([
+          "order_no", "date", "status", "payment", "customer", "phone",
+          "email", "city", "state", "pincode", "coupon", "subtotal_inr",
+          "discount_inr", "shipping_inr", "total_inr",
+        ]),
+        ...all.map((o) =>
+          csvRow([
+            o.orderNo, o.date, o.status, o.payment, o.customer, o.phone,
+            o.email, o.city, o.state, o.pincode, o.couponCode,
+            inr(o.subtotalPaise), inr(o.discountPaise), inr(o.shippingPaise),
+            inr(o.totalPaise),
+          ]),
+        ),
+      ];
+      const blob = new Blob([lines.join("\n")], {
+        type: "text/csv;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "orders.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Couldn't export the orders.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -167,6 +213,14 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
             Clear
           </button>
         )}
+        <button
+          type="button"
+          onClick={exportCsv}
+          disabled={isExporting}
+          className="rounded-lg border border-[#E7E0D4] bg-white px-[18px] py-[10px] text-[12px] font-semibold text-[#5E4A40] transition-colors hover:border-[#D8CDB9] disabled:opacity-60"
+        >
+          {isExporting ? "Exporting…" : "Export CSV"}
+        </button>
       </form>
 
       {page.search && (
@@ -219,6 +273,11 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
             ) : (
               page.rows.map((o) => {
                 const chip = statusChip(o.status);
+                // Ageing nudge (5.18): only Pending orders go stale.
+                const age =
+                  o.status === "Pending"
+                    ? pendingAge(o.createdAt, Date.now())
+                    : null;
                 return (
                   <button
                     type="button"
@@ -249,11 +308,26 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
                     <span className="w-[90px] text-center text-[12px] text-[#5E4A40]">
                       {o.paymentLabel}
                     </span>
-                    <span
-                      className="w-[96px] rounded-full py-[5px] text-center text-[11px] font-semibold"
-                      style={{ color: chip.color, background: chip.bg }}
-                    >
-                      {chip.label}
+                    <span className="flex w-[96px] flex-col items-center gap-1">
+                      <span
+                        className="w-full rounded-full py-[5px] text-center text-[11px] font-semibold"
+                        style={{ color: chip.color, background: chip.bg }}
+                      >
+                        {chip.label}
+                      </span>
+                      {age && (
+                        <span
+                          suppressHydrationWarning
+                          title={`Pending for over ${age.label.replace("+", "")}`}
+                          className={`rounded-full px-2 py-px text-[10px] font-semibold ${
+                            age.tone === "red"
+                              ? "bg-[#FBE9E7] text-[#C0392F]"
+                              : "bg-[#FBF3DE] text-[#A87A1E]"
+                          }`}
+                        >
+                          {age.label}
+                        </span>
+                      )}
                     </span>
                   </button>
                 );

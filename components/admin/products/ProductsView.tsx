@@ -121,7 +121,7 @@ export function ProductsView({
               <span className="w-[90px] text-right">Price</span>
               <span className="w-[70px] text-center">Stock</span>
               <span className="w-[110px] text-center">Status</span>
-              <span className="w-[56px] text-right">Edit</span>
+              <span className="w-[80px] text-right">Actions</span>
             </div>
 
             {page.rows.length === 0 ? (
@@ -177,7 +177,21 @@ export function ProductsView({
                         {chip.label}
                       </span>
                     </span>
-                    <span className="flex w-[56px] items-center justify-end gap-3">
+                    <span className="flex w-[80px] items-center justify-end gap-3">
+                      {p.status !== "Draft" && (
+                        <a
+                          href={ROUTES.product(p.slug)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="View on storefront"
+                          className="inline-flex text-[#8A7E74] transition-colors hover:text-maroon-700"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <path d="M15 3h6v6M10 14 21 3" />
+                          </svg>
+                        </a>
+                      )}
                       <Link
                         href={`${ROUTES.adminAnalytics}?product=${p.id}`}
                         title="View analytics"
