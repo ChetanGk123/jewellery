@@ -5,6 +5,10 @@ import {
   type NewOrderAdminEmailInput,
 } from "./admin-alert";
 import {
+  buildDailyDigestEmail,
+  type DailyDigestEmailInput,
+} from "./daily-digest";
+import {
   buildOrderConfirmationEmail,
   type EmailMessage,
   type OrderConfirmationEmailInput,
@@ -41,10 +45,14 @@ export function isEmailEnabled(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
 
-/** Deliver one message. Best-effort: logs and swallows every failure. */
-async function sendEmail(to: string, message: EmailMessage): Promise<void> {
+/**
+ * Deliver one message. Best-effort: logs and swallows every failure; returns
+ * whether the provider accepted it (queued callers ignore this, the cron
+ * digest reports it).
+ */
+async function sendEmail(to: string, message: EmailMessage): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return;
+  if (!apiKey) return false;
 
   try {
     const response = await fetch(RESEND_ENDPOINT, {
@@ -68,9 +76,12 @@ async function sendEmail(to: string, message: EmailMessage): Promise<void> {
         `email send failed (${response.status})`,
         await response.text().catch(() => ""),
       );
+      return false;
     }
+    return true;
   } catch (error: unknown) {
     console.error("email send failed", error);
+    return false;
   }
 }
 
@@ -153,6 +164,27 @@ export function queueNewOrderAdminEmail(input: QueueNewOrderAdminInput): void {
     buildNewOrderAdminEmail({
       ...input,
       adminUrl: `${SITE_URL}${ROUTES.adminOrders}`,
+    }),
+  );
+}
+
+export type SendDailyDigestInput = Omit<DailyDigestEmailInput, "adminUrl">;
+
+/**
+ * Send the close-of-day digest to the store inbox (TASKS 5.17). Unlike the
+ * queued sends this is AWAITED — the cron route reports the outcome so a
+ * failing digest shows up in the scheduler's logs instead of vanishing.
+ */
+export async function sendDailyDigestEmailNow(
+  input: SendDailyDigestInput,
+): Promise<boolean> {
+  if (!isEmailEnabled()) return false;
+
+  return sendEmail(
+    ADMIN_ALERT_TO,
+    buildDailyDigestEmail({
+      ...input,
+      adminUrl: `${SITE_URL}${ROUTES.admin}`,
     }),
   );
 }

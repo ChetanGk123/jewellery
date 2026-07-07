@@ -134,9 +134,38 @@ compose they're passed as `build.args`.
 | `RESEND_API_KEY` | Optional | Enables order-confirmation (4.6) + status/admin emails (5.2). No key ⇒ all sends are no-ops. |
 | `EMAIL_FROM` | Optional | Sender address; needs a **verified Resend domain** to deliver beyond the Resend account owner. |
 | `ADMIN_ALERT_EMAIL` | Optional | Recipient for the new-order admin alert (falls back to `STORE_INFO.email`). |
+| `CRON_SECRET` | Optional | Bearer token for the daily-digest cron route (5.17). See §4.3. |
 
 **Never** put `.env.local`, the E2E test creds, or any secret in the repo — they
 belong only in the Dokploy Environment panel. `.env.local` is gitignored.
+
+### 4.3 Daily digest cron (TASKS 5.17)
+
+The close-of-day digest (yesterday's orders / revenue / pending / low-stock,
+emailed to `ADMIN_ALERT_EMAIL`) is triggered by `GET /api/cron/daily-digest`.
+Three one-time steps:
+
+1. **Generate a secret** (`openssl rand -hex 32`) and set it as `CRON_SECRET`
+   in the Dokploy Environment panel.
+2. **Insert the same value into the database** (Supabase SQL editor) — the
+   `get_daily_digest` RPC re-checks it against this sealed row (migration 0029):
+
+   ```sql
+   insert into app_secret (name, value) values ('cron', '<same value>');
+   ```
+
+3. **Schedule the call** once a day after IST close (e.g. 22:00 IST = 16:30
+   UTC). Dokploy → the app → **Advanced → Cron Jobs** (runs inside the
+   container), or any external scheduler:
+
+   ```
+   30 16 * * *  curl -fsS -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/daily-digest
+   ```
+
+The route answers `503` without `CRON_SECRET`, `401` on a bad bearer, `502`
+when the RPC or the email send fails (so the scheduler's logs show misfires),
+and `{ "ok": true, "date": …, "orders": … }` on success. Requires
+`RESEND_API_KEY` — without it the send is a no-op and the route reports `502`.
 
 ---
 

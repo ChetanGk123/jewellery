@@ -638,6 +638,10 @@ export type Database = {
         Args: { p_order_no: string; p_note: string }
         Returns: Json
       }
+      get_daily_digest: {
+        Args: { p_secret: string }
+        Returns: Json
+      }
       admin_delete_category: {
         Args: { p_id: string }
         Returns: undefined
