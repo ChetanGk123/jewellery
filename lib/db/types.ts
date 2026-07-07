@@ -602,6 +602,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      admin_delete_coupon: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       admin_list_admins: {
         Args: Record<PropertyKey, never>
         Returns: {

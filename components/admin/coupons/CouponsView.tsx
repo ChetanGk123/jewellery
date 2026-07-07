@@ -18,7 +18,8 @@ import { CouponModal } from "./CouponModal";
  * the CouponModal. Mirrors the prototype, which offers create + toggle only.
  */
 export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
-  const [modalOpen, setModalOpen] = useState(false);
+  // `null` = closed; "new" = create; an object = edit that coupon.
+  const [modal, setModal] = useState<"new" | AdminCouponRow | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -37,7 +38,7 @@ export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
     <div className="flex flex-col gap-[18px]">
       <button
         type="button"
-        onClick={() => setModalOpen(true)}
+        onClick={() => setModal("new")}
         className="inline-flex items-center gap-2 self-start rounded-lg bg-maroon-700 px-[18px] py-[11px] font-body text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -54,7 +55,7 @@ export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
 
       <div className="overflow-hidden rounded-xl border border-[#EAE3D7] bg-white">
         <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
+          <div className="min-w-[870px]">
             {/* Header */}
             <div className="flex items-center gap-3.5 border-b border-[#EFE9DE] bg-[#FBF8F2] px-[22px] py-[13px] font-body text-[11px] font-semibold uppercase tracking-[0.06em] text-[#8A7E74]">
               <span className="w-[140px]">Code</span>
@@ -63,6 +64,7 @@ export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
               <span className="w-[120px]">Usage</span>
               <span className="w-[120px]">Expires</span>
               <span className="w-[90px] text-center">Active</span>
+              <span className="w-[60px] text-center">Edit</span>
             </div>
 
             {coupons.length === 0 ? (
@@ -109,6 +111,19 @@ export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
                       />
                     </button>
                   </span>
+                  <span className="flex w-[60px] justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null);
+                        setModal(c);
+                      }}
+                      aria-label={`Edit ${c.code}`}
+                      className="rounded-md border border-[#DAD0C2] bg-white px-3 py-1.5 font-body text-[11.5px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2]"
+                    >
+                      Edit
+                    </button>
+                  </span>
                 </div>
               ))
             )}
@@ -122,7 +137,12 @@ export function CouponsView({ coupons }: { coupons: AdminCouponRow[] }) {
         </span>
       )}
 
-      {modalOpen && <CouponModal onClose={() => setModalOpen(false)} />}
+      {modal !== null && (
+        <CouponModal
+          coupon={modal === "new" ? null : modal}
+          onClose={() => setModal(null)}
+        />
+      )}
     </div>
   );
 }

@@ -134,3 +134,16 @@ export async function toggleCoupon(
   revalidatePath(ROUTES.adminCoupons);
   return { ok: true };
 }
+
+/** Permanently remove a coupon via `admin_delete_coupon` (0027, TASKS 5.9). */
+export async function deleteCoupon(id: string): Promise<CouponActionResult> {
+  await requireAdmin(ROUTES.adminCoupons);
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.rpc("admin_delete_coupon", { p_id: id });
+
+  if (error) return { ok: false, error: messageFor(error.code, error.message) };
+
+  revalidatePath(ROUTES.adminCoupons);
+  return { ok: true };
+}
