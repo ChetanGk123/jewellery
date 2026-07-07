@@ -12,6 +12,7 @@ import {
 import { useDialog } from "@/hooks/useDialog";
 import { ROUTES } from "@/lib/routes";
 import { formatPaise } from "@/lib/utils/money";
+import { codConfirmationMessage, customerWhatsappUrl } from "@/lib/whatsapp";
 
 type Props = {
   order: AdminOrderRow | null;
@@ -102,12 +103,24 @@ export function OrderDrawer({
                 <span className="text-[14px] font-medium text-[#2A1F1A]">
                   {order.customerName}
                 </span>
+                <span className="text-[12px] font-medium text-[#8A7E74]">
+                  {order.customerOrderCount <= 1
+                    ? "First order from this customer"
+                    : `${order.customerOrderCount} orders from this customer`}
+                  {order.customerCancelledCount > 0 && (
+                    <span className="text-[#C0392F]">
+                      {" "}
+                      · {order.customerCancelledCount} cancelled
+                    </span>
+                  )}
+                </span>
                 <span className="text-[12.5px] leading-relaxed text-[#5E4A40]">
                   {order.phone} · {order.email}
                 </span>
                 <span className="text-[12.5px] leading-relaxed text-[#5E4A40]">
                   {order.addressLine}, {order.city}, {order.state} — {order.pincode}
                 </span>
+                <ContactActions order={order} />
               </Card>
 
               <div className="overflow-hidden rounded-[10px] border border-[#EAE3D7] bg-white">
@@ -227,6 +240,53 @@ function Card({ label, children }: { label: string; children: React.ReactNode })
         {label}
       </span>
       {children}
+    </div>
+  );
+}
+
+/**
+ * One-click ways to reach the customer about this order (TASKS 5.15): Call
+ * (`tel:`) and WhatsApp — prefilled with the COD-confirmation template while
+ * the order is Pending COD (confirm before dispatch so parcels don't bounce),
+ * else a neutral opener naming the order. WhatsApp hides on unusable numbers.
+ */
+function ContactActions({ order }: { order: AdminOrderRow }) {
+  const message =
+    order.paymentMethod === "cod" && order.status === "Pending"
+      ? codConfirmationMessage({
+          customerName: order.customerName,
+          orderNo: order.orderNo,
+          totalPaise: order.totalPaise,
+        })
+      : `Namaste ${order.customerName}, this is regarding your order ${order.orderNo}.`;
+  const waUrl = customerWhatsappUrl(order.phone, message);
+  const base =
+    "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11.5px] font-semibold transition-colors";
+
+  return (
+    <div className="flex flex-wrap gap-2 pt-1">
+      <a
+        href={`tel:${order.phone}`}
+        className={`${base} border-[#E7E0D4] bg-white text-[#5E4A40] hover:bg-[#FBF8F2]`}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+          <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 2Z" />
+        </svg>
+        Call
+      </a>
+      {waUrl && (
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${base} border-[#BFE3C8] bg-[#EAF6EE] text-[#128C4A] hover:bg-[#E0F1E6]`}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.6.8-.8 1-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4 0-.5.1-.7l.4-.5c.1-.2.2-.3.3-.5v-.5c0-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s1 2.5 1.1 2.7c.1.2 1.9 3 4.7 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2l-.4-.4Z" />
+          </svg>
+          WhatsApp
+        </a>
+      )}
     </div>
   );
 }

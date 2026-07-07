@@ -51,6 +51,10 @@ export type AdminOrderRow = {
   itemCount: number;
   items: AdminOrderItem[];
   awb: string | null;
+  /** Lifetime orders from this customer (matched by phone), incl. this one. */
+  customerOrderCount: number;
+  /** How many of those were cancelled — the COD-risk signal. */
+  customerCancelledCount: number;
 };
 
 /** Tab counts: one per status plus the "All" total. */
@@ -162,8 +166,26 @@ type OrderSelectRow = {
   }[];
 };
 
+/** Per-customer order history (keyed by phone — stable across guest edits). */
+type CustomerHistory = { orders: number; cancelled: number };
+
+/** Tally `{phone → history}` from narrow `customer_phone, status` rows. */
+function tallyHistory(
+  rows: { customer_phone: string; status: string }[],
+): Map<string, CustomerHistory> {
+  const byPhone = new Map<string, CustomerHistory>();
+  for (const row of rows) {
+    const prev = byPhone.get(row.customer_phone) ?? { orders: 0, cancelled: 0 };
+    byPhone.set(row.customer_phone, {
+      orders: prev.orders + 1,
+      cancelled: prev.cancelled + (row.status === "Cancelled" ? 1 : 0),
+    });
+  }
+  return byPhone;
+}
+
 /** Map a `SELECT` row to the camelCase `AdminOrderRow` the console uses. */
-function mapOrderRow(o: OrderSelectRow): AdminOrderRow {
+function mapOrderRow(o: OrderSelectRow, history?: CustomerHistory): AdminOrderRow {
   const items = o.order_item ?? [];
   return {
     id: o.id,
@@ -192,6 +214,9 @@ function mapOrderRow(o: OrderSelectRow): AdminOrderRow {
       lineTotalPaise: it.line_total_paise,
     })),
     awb: o.awb,
+    // Without history context this order is at least the customer's first.
+    customerOrderCount: history?.orders ?? 1,
+    customerCancelledCount: history?.cancelled ?? 0,
   };
 }
 
@@ -210,7 +235,13 @@ export async function getAdminOrderByNo(
       .select(SELECT)
       .eq("order_no", orderNo)
       .maybeSingle();
-    return data ? mapOrderRow(data as OrderSelectRow) : null;
+    if (!data) return null;
+    const row = data as OrderSelectRow;
+    const { data: hist } = await supabase
+      .from("order")
+      .select("customer_phone, status")
+      .eq("customer_phone", row.customer_phone);
+    return mapOrderRow(row, tallyHistory(hist ?? []).get(row.customer_phone));
   } catch (err) {
     console.error("[admin-read] order-by-no failed:", err);
     return null;
@@ -269,8 +300,23 @@ export async function listAdminOrders(opts: {
       const total = counts[filter];
       const pageCount = Math.max(1, Math.ceil(total / ORDERS_PAGE_SIZE));
 
-      const rows: AdminOrderRow[] = (rowsRes.data ?? []).map((o) =>
-        mapOrderRow(o as OrderSelectRow),
+      // Customer context (5.15): one bounded read over just this page's
+      // distinct phone numbers → lifetime order/cancelled tallies per customer.
+      const rawRows = (rowsRes.data ?? []) as OrderSelectRow[];
+      const phones = [...new Set(rawRows.map((o) => o.customer_phone))].filter(
+        Boolean,
+      );
+      let historyByPhone = new Map<string, CustomerHistory>();
+      if (phones.length > 0) {
+        const { data: hist } = await supabase
+          .from("order")
+          .select("customer_phone, status")
+          .in("customer_phone", phones);
+        historyByPhone = tallyHistory(hist ?? []);
+      }
+
+      const rows: AdminOrderRow[] = rawRows.map((o) =>
+        mapOrderRow(o, historyByPhone.get(o.customer_phone)),
       );
 
       return { rows, counts, filter, search, page, pageCount, total };

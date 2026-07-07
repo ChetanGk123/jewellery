@@ -4,6 +4,8 @@ import { STORE_INFO } from "@/lib/store-info";
 import {
   cartEnquiryMessage,
   cartEnquiryUrl,
+  codConfirmationMessage,
+  customerWhatsappUrl,
   productEnquiryMessage,
   productEnquiryUrl,
   whatsappUrl,
@@ -95,6 +97,45 @@ describe("cartEnquiryMessage", () => {
     expect(message).toContain("• 2× Polki Choker — ₹3,299");
     // Subtotal = 499900 + 329900*2 = 1159700.
     expect(message).toContain("Subtotal: ₹11,597");
+  });
+});
+
+describe("codConfirmationMessage", () => {
+  test("names the customer, order number, and COD total, and asks for a YES", () => {
+    const message = codConfirmationMessage({
+      customerName: "Asha Kapoor",
+      orderNo: "RJ-1024",
+      totalPaise: 778000,
+    });
+    expect(message).toContain("Asha Kapoor");
+    expect(message).toContain("RJ-1024");
+    expect(message).toContain("₹7,780");
+    expect(message).toContain("Cash on Delivery");
+    expect(message).toContain(STORE_INFO.name);
+    expect(message).toContain("YES");
+  });
+});
+
+describe("customerWhatsappUrl", () => {
+  test("builds a wa.me link to a 10-digit local number with the 91 country code", () => {
+    const url = customerWhatsappUrl("99727 77455", "Namaste");
+    expect(url).toBe("https://wa.me/919972777455?text=Namaste");
+  });
+
+  test("keeps an already-international number as-is", () => {
+    const url = customerWhatsappUrl("+91 99727 77455", "Hi");
+    expect(url).toBe("https://wa.me/919972777455?text=Hi");
+  });
+
+  test("URL-encodes the message", () => {
+    const url = customerWhatsappUrl("9972777455", "Order RJ-1 & ₹100") ?? "";
+    const encoded = url.slice(url.indexOf("?text=") + "?text=".length);
+    expect(decodeURIComponent(encoded)).toBe("Order RJ-1 & ₹100");
+  });
+
+  test("returns null when the phone has no usable digits", () => {
+    expect(customerWhatsappUrl("", "Hi")).toBeNull();
+    expect(customerWhatsappUrl("n/a", "Hi")).toBeNull();
   });
 });
 

@@ -55,3 +55,48 @@ export function cartEnquiryMessage(lines: readonly CartLine[]): string {
 export function cartEnquiryUrl(lines: readonly CartLine[]): string {
   return whatsappUrl(cartEnquiryMessage(lines));
 }
+
+/* ------------------- Operator → customer (admin, 5.15) ------------------- */
+
+/** India country code — checkout collects 10-digit local numbers. */
+const IN_COUNTRY_CODE = "91";
+
+/**
+ * A `wa.me` link **to a customer's number** (the storefront builders above all
+ * point at the store). 10-digit local numbers get the Indian country code;
+ * longer ones are assumed already international. Returns null when the phone
+ * has no usable digits so callers can hide the button instead of linking to a
+ * broken chat.
+ */
+export function customerWhatsappUrl(
+  phone: string,
+  message: string,
+): string | null {
+  const digits = phone.replace(/\D/g, "");
+  if (!digits) return null;
+  const intl = digits.length === 10 ? `${IN_COUNTRY_CODE}${digits}` : digits;
+  return `${WA_BASE}/${intl}?text=${encodeURIComponent(message)}`;
+}
+
+export type CodConfirmation = {
+  customerName: string;
+  orderNo: string;
+  totalPaise: number;
+};
+
+/**
+ * COD-confirmation template the operator sends before dispatch (TASKS 5.15):
+ * names the order and the amount due, and asks for a YES so unconfirmed
+ * parcels don't ship and bounce.
+ */
+export function codConfirmationMessage({
+  customerName,
+  orderNo,
+  totalPaise,
+}: CodConfirmation): string {
+  return (
+    `Namaste ${customerName}, this is ${STORE_INFO.name}. ` +
+    `Confirming your Cash on Delivery order ${orderNo} for ${formatPaise(totalPaise)}. ` +
+    `Please reply YES to confirm and we'll pack and dispatch it right away.`
+  );
+}
