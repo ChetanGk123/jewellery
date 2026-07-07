@@ -5,6 +5,7 @@ import {
   deleteCategory,
   upsertCategory,
 } from "@/app/(admin)/admin/(console)/categories/actions";
+import { useDialog } from "@/hooks/useDialog";
 import type { AdminCategoryRow } from "@/lib/admin/category";
 
 type Props = {
@@ -25,6 +26,11 @@ export function CategoryModal({ category, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const dialogRef = useDialog<HTMLDivElement>({
+    isOpen: true,
+    onDismiss: onClose,
+    isPending,
+  });
 
   const onSave = () => {
     setError(null);
@@ -62,10 +68,12 @@ export function CategoryModal({ category, onClose }: Props) {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={editing ? "Edit category" : "New category"}
-        className="w-[440px] max-w-full overflow-hidden rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)]"
+        tabIndex={-1}
+        className="w-[440px] max-w-full overflow-hidden rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)] outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

@@ -14,6 +14,7 @@ import {
 } from "@/lib/admin/product-status";
 import type { AdminCategory, AdminProductRow } from "@/lib/db/admin-products";
 import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
+import { useDialog } from "@/hooks/useDialog";
 
 type Props = {
   product: AdminProductRow | null;
@@ -80,6 +81,11 @@ export function ProductModal({ product, categories, onClose }: Props) {
   const [form, setForm] = useState<FormState>(() => initialState(product, categories));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const dialogRef = useDialog<HTMLDivElement>({
+    isOpen: true,
+    onDismiss: onClose,
+    isPending,
+  });
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -161,7 +167,12 @@ export function ProductModal({ product, categories, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-[520px] max-w-full overflow-auto rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)]"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={product ? "Edit product" : "Add new product"}
+        tabIndex={-1}
+        className="max-h-[90vh] w-[520px] max-w-full overflow-auto rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)] outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

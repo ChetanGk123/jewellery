@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { upsertCoupon } from "@/app/(admin)/admin/(console)/coupons/actions";
+import { useDialog } from "@/hooks/useDialog";
 import type { CouponKind } from "@/lib/coupons";
 
 type Props = {
@@ -31,6 +32,11 @@ export function CouponModal({ onClose }: Props) {
   const [expiresAt, setExpiresAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const dialogRef = useDialog<HTMLDivElement>({
+    isOpen: true,
+    onDismiss: onClose,
+    isPending,
+  });
 
   const showValue = kind !== "free_shipping";
   const isPercent = kind === "percent";
@@ -67,10 +73,12 @@ export function CouponModal({ onClose }: Props) {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Create coupon"
-        className="w-[460px] max-w-full overflow-hidden rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)]"
+        tabIndex={-1}
+        className="w-[460px] max-w-full overflow-hidden rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)] outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

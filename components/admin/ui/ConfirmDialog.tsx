@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { type ReactNode } from "react";
+import { useDialog } from "@/hooks/useDialog";
 
 type Props = {
   /** Accessible label for the dialog + heading text. */
@@ -38,16 +39,11 @@ export function ConfirmDialog({
   onConfirm,
   onClose,
 }: Props) {
-  const dismissRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    dismissRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isPending) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isPending, onClose]);
+  const dialogRef = useDialog<HTMLDivElement>({
+    isOpen: true,
+    onDismiss: onClose,
+    isPending,
+  });
 
   return (
     <div
@@ -57,10 +53,12 @@ export function ConfirmDialog({
       }}
     >
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-label={title}
-        className="w-[420px] max-w-full overflow-hidden rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)]"
+        tabIndex={-1}
+        className="w-[420px] max-w-full overflow-hidden rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)] outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col gap-2.5 px-[26px] py-6">
@@ -80,7 +78,6 @@ export function ConfirmDialog({
 
         <div className="flex items-center justify-end gap-2.5 border-t border-[#E7E0D4] bg-white px-[26px] py-[18px]">
           <button
-            ref={dismissRef}
             type="button"
             onClick={onClose}
             disabled={isPending}

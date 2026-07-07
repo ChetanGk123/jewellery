@@ -9,6 +9,7 @@ import {
   type OrderStep,
   type StepState,
 } from "@/lib/admin/order-status";
+import { useDialog } from "@/hooks/useDialog";
 import { formatPaise } from "@/lib/utils/money";
 
 type Props = {
@@ -39,20 +40,28 @@ export function OrderDrawer({
   const advance = order ? advanceLabel(order.status) : null;
   const showCancel = order ? canCancel(order.status) : false;
   const steps = order ? buildStepper(order.status) : null;
+  const dialogRef = useDialog<HTMLElement>({ isOpen, onDismiss: onClose, isPending });
 
   return (
     <>
       <button
         type="button"
         aria-label="Close order"
+        aria-hidden={!isOpen}
+        tabIndex={isOpen ? 0 : -1}
         onClick={onClose}
         className={`fixed inset-0 z-[60] bg-[rgba(42,10,18,0.45)] transition-opacity duration-300 ${
           isOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
       <aside
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={order ? `Order ${order.orderNo}` : "Order details"}
         aria-hidden={!isOpen}
-        className="fixed inset-y-0 right-0 z-[65] flex w-[440px] max-w-full flex-col bg-[#F5F1EA] shadow-[-12px_0_40px_rgba(42,10,18,0.22)] transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        tabIndex={-1}
+        className="fixed inset-y-0 right-0 z-[65] flex w-[440px] max-w-full flex-col bg-[#F5F1EA] shadow-[-12px_0_40px_rgba(42,10,18,0.22)] outline-none transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{ transform: isOpen ? "translateX(0)" : "translateX(100%)" }}
       >
         {order && (
