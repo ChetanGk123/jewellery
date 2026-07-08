@@ -2,25 +2,45 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   type AnalyticsKpi,
   type AnalyticsProduct,
   type AnalyticsSort,
+  ANALYTICS_PAGE_SIZE,
   ANALYTICS_SORTS,
   sortAnalytics,
   sparkBars,
   trendColor,
   trendLabel,
 } from "@/lib/admin/analytics"
+import { rangeLabel, type AnalyticsRange } from "@/lib/admin/analytics-range"
 import { productDisplayChip, stockColor } from "@/lib/admin/product-status"
 import { ROUTES } from "@/lib/routes"
 import { formatPaise } from "@/lib/utils/money"
+import { AdminPager } from "@/components/admin/ui/AdminPager"
 
 type Props = {
   kpis: AnalyticsKpi[]
   products: AnalyticsProduct[]
   /** Product to open the detail view for on load (products-row `?product=` deep link). */
   initialProductId?: string | null
+  /** The resolved sales window the aggregates cover (6.10). */
+  range: AnalyticsRange
+  /** 1-based `?page` for the performance table. */
+  page: number
+}
+
+/** Pager/sort links: the default window stays param-free (6.10). */
+function hrefFor(range: AnalyticsRange, page: number): string {
+  const params = new URLSearchParams()
+  if (!range.isDefault) {
+    params.set("from", range.from)
+    params.set("to", range.to)
+  }
+  if (page > 1) params.set("page", String(page))
+  const qs = params.toString()
+  return qs ? `${ROUTES.adminAnalytics}?${qs}` : ROUTES.adminAnalytics
 }
 
 /**
@@ -30,15 +50,40 @@ type Props = {
  * an Edit-product link back to the catalogue). List ↔ detail is client state, so
  * the whole dataset loads once server-side and no route change is needed.
  */
-export function AnalyticsView({ kpis, products, initialProductId = null }: Props) {
+export function AnalyticsView({ kpis, products, initialProductId = null, range, page }: Props) {
+  const router = useRouter()
   const [sort, setSort] = useState<AnalyticsSort>("units")
   const [selectedId, setSelectedId] = useState<string | null>(initialProductId)
 
   const sorted = useMemo(() => sortAnalytics(products, sort), [products, sort])
   const selected = selectedId ? (products.find((p) => p.id === selectedId) ?? null) : null
 
+  // Client-side page slice (6.10) — the KPIs already need every row loaded, so
+  // paging is presentation only; `?page` keeps the position shareable.
+  const pageCount = Math.max(1, Math.ceil(sorted.length / ANALYTICS_PAGE_SIZE))
+  const current = Math.min(page, pageCount)
+  const pageRows = sorted.slice((current - 1) * ANALYTICS_PAGE_SIZE, current * ANALYTICS_PAGE_SIZE)
+
+  // Window changes restart at page 1; clearing "from" restores the default.
+  const setDates = (from: string, to: string) => {
+    const params = new URLSearchParams()
+    if (from) {
+      params.set("from", from)
+      if (to) params.set("to", to)
+    }
+    const qs = params.toString()
+    router.replace(qs ? `${ROUTES.adminAnalytics}?${qs}` : ROUTES.adminAnalytics)
+  }
+
   if (selected) {
-    return <ProductDetail product={selected} onBack={() => setSelectedId(null)} />
+    return (
+      <ProductDetail
+        product={selected}
+        caption={rangeLabel(range)}
+        isDefaultWindow={range.isDefault}
+        onBack={() => setSelectedId(null)}
+      />
+    )
   }
 
   return (
@@ -70,20 +115,55 @@ export function AnalyticsView({ kpis, products, initialProductId = null }: Props
           <span className="font-body text-[15px] font-semibold text-[#2A1F1A]">
             Performance by product
           </span>
-          <label className="flex items-center gap-2 font-body text-[12px] font-medium text-[#8A7E74]">
-            Sort by
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value as AnalyticsSort)}
-              className="cursor-pointer rounded-lg border border-[#E7E0D4] bg-white px-[11px] py-2 font-body text-[13px] text-[#2A1F1A]"
-            >
-              {ANALYTICS_SORTS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Sales window (6.10) — clearing "from" restores the default. */}
+            <div className="flex items-center gap-1.5">
+              <input
+                type="date"
+                value={range.from}
+                max={range.to}
+                onChange={(event) => setDates(event.target.value, range.to)}
+                aria-label="Sales from date"
+                className="rounded-lg border border-[#E7E0D4] bg-white px-2.5 py-[7px] font-body text-[12px] text-[#5E4A40] outline-none focus:border-[#C9A24B]"
+              />
+              <span className="font-body text-[12px] text-[#A99C90]">to</span>
+              <input
+                type="date"
+                value={range.to}
+                min={range.from}
+                onChange={(event) => setDates(range.from, event.target.value)}
+                aria-label="Sales to date"
+                className="rounded-lg border border-[#E7E0D4] bg-white px-2.5 py-[7px] font-body text-[12px] text-[#5E4A40] outline-none focus:border-[#C9A24B]"
+              />
+              {!range.isDefault && (
+                <Link
+                  href={ROUTES.adminAnalytics}
+                  replace
+                  className="font-body text-[12px] font-semibold text-maroon-700 hover:underline"
+                >
+                  Last 6 months
+                </Link>
+              )}
+            </div>
+            <label className="flex items-center gap-2 font-body text-[12px] font-medium text-[#8A7E74]">
+              Sort by
+              <select
+                value={sort}
+                onChange={(event) => {
+                  setSort(event.target.value as AnalyticsSort)
+                  // A new order re-shuffles every page — restart at 1.
+                  if (current > 1) router.replace(hrefFor(range, 1))
+                }}
+                className="cursor-pointer rounded-lg border border-[#E7E0D4] bg-white px-[11px] py-2 font-body text-[13px] text-[#2A1F1A]"
+              >
+                {ANALYTICS_SORTS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
         {products.length === 0 ? (
@@ -97,13 +177,13 @@ export function AnalyticsView({ kpis, products, initialProductId = null }: Props
                 <span className="flex-1">Product</span>
                 <span className="w-[90px] text-right">Price</span>
                 <span className="w-16 text-center">Stock</span>
-                <span className="w-[90px] text-right">Units 6mo</span>
+                <span className="w-[90px] text-right">Units</span>
                 <span className="w-[110px] text-right">Revenue</span>
                 <span className="w-[74px] text-right">Trend</span>
                 <span className="w-[104px] text-center">History</span>
               </div>
 
-              {sorted.map((p) => (
+              {pageRows.map((p) => (
                 <button
                   key={p.id}
                   type="button"
@@ -146,7 +226,7 @@ export function AnalyticsView({ kpis, products, initialProductId = null }: Props
                     {sparkBars(p.monthly).map((b, i) => (
                       <span
                         key={i}
-                        className="w-[9px] rounded-t-[2px]"
+                        className="min-w-0 flex-1 rounded-t-[2px] [max-width:9px]"
                         style={{ height: b.height, background: b.color }}
                       />
                     ))}
@@ -157,25 +237,49 @@ export function AnalyticsView({ kpis, products, initialProductId = null }: Props
           </div>
         )}
       </div>
+
+      <AdminPager
+        page={current}
+        pageCount={pageCount}
+        total={sorted.length}
+        pageSize={ANALYTICS_PAGE_SIZE}
+        hrefForPage={(n) => hrefFor(range, n)}
+      />
     </div>
   )
 }
 
 /** The per-product breakdown: header, six stat cards, and a monthly bar chart. */
-function ProductDetail({ product, onBack }: { product: AnalyticsProduct; onBack: () => void }) {
+function ProductDetail({
+  product,
+  caption,
+  isDefaultWindow,
+  onBack,
+}: {
+  product: AnalyticsProduct
+  /** Human window caption, e.g. "Last 6 months" or "10 Apr 2026 – 20 Jun 2026". */
+  caption: string
+  isDefaultWindow: boolean
+  onBack: () => void
+}) {
   const chip = productDisplayChip(product.status, product.stock)
-  const thisMonth = product.monthly[product.monthly.length - 1]
+  const lastMonth = product.monthly[product.monthly.length - 1]
   const peakUnits = Math.max(1, ...product.monthly.map((m) => m.units))
+  const tag = isDefaultWindow ? "6 mo" : "range"
 
   const cards: { label: string; value: string; accent: string }[] = [
-    { label: "Units · 6 mo", value: String(product.units6mo), accent: "#71182B" },
+    { label: `Units · ${tag}`, value: String(product.units6mo), accent: "#71182B" },
     {
-      label: "Revenue · 6 mo",
+      label: `Revenue · ${tag}`,
       value: formatPaise(product.revenuePaise6mo),
       accent: "#1B7A3D",
     },
     { label: "Trend", value: trendLabel(product.trendPct), accent: trendColor(product.trendPct) },
-    { label: "Units this month", value: String(thisMonth?.units ?? 0), accent: "#B7791F" },
+    {
+      label: lastMonth ? `Units · ${lastMonth.label}` : "Units this month",
+      value: String(lastMonth?.units ?? 0),
+      accent: "#B7791F",
+    },
     {
       label: "In stock",
       value: String(product.stock),
@@ -259,7 +363,7 @@ function ProductDetail({ product, onBack }: { product: AnalyticsProduct; onBack:
           <span className="font-body text-[15px] font-semibold text-[#2A1F1A]">
             Sales history — units per month
           </span>
-          <span className="font-body text-[12px] font-medium text-[#8A7E74]">Last 6 months</span>
+          <span className="font-body text-[12px] font-medium text-[#8A7E74]">{caption}</span>
         </div>
         <div className="flex h-[180px] items-end gap-4">
           {product.monthly.map((m, i) => {

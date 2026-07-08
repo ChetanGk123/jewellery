@@ -1,5 +1,5 @@
 import "server-only"
-import { shiftDate, type OrderDateRange } from "@/lib/admin/order-dates"
+import { istDayStartIso, shiftDate, type OrderDateRange } from "@/lib/admin/order-dates"
 import { ORDER_STATUSES, ORDERS_PAGE_SIZE, type OrderStatus } from "@/lib/admin/order-status"
 import { type AdminRead, loadAdmin } from "./admin-read"
 import { createServerClient } from "./server"
@@ -149,14 +149,6 @@ function emptyPage(
     pageCount: 0,
     total: 0,
   }
-}
-
-/**
- * A calendar date's midnight in IST, as an ISO instant for timestamptz
- * comparison — e.g. "2026-07-06" → "2026-07-05T18:30:00.000Z".
- */
-function istDayStartIso(date: string): string {
-  return new Date(`${date}T00:00:00+05:30`).toISOString()
 }
 
 // Columns an operator would recognise an order by when a customer calls: the

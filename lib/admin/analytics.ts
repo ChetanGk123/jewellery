@@ -6,6 +6,9 @@
  * server-side — no fake sparkline data (the prototype's placeholders are gone).
  */
 
+/** Performance-table page size (client-side slice — the KPIs need every row). */
+export const ANALYTICS_PAGE_SIZE = 8
+
 /** How the performance table is ordered. */
 export type AnalyticsSort = "units" | "revenue" | "stock" | "price"
 
@@ -16,7 +19,7 @@ export const ANALYTICS_SORTS: { value: AnalyticsSort; label: string }[] = [
   { value: "price", label: "Highest price" },
 ]
 
-/** One month in a product's sales history (oldest → newest, 6 entries). */
+/** One month in a product's sales history (oldest → newest, one per window month). */
 export type MonthlyPoint = {
   /** Short IST month label, e.g. "Feb". */
   label: string
@@ -24,7 +27,11 @@ export type MonthlyPoint = {
   revenuePaise: number
 }
 
-/** A product row with its 6-month sales aggregates. */
+/**
+ * A product row with its in-window sales aggregates. The `6mo` field names are
+ * historical — since 6.10 they hold whatever window the operator selected
+ * (default: the last 6 months).
+ */
 export type AnalyticsProduct = {
   id: string
   name: string
@@ -37,7 +44,7 @@ export type AnalyticsProduct = {
   pricePaise: number
   units6mo: number
   revenuePaise6mo: number
-  /** Recent-3-months vs prior-3-months change, %; null when there's no baseline. */
+  /** Recent-half vs prior-half units change, %; null when there's no baseline. */
   trendPct: number | null
   monthly: MonthlyPoint[]
 }

@@ -23,6 +23,14 @@ export type OrderDateRange = {
   isDefault: boolean
 }
 
+/**
+ * A calendar date's midnight in IST, as an ISO instant for timestamptz
+ * comparison — e.g. "2026-07-06" → "2026-07-05T18:30:00.000Z".
+ */
+export function istDayStartIso(date: string): string {
+  return new Date(`${date}T00:00:00+05:30`).toISOString()
+}
+
 /** Shift a `YYYY-MM-DD` date by whole days (UTC math — no DST surprises). */
 export function shiftDate(dateIso: string, days: number): string {
   const date = new Date(`${dateIso}T00:00:00Z`)
