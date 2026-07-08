@@ -1,11 +1,11 @@
 type Props = {
   /** Current decoy value (should always stay "" for real users). */
-  value: string;
+  value: string
   /** Receives whatever a bot types into the decoy field. */
-  onChange: (value: string) => void;
+  onChange: (value: string) => void
   /** Field name — pick something a bot would want to autofill. */
-  name?: string;
-};
+  name?: string
+}
 
 /**
  * A spam honeypot: a text field hidden from humans (off-screen, not display
@@ -33,5 +33,5 @@ export function Honeypot({ value, onChange, name = "company" }: Props) {
         onChange={(event) => onChange(event.target.value)}
       />
     </div>
-  );
+  )
 }

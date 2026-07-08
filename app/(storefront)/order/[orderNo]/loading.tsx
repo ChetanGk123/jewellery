@@ -14,5 +14,5 @@ export default function OrderConfirmationLoading() {
       <div className="h-4 w-96 max-w-full animate-pulse rounded bg-[#F3E9DA]" />
       <div className="mt-2 h-56 w-full max-w-[420px] animate-pulse rounded border border-[#E7D9C2] bg-[#FFFDF8]" />
     </main>
-  );
+  )
 }

@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { ROUTES } from "@/lib/routes";
+import Link from "next/link"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Shared hero header for the help / info pages — maroon-gradient band with a
@@ -12,10 +12,10 @@ export function HelpHeader({
   title,
   intro,
 }: {
-  crumb: string;
-  eyebrow: string;
-  title: string;
-  intro: string;
+  crumb: string
+  eyebrow: string
+  title: string
+  intro: string
 }) {
   return (
     <section className="bg-[linear-gradient(120deg,#4A0E1C,#71182B_60%,#5E1322)]">
@@ -44,5 +44,5 @@ export function HelpHeader({
         </p>
       </div>
     </section>
-  );
+  )
 }

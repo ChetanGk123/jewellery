@@ -1,32 +1,30 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { ProductListing } from "@/components/storefront/listing/ProductListing";
+import type { Metadata } from "next"
+import { notFound } from "next/navigation"
+import { ProductListing } from "@/components/storefront/listing/ProductListing"
 import {
   getCategoryBySlug,
   getCategoryTiles,
   getMaterials,
   getProductsPage,
-} from "@/lib/db/queries";
-import { parseListingParams, type RawSearchParams } from "@/lib/listing";
-import { ROUTES } from "@/lib/routes";
+} from "@/lib/db/queries"
+import { parseListingParams, type RawSearchParams } from "@/lib/listing"
+import { ROUTES } from "@/lib/routes"
 
 type CategoryPageProps = {
-  params: Promise<{ category: string }>;
-  searchParams: Promise<RawSearchParams>;
-};
+  params: Promise<{ category: string }>
+  searchParams: Promise<RawSearchParams>
+}
 
-export async function generateMetadata({
-  params,
-}: CategoryPageProps): Promise<Metadata> {
-  const { category: slug } = await params;
-  const category = await getCategoryBySlug(slug);
-  if (!category) return { title: "Category not found" };
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  const { category: slug } = await params
+  const category = await getCategoryBySlug(slug)
+  if (!category) return { title: "Category not found" }
   return {
     title: category.name,
     description:
       category.description ??
       `Shop ${category.name} — handcrafted artificial bridal jewellery from RJ Jewellers.`,
-  };
+  }
 }
 
 /**
@@ -34,12 +32,9 @@ export async function generateMetadata({
  * one category. Material, price, and sort live in the URL search params; the
  * category itself is fixed by the route. Unknown slug → 404.
  */
-export default async function CategoryPage({
-  params,
-  searchParams,
-}: CategoryPageProps) {
-  const { category: slug } = await params;
-  const listing = parseListingParams(await searchParams);
+export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
+  const { category: slug } = await params
+  const listing = parseListingParams(await searchParams)
 
   const [category, productsPage, categories, materials] = await Promise.all([
     getCategoryBySlug(slug),
@@ -54,22 +49,20 @@ export default async function CategoryPage({
     ),
     getCategoryTiles(),
     getMaterials(),
-  ]);
+  ])
 
-  if (!category) notFound();
+  if (!category) notFound()
 
-  const { items: products, total, pageCount, page: servedPage } = productsPage;
+  const { items: products, total, pageCount, page: servedPage } = productsPage
   // See shop/page.tsx's identical comment: the pager needs the page actually
   // served, not the raw (possibly out-of-range) request param.
-  const listingParams = { ...listing, page: servedPage };
+  const listingParams = { ...listing, page: servedPage }
 
   const hasActiveFilters = Boolean(
-    listing.material ||
-      listing.maxPaise !== undefined ||
-      listing.sort !== "featured",
-  );
+    listing.material || listing.maxPaise !== undefined || listing.sort !== "featured",
+  )
 
-  const noun = total === 1 ? "product" : "products";
+  const noun = total === 1 ? "product" : "products"
 
   return (
     <ProductListing
@@ -84,5 +77,5 @@ export default async function CategoryPage({
       resetHref={ROUTES.category(category.slug)}
       pageCount={pageCount}
     />
-  );
+  )
 }

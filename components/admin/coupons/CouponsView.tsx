@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { toggleCoupon } from "@/app/(admin)/admin/(console)/coupons/actions";
-import { AdminPager } from "@/components/admin/ui/AdminPager";
+import { useState, useTransition } from "react"
+import { toggleCoupon } from "@/app/(admin)/admin/(console)/coupons/actions"
+import { AdminPager } from "@/components/admin/ui/AdminPager"
 import {
   ADMIN_COUPONS_PAGE_SIZE,
   type AdminCouponRow,
@@ -10,13 +10,13 @@ import {
   couponExpiryLabel,
   couponMinOrderLabel,
   couponUsageLabel,
-} from "@/lib/admin/coupon";
-import type { AdminCouponsPage } from "@/lib/db/admin-coupons";
-import { ROUTES } from "@/lib/routes";
-import { CouponModal } from "./CouponModal";
+} from "@/lib/admin/coupon"
+import type { AdminCouponsPage } from "@/lib/db/admin-coupons"
+import { ROUTES } from "@/lib/routes"
+import { CouponModal } from "./CouponModal"
 
 function hrefForPage(page: number): string {
-  return page > 1 ? `${ROUTES.adminCoupons}?page=${page}` : ROUTES.adminCoupons;
+  return page > 1 ? `${ROUTES.adminCoupons}?page=${page}` : ROUTES.adminCoupons
 }
 
 /**
@@ -28,20 +28,20 @@ function hrefForPage(page: number): string {
  */
 export function CouponsView({ page }: { page: AdminCouponsPage }) {
   // `null` = closed; "new" = create; an object = edit that coupon.
-  const [modal, setModal] = useState<"new" | AdminCouponRow | null>(null);
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
+  const [modal, setModal] = useState<"new" | AdminCouponRow | null>(null)
+  const [pendingId, setPendingId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
 
   const onToggle = (row: AdminCouponRow) => {
-    setError(null);
-    setPendingId(row.id);
+    setError(null)
+    setPendingId(row.id)
     startTransition(async () => {
-      const res = await toggleCoupon(row.id, !row.isActive);
-      setPendingId(null);
-      if (!res.ok) setError(res.error ?? "Couldn't update the coupon.");
-    });
-  };
+      const res = await toggleCoupon(row.id, !row.isActive)
+      setPendingId(null)
+      if (!res.ok) setError(res.error ?? "Couldn't update the coupon.")
+    })
+  }
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -50,7 +50,15 @@ export function CouponsView({ page }: { page: AdminCouponsPage }) {
         onClick={() => setModal("new")}
         className="inline-flex items-center gap-2 self-start rounded-lg bg-maroon-700 px-[18px] py-[11px] font-body text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
           <path d="M12 5v14M5 12h14" />
         </svg>
         Create Coupon
@@ -124,8 +132,8 @@ export function CouponsView({ page }: { page: AdminCouponsPage }) {
                     <button
                       type="button"
                       onClick={() => {
-                        setError(null);
-                        setModal(c);
+                        setError(null)
+                        setModal(c)
                       }}
                       aria-label={`Edit ${c.code}`}
                       className="rounded-md border border-[#DAD0C2] bg-white px-3 py-1.5 font-body text-[11.5px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2]"
@@ -149,11 +157,8 @@ export function CouponsView({ page }: { page: AdminCouponsPage }) {
       />
 
       {modal !== null && (
-        <CouponModal
-          coupon={modal === "new" ? null : modal}
-          onClose={() => setModal(null)}
-        />
+        <CouponModal coupon={modal === "new" ? null : modal} onClose={() => setModal(null)} />
       )}
     </div>
-  );
+  )
 }

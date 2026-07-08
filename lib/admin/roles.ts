@@ -11,15 +11,15 @@
  * `getUser()`) or the verified JWT claims from `getClaims()` — the proxy uses
  * the latter so the gate never costs an Auth server round trip (TASKS 4.18).
  */
-export const ADMIN_ROLE = "admin";
+export const ADMIN_ROLE = "admin"
 
-type AppMetadata = { role?: unknown; roles?: unknown };
+type AppMetadata = { role?: unknown; roles?: unknown }
 
-type HasAppMetadata = { app_metadata?: unknown };
+type HasAppMetadata = { app_metadata?: unknown }
 
 export function isAdmin(subject: HasAppMetadata | null | undefined): boolean {
-  const meta = (subject?.app_metadata ?? undefined) as AppMetadata | undefined;
-  if (meta?.role === ADMIN_ROLE) return true;
-  if (Array.isArray(meta?.roles) && meta.roles.includes(ADMIN_ROLE)) return true;
-  return false;
+  const meta = (subject?.app_metadata ?? undefined) as AppMetadata | undefined
+  if (meta?.role === ADMIN_ROLE) return true
+  if (Array.isArray(meta?.roles) && meta.roles.includes(ADMIN_ROLE)) return true
+  return false
 }

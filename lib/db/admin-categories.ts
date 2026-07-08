@@ -1,20 +1,17 @@
-import "server-only";
-import {
-  ADMIN_CATEGORIES_PAGE_SIZE,
-  type AdminCategoryRow,
-} from "@/lib/admin/category";
-import { type AdminRead, loadAdmin } from "./admin-read";
-import { createServerClient } from "./server";
+import "server-only"
+import { ADMIN_CATEGORIES_PAGE_SIZE, type AdminCategoryRow } from "@/lib/admin/category"
+import { type AdminRead, loadAdmin } from "./admin-read"
+import { createServerClient } from "./server"
 
 export type AdminCategoriesPage = {
-  rows: AdminCategoryRow[];
-  page: number;
-  pageCount: number;
-  total: number;
-};
+  rows: AdminCategoryRow[]
+  page: number
+  pageCount: number
+  total: number
+}
 
 function emptyPage(page: number): AdminCategoriesPage {
-  return { rows: [], page, pageCount: 1, total: 0 };
+  return { rows: [], page, pageCount: 1, total: 0 }
 }
 
 /**
@@ -26,15 +23,15 @@ function emptyPage(page: number): AdminCategoriesPage {
  * the `admin_upsert_category` / `admin_delete_category` RPCs (0011).
  */
 export async function listAdminCategories(opts: {
-  page: number;
+  page: number
 }): Promise<AdminRead<AdminCategoriesPage>> {
-  const page = Math.max(1, opts.page);
+  const page = Math.max(1, opts.page)
 
   return loadAdmin(
     "categories",
     async () => {
-      const supabase = await createServerClient();
-      const from = (page - 1) * ADMIN_CATEGORIES_PAGE_SIZE;
+      const supabase = await createServerClient()
+      const from = (page - 1) * ADMIN_CATEGORIES_PAGE_SIZE
 
       const { data: cats, count } = await supabase
         .from("category")
@@ -42,20 +39,17 @@ export async function listAdminCategories(opts: {
           count: "exact",
         })
         .order("sort_order", { ascending: true })
-        .range(from, from + ADMIN_CATEGORIES_PAGE_SIZE - 1);
+        .range(from, from + ADMIN_CATEGORIES_PAGE_SIZE - 1)
 
-      const ids = (cats ?? []).map((c) => c.id);
+      const ids = (cats ?? []).map((c) => c.id)
       const { data: products } = ids.length
-        ? await supabase
-            .from("product")
-            .select("category_id")
-            .in("category_id", ids)
-        : { data: [] };
+        ? await supabase.from("product").select("category_id").in("category_id", ids)
+        : { data: [] }
 
-      const counts = new Map<string, number>();
+      const counts = new Map<string, number>()
       for (const p of products ?? []) {
-        if (!p.category_id) continue;
-        counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1);
+        if (!p.category_id) continue
+        counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1)
       }
 
       const rows: AdminCategoryRow[] = (cats ?? []).map((c) => ({
@@ -66,16 +60,13 @@ export async function listAdminCategories(opts: {
         heroBg: c.hero_bg,
         sortOrder: c.sort_order,
         productCount: counts.get(c.id) ?? 0,
-      }));
+      }))
 
-      const total = count ?? 0;
-      const pageCount = Math.max(
-        1,
-        Math.ceil(total / ADMIN_CATEGORIES_PAGE_SIZE),
-      );
+      const total = count ?? 0
+      const pageCount = Math.max(1, Math.ceil(total / ADMIN_CATEGORIES_PAGE_SIZE))
 
-      return { rows, page, pageCount, total };
+      return { rows, page, pageCount, total }
     },
     emptyPage(page),
-  );
+  )
 }

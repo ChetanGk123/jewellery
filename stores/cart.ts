@@ -1,16 +1,10 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import {
-  addLine,
-  removeLine,
-  setLineQuantity,
-  type CartLine,
-  type CartLineInput,
-} from "@/lib/cart";
-import { normalizeCouponCode } from "@/lib/coupons";
+import { useEffect, useState } from "react"
+import { create } from "zustand"
+import { createJSONStorage, persist } from "zustand/middleware"
+import { addLine, removeLine, setLineQuantity, type CartLine, type CartLineInput } from "@/lib/cart"
+import { normalizeCouponCode } from "@/lib/coupons"
 
 /**
  * Client-side cart store — the persisted, cross-route home for the customer's
@@ -23,19 +17,19 @@ import { normalizeCouponCode } from "@/lib/coupons";
  * read time, and recomputed authoritatively server-side at checkout (2.5).
  */
 
-const STORAGE_KEY = "jr-cart";
-const STORAGE_VERSION = 1;
+const STORAGE_KEY = "jr-cart"
+const STORAGE_VERSION = 1
 
 type CartState = {
-  lines: CartLine[];
-  couponCode: string | null;
-  addItem: (input: CartLineInput, quantity?: number) => void;
-  setItemQuantity: (id: string, quantity: number) => void;
-  removeItem: (id: string) => void;
-  clearCart: () => void;
-  applyCoupon: (code: string) => void;
-  clearCoupon: () => void;
-};
+  lines: CartLine[]
+  couponCode: string | null
+  addItem: (input: CartLineInput, quantity?: number) => void
+  setItemQuantity: (id: string, quantity: number) => void
+  removeItem: (id: string) => void
+  clearCart: () => void
+  applyCoupon: (code: string) => void
+  clearCoupon: () => void
+}
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -46,8 +40,7 @@ export const useCartStore = create<CartState>()(
         set((state) => ({ lines: addLine(state.lines, input, quantity) })),
       setItemQuantity: (id, quantity) =>
         set((state) => ({ lines: setLineQuantity(state.lines, id, quantity) })),
-      removeItem: (id) =>
-        set((state) => ({ lines: removeLine(state.lines, id) })),
+      removeItem: (id) => set((state) => ({ lines: removeLine(state.lines, id) })),
       clearCart: () => set({ lines: [], couponCode: null }),
       applyCoupon: (code) => set({ couponCode: normalizeCouponCode(code) }),
       clearCoupon: () => set({ couponCode: null }),
@@ -58,7 +51,7 @@ export const useCartStore = create<CartState>()(
       storage: createJSONStorage(() => localStorage),
     },
   ),
-);
+)
 
 /**
  * True once the persisted cart has finished rehydrating from localStorage. The
@@ -68,16 +61,14 @@ export const useCartStore = create<CartState>()(
  * then flipped via persist's own hydration signal.
  */
 export function useCartHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(false);
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    const unsubscribe = useCartStore.persist.onFinishHydration(() =>
-      setHydrated(true),
-    );
+    const unsubscribe = useCartStore.persist.onFinishHydration(() => setHydrated(true))
     // Cover the case where hydration already finished before this effect ran.
-    if (useCartStore.persist.hasHydrated()) setHydrated(true);
-    return unsubscribe;
-  }, []);
+    if (useCartStore.persist.hasHydrated()) setHydrated(true)
+    return unsubscribe
+  }, [])
 
-  return hydrated;
+  return hydrated
 }

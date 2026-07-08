@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test"
 
 /**
  * Visual regression (TASKS — Testing): full-page screenshots of the key
@@ -16,7 +16,7 @@ import { expect, test } from "@playwright/test";
  */
 
 /** Project breakpoints (px) from the web testing rules. */
-const BREAKPOINTS = [320, 768, 1024, 1440] as const;
+const BREAKPOINTS = [320, 768, 1024, 1440] as const
 
 /** Deterministic pages: path + a slug for the snapshot filename. */
 const SURFACES = [
@@ -25,21 +25,21 @@ const SURFACES = [
   { path: "/product/kundan-rani-haar-set", name: "product" },
   { path: "/cart", name: "cart-empty" },
   { path: "/sign-in", name: "sign-in" },
-] as const;
+] as const
 
 for (const width of BREAKPOINTS) {
   test.describe(`viewport ${width}px`, () => {
-    test.use({ viewport: { width, height: 900 } });
+    test.use({ viewport: { width, height: 900 } })
 
     for (const surface of SURFACES) {
       test(`${surface.name} matches baseline`, async ({ page }) => {
-        await page.goto(surface.path);
+        await page.goto(surface.path)
         // Let remote (Supabase storage) images finish decoding before capture.
-        await page.waitForLoadState("networkidle");
+        await page.waitForLoadState("networkidle")
         await expect(page).toHaveScreenshot(`${surface.name}-${width}.png`, {
           fullPage: true,
-        });
-      });
+        })
+      })
     }
-  });
+  })
 }

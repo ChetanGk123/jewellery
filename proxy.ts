@@ -1,7 +1,7 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
-import { isAdmin } from "@/lib/admin/roles";
-import { ROUTES } from "@/lib/routes";
+import { createServerClient } from "@supabase/ssr"
+import { NextResponse, type NextRequest } from "next/server"
+import { isAdmin } from "@/lib/admin/roles"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Per-request Content-Security-Policy with a nonce (TASKS — Security).
@@ -24,25 +24,25 @@ import { ROUTES } from "@/lib/routes";
 
 /** Supabase origin (storage images + client SDK), derived from public env. */
 function supabaseOrigin(): string {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   try {
-    return url ? new URL(url).origin : "";
+    return url ? new URL(url).origin : ""
   } catch {
-    return "";
+    return ""
   }
 }
 
 /** Base64 nonce from 16 CSPRNG bytes (Edge-runtime safe — no Node `Buffer`). */
 function makeNonce(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return btoa(String.fromCharCode(...bytes));
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return btoa(String.fromCharCode(...bytes))
 }
 
 export async function proxy(request: NextRequest) {
-  const nonce = makeNonce();
-  const supabase = supabaseOrigin();
-  const isDev = process.env.NODE_ENV !== "production";
+  const nonce = makeNonce()
+  const supabase = supabaseOrigin()
+  const isDev = process.env.NODE_ENV !== "production"
 
   // Production is strict: only nonce'd scripts run (via `'strict-dynamic'`).
   // Development must relax to `'unsafe-eval'`/`'unsafe-inline'` — Next's Fast
@@ -50,12 +50,12 @@ export async function proxy(request: NextRequest) {
   // a strict policy would block, breaking the dev server entirely.
   const scriptSrc = isDev
     ? `script-src 'self' 'unsafe-inline' 'unsafe-eval'`
-    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
 
   // Dev HMR opens a websocket back to the Next dev server; allow ws(s):.
   const connectSrc = isDev
     ? `connect-src 'self' ${supabase} ws: wss:`
-    : `connect-src 'self' ${supabase}`;
+    : `connect-src 'self' ${supabase}`
 
   const directives = [
     `default-src 'self'`,
@@ -69,17 +69,17 @@ export async function proxy(request: NextRequest) {
     `form-action 'self'`,
     `base-uri 'self'`,
     `object-src 'none'`,
-  ];
+  ]
   // Only force HTTPS upgrades in production (localhost dev is plain http).
-  if (!isDev) directives.push(`upgrade-insecure-requests`);
-  const csp = directives.join("; ");
+  if (!isDev) directives.push(`upgrade-insecure-requests`)
+  const csp = directives.join("; ")
 
   // Give Next the nonce (and CSP) on the *request* so it stamps its scripts.
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", csp);
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set("x-nonce", nonce)
+  requestHeaders.set("Content-Security-Policy", csp)
 
-  let response = NextResponse.next({ request: { headers: requestHeaders } });
+  let response = NextResponse.next({ request: { headers: requestHeaders } })
 
   // Supabase session refresh: rotate an expired auth token on the way in so
   // Server Components always see a live session. When tokens rotate we must
@@ -93,54 +93,53 @@ export async function proxy(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll();
+          return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
           for (const { name, value } of cookiesToSet) {
-            request.cookies.set(name, value);
+            request.cookies.set(name, value)
           }
           // request.cookies.set mutates the underlying Cookie header; re-sync
           // our forwarded header copy before rebuilding the response.
-          requestHeaders.set("cookie", request.headers.get("cookie") ?? "");
-          response = NextResponse.next({ request: { headers: requestHeaders } });
+          requestHeaders.set("cookie", request.headers.get("cookie") ?? "")
+          response = NextResponse.next({ request: { headers: requestHeaders } })
           for (const { name, value, options } of cookiesToSet) {
-            response.cookies.set(name, value, options);
+            response.cookies.set(name, value, options)
           }
         },
       },
     },
-  );
+  )
   // Triggers the session refresh when needed, and gives us the verified JWT
   // claims for the admin gate below. `getClaims()` (not `getUser()`): the
   // project signs JWTs with an asymmetric key (ES256), so verification runs
   // locally via WebCrypto against the JWKS (module-cached ~10 min) — no Auth
   // server round trip on every navigation (TASKS 4.18). Near-expiry sessions
   // are still refreshed first, which is what persists rotated cookies above.
-  const { data: claimsData } = await supabaseClient.auth.getClaims();
-  const claims = claimsData?.claims ?? null;
+  const { data: claimsData } = await supabaseClient.auth.getClaims()
+  const claims = claimsData?.claims ?? null
 
   // Coarse admin gate: bounce non-admins off the console before it renders. The
   // console layout re-checks authoritatively via `requireAdmin`; this is the
   // early first line (and covers the `(auth)` pages via `isAdminPublic`).
-  const path = request.nextUrl.pathname;
-  const isAdminArea =
-    path === ROUTES.admin || path.startsWith(`${ROUTES.admin}/`);
+  const path = request.nextUrl.pathname
+  const isAdminArea = path === ROUTES.admin || path.startsWith(`${ROUTES.admin}/`)
   const isAdminPublic =
     path === ROUTES.adminSignIn ||
     path === ROUTES.adminForgotPassword ||
-    path === ROUTES.adminResetPassword;
+    path === ROUTES.adminResetPassword
   // Note: redirecting an already-signed-in admin OFF the sign-in page is handled
   // authoritatively by the sign-in page itself (getCurrentUser → getUser). Doing
   // it here from the locally-verified `claims` would trust a stale role claim
   // after a hard revoke (session deleted, JWT not yet expired) and fight the
   // layout's requireAdmin redirect — an infinite loop.
   if (isAdminArea && !isAdminPublic && !isAdmin(claims)) {
-    const signIn = new URL(ROUTES.adminSignIn, request.url);
-    signIn.searchParams.set("next", path);
-    const redirectRes = NextResponse.redirect(signIn);
-    redirectRes.headers.set("Content-Security-Policy", csp);
-    redirectRes.headers.set("Cache-Control", "no-store, must-revalidate");
-    return redirectRes;
+    const signIn = new URL(ROUTES.adminSignIn, request.url)
+    signIn.searchParams.set("next", path)
+    const redirectRes = NextResponse.redirect(signIn)
+    redirectRes.headers.set("Content-Security-Policy", csp)
+    redirectRes.headers.set("Cache-Control", "no-store, must-revalidate")
+    return redirectRes
   }
 
   // Never let the browser cache a console document. Without this, a revoked admin
@@ -148,11 +147,11 @@ export async function proxy(request: NextRequest) {
   // re-hitting the gate; `no-store` excludes these pages from bfcache so Back
   // forces a fresh request (which the checks above + `requireAdmin` re-run on).
   if (isAdminArea) {
-    response.headers.set("Cache-Control", "no-store, must-revalidate");
+    response.headers.set("Cache-Control", "no-store, must-revalidate")
   }
 
-  response.headers.set("Content-Security-Policy", csp);
-  return response;
+  response.headers.set("Content-Security-Policy", csp)
+  return response
 }
 
 export const config = {
@@ -171,4 +170,4 @@ export const config = {
       ],
     },
   ],
-};
+}

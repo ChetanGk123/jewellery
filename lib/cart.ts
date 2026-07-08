@@ -9,47 +9,44 @@
  * trusted from the client (see TASKS.md 2.5).
  */
 
-export const MIN_LINE_QUANTITY = 1;
-export const MAX_LINE_QUANTITY = 10;
+export const MIN_LINE_QUANTITY = 1
+export const MAX_LINE_QUANTITY = 10
 
 /** A product (optionally a specific variant) a customer intends to buy. */
 export type CartLine = {
   /** Stable line key: product id, plus the option value when a variant is chosen. */
-  id: string;
-  productId: string;
-  slug: string;
-  name: string;
-  categoryName: string;
+  id: string
+  productId: string
+  slug: string
+  name: string
+  categoryName: string
   /** Unit price snapshot in paise (display only; server recomputes at checkout). */
-  pricePaise: number;
+  pricePaise: number
   /** MRP snapshot in paise for struck-through savings, or null when none. */
-  mrpPaise: number | null;
-  imageUrl: string | null;
-  imageBg: string | null;
+  mrpPaise: number | null
+  imageUrl: string | null
+  imageBg: string | null
   /** Chosen variant (e.g. plating tone) when the product has options, else null. */
-  optionLabel: string | null;
-  optionValue: string | null;
-  quantity: number;
-};
+  optionLabel: string | null
+  optionValue: string | null
+  quantity: number
+}
 
 /** Everything needed to add a line except its quantity and derived id. */
-export type CartLineInput = Omit<CartLine, "id" | "quantity">;
+export type CartLineInput = Omit<CartLine, "id" | "quantity">
 
 /** Deterministic line key so the same product+variant merges into one line. */
-export function cartLineId(
-  productId: string,
-  optionValue?: string | null,
-): string {
-  return optionValue ? `${productId}:${optionValue}` : productId;
+export function cartLineId(productId: string, optionValue?: string | null): string {
+  return optionValue ? `${productId}:${optionValue}` : productId
 }
 
 /** Coerce any incoming quantity into a whole number within the allowed bounds. */
 function clampQuantity(quantity: number): number {
-  if (!Number.isFinite(quantity)) return MIN_LINE_QUANTITY;
-  const whole = Math.floor(quantity);
-  if (whole < MIN_LINE_QUANTITY) return MIN_LINE_QUANTITY;
-  if (whole > MAX_LINE_QUANTITY) return MAX_LINE_QUANTITY;
-  return whole;
+  if (!Number.isFinite(quantity)) return MIN_LINE_QUANTITY
+  const whole = Math.floor(quantity)
+  if (whole < MIN_LINE_QUANTITY) return MIN_LINE_QUANTITY
+  if (whole > MAX_LINE_QUANTITY) return MAX_LINE_QUANTITY
+  return whole
 }
 
 /**
@@ -63,16 +60,14 @@ export function addLine(
   input: CartLineInput,
   quantity = 1,
 ): CartLine[] {
-  const id = cartLineId(input.productId, input.optionValue);
-  const existing = lines.find((line) => line.id === id);
+  const id = cartLineId(input.productId, input.optionValue)
+  const existing = lines.find((line) => line.id === id)
   if (existing) {
     return lines.map((line) =>
-      line.id === id
-        ? { ...line, quantity: clampQuantity(line.quantity + quantity) }
-        : line,
-    );
+      line.id === id ? { ...line, quantity: clampQuantity(line.quantity + quantity) } : line,
+    )
   }
-  return [...lines, { ...input, id, quantity: clampQuantity(quantity) }];
+  return [...lines, { ...input, id, quantity: clampQuantity(quantity) }]
 }
 
 /** Set an exact quantity for a line; a quantity of 0 or less removes it. */
@@ -81,36 +76,33 @@ export function setLineQuantity(
   id: string,
   quantity: number,
 ): CartLine[] {
-  if (quantity <= 0) return removeLine(lines, id);
+  if (quantity <= 0) return removeLine(lines, id)
   return lines.map((line) =>
     line.id === id ? { ...line, quantity: clampQuantity(quantity) } : line,
-  );
+  )
 }
 
 /** Remove a line from the cart entirely. */
 export function removeLine(lines: readonly CartLine[], id: string): CartLine[] {
-  return lines.filter((line) => line.id !== id);
+  return lines.filter((line) => line.id !== id)
 }
 
 /** Total number of individual units across all lines (for the cart badge). */
 export function cartCount(lines: readonly CartLine[]): number {
-  return lines.reduce((sum, line) => sum + line.quantity, 0);
+  return lines.reduce((sum, line) => sum + line.quantity, 0)
 }
 
 /** Sum of price × quantity across all lines, in paise. */
 export function cartSubtotalPaise(lines: readonly CartLine[]): number {
-  return lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0);
+  return lines.reduce((sum, line) => sum + line.pricePaise * line.quantity, 0)
 }
 
 /** Sum of MRP × quantity (falling back to price when a line has no MRP), in paise. */
 export function cartMrpTotalPaise(lines: readonly CartLine[]): number {
-  return lines.reduce(
-    (sum, line) => sum + (line.mrpPaise ?? line.pricePaise) * line.quantity,
-    0,
-  );
+  return lines.reduce((sum, line) => sum + (line.mrpPaise ?? line.pricePaise) * line.quantity, 0)
 }
 
 /** Total saving versus MRP across the cart, in paise (never negative). */
 export function cartSavingsPaise(lines: readonly CartLine[]): number {
-  return Math.max(0, cartMrpTotalPaise(lines) - cartSubtotalPaise(lines));
+  return Math.max(0, cartMrpTotalPaise(lines) - cartSubtotalPaise(lines))
 }

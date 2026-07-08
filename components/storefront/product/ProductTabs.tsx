@@ -1,23 +1,23 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
 
-type TabId = "description" | "details" | "shipping";
+type TabId = "description" | "details" | "shipping"
 
 export type ProductTabsData = {
-  descLong: string | null;
-  material: string | null;
-  plating: string | null;
-  stones: string | null;
-  care: string | null;
-  shippingNote: string | null;
-};
+  descLong: string | null
+  material: string | null
+  plating: string | null
+  stones: string | null
+  care: string | null
+  shippingNote: string | null
+}
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "description", label: "Description" },
   { id: "details", label: "Details" },
   { id: "shipping", label: "Shipping & Returns" },
-];
+]
 
 /**
  * Tabbed product copy — Description / Details / Shipping — matched to the
@@ -26,8 +26,8 @@ const TABS: { id: TabId; label: string }[] = [
  * layout stays stable.
  */
 export function ProductTabs({ data }: { data: ProductTabsData }) {
-  const [active, setActive] = useState<TabId>("description");
-  const fallback = "—";
+  const [active, setActive] = useState<TabId>("description")
+  const fallback = "—"
 
   return (
     <div className="flex flex-col gap-4">
@@ -37,7 +37,7 @@ export function ProductTabs({ data }: { data: ProductTabsData }) {
         className="flex gap-6 border-b border-[#E7D9C2]"
       >
         {TABS.map((tab) => {
-          const isActive = tab.id === active;
+          const isActive = tab.id === active
           return (
             <button
               key={tab.id}
@@ -55,7 +55,7 @@ export function ProductTabs({ data }: { data: ProductTabsData }) {
             >
               {tab.label}
             </button>
-          );
+          )
         })}
       </div>
 
@@ -86,7 +86,7 @@ export function ProductTabs({ data }: { data: ProductTabsData }) {
         )}
       </div>
     </div>
-  );
+  )
 }
 
 function SpecRow({ label, value }: { label: string; value: string }) {
@@ -95,5 +95,5 @@ function SpecRow({ label, value }: { label: string; value: string }) {
       <dt className="text-[#9C8A84]">{label}</dt>
       <dd className="m-0 text-right">{value}</dd>
     </div>
-  );
+  )
 }

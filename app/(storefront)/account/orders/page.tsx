@@ -1,29 +1,27 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { listMyOrders, type MyOrderSummary } from "@/lib/db/orders";
-import { getCurrentUser } from "@/lib/db/server";
-import { ROUTES } from "@/lib/routes";
-import { formatPaise } from "@/lib/utils/money";
+import type { Metadata } from "next"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import { listMyOrders, type MyOrderSummary } from "@/lib/db/orders"
+import { getCurrentUser } from "@/lib/db/server"
+import { ROUTES } from "@/lib/routes"
+import { formatPaise } from "@/lib/utils/money"
 
 export const metadata: Metadata = {
   title: "My Orders",
   robots: { index: false },
-};
+}
 
 /**
  * Order history for the signed-in customer (rows come through the "customer
  * reads own orders" RLS policy). Each order links to its confirmation page.
  */
 export default async function MyOrdersPage() {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser()
   if (!user) {
-    redirect(
-      `${ROUTES.signIn}?next=${encodeURIComponent(ROUTES.accountOrders)}`,
-    );
+    redirect(`${ROUTES.signIn}?next=${encodeURIComponent(ROUTES.accountOrders)}`)
   }
 
-  const orders = await listMyOrders();
+  const orders = await listMyOrders()
 
   return (
     <main className="mx-auto w-full max-w-[860px] flex-1 px-6 py-12">
@@ -42,8 +40,7 @@ export default async function MyOrdersPage() {
       {orders.length === 0 ? (
         <div className="flex flex-col items-start gap-5 rounded border border-[#E7D9C2] bg-[#FFFDF8] p-8">
           <p className="m-0 text-[14px] font-light text-[#5E4A44]">
-            No orders yet — your orders will appear here once you&apos;ve
-            checked out.
+            No orders yet — your orders will appear here once you&apos;ve checked out.
           </p>
           <Link
             href={ROUTES.shop}
@@ -60,7 +57,7 @@ export default async function MyOrdersPage() {
         </ul>
       )}
     </main>
-  );
+  )
 }
 
 function OrderRow({ order }: { order: MyOrderSummary }) {
@@ -68,7 +65,7 @@ function OrderRow({ order }: { order: MyOrderSummary }) {
     day: "numeric",
     month: "short",
     year: "numeric",
-  });
+  })
 
   return (
     <li>
@@ -81,8 +78,7 @@ function OrderRow({ order }: { order: MyOrderSummary }) {
             {order.orderNo}
           </span>
           <span className="text-[12.5px] font-light leading-none text-[#5E4A44]">
-            {placedOn} · {order.itemCount}{" "}
-            {order.itemCount === 1 ? "item" : "items"}
+            {placedOn} · {order.itemCount} {order.itemCount === 1 ? "item" : "items"}
           </span>
         </span>
         <span className="flex items-center gap-4">
@@ -93,7 +89,7 @@ function OrderRow({ order }: { order: MyOrderSummary }) {
         </span>
       </Link>
     </li>
-  );
+  )
 }
 
 /** Status chip tones, matched to the admin prototype's order chips. */
@@ -104,15 +100,13 @@ const STATUS_CHIP_CLASSES: Record<string, string> = {
   Shipped: "bg-[#E3EDFB] text-[#2A5DA8]",
   Delivered: "bg-[#E4F3E7] text-[#1E7A38]",
   Cancelled: "bg-[#FBEAEC] text-[#B23A48]",
-};
+}
 
 function StatusChip({ status }: { status: string }) {
-  const tone = STATUS_CHIP_CLASSES[status] ?? "bg-[#F3E9E2] text-[#5E4A44]";
+  const tone = STATUS_CHIP_CLASSES[status] ?? "bg-[#F3E9E2] text-[#5E4A44]"
   return (
-    <span
-      className={`rounded-full px-3 py-1.5 text-[11px] font-semibold leading-none ${tone}`}
-    >
+    <span className={`rounded-full px-3 py-1.5 text-[11px] font-semibold leading-none ${tone}`}>
       {status}
     </span>
-  );
+  )
 }

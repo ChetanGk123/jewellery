@@ -1,5 +1,5 @@
-import "server-only";
-import { headers } from "next/headers";
+import "server-only"
+import { headers } from "next/headers"
 
 /**
  * The per-request CSP nonce (TASKS 4.16), minted in `proxy.ts` and forwarded
@@ -8,6 +8,6 @@ import { headers } from "next/headers";
  * nonce'd the same way or a strict `script-src` may drop it.
  */
 export async function getNonce(): Promise<string | undefined> {
-  const headerList = await headers();
-  return headerList.get("x-nonce") ?? undefined;
+  const headerList = await headers()
+  return headerList.get("x-nonce") ?? undefined
 }

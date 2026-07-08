@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { Honeypot } from "@/components/ui/Honeypot";
-import { subscribe } from "./subscribe-action";
+import { useState, useTransition } from "react"
+import { Honeypot } from "@/components/ui/Honeypot"
+import { subscribe } from "./subscribe-action"
 
 /**
  * Footer "Stay in touch" sign-up (TASKS 3.9). Preserves the prototype's
@@ -12,29 +12,29 @@ import { subscribe } from "./subscribe-action";
  * The address de-dupes server-side, so a repeat sign-up still reads as success.
  */
 export function NewsletterForm() {
-  const [email, setEmail] = useState("");
-  const [honeypot, setHoneypot] = useState("");
-  const [done, setDone] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [email, setEmail] = useState("")
+  const [honeypot, setHoneypot] = useState("")
+  const [done, setDone] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    setError(null);
+    event.preventDefault()
+    setError(null)
     startTransition(async () => {
-      const res = await subscribe({ values: { email }, honeypot });
+      const res = await subscribe({ values: { email }, honeypot })
       if (res.ok) {
         setDone(
           res.alreadyMember
             ? "You're already on the list — thank you!"
             : "You're on the list. Watch your inbox.",
-        );
-        setEmail("");
+        )
+        setEmail("")
       } else {
-        setError(res.error);
+        setError(res.error)
       }
-    });
-  };
+    })
+  }
 
   if (done) {
     return (
@@ -42,7 +42,7 @@ export function NewsletterForm() {
         <span aria-hidden="true">✓</span>
         {done}
       </p>
-    );
+    )
   }
 
   return (
@@ -78,5 +78,5 @@ export function NewsletterForm() {
         </span>
       )}
     </form>
-  );
+  )
 }

@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { ChangeEvent } from "react";
-import type { ProductSort } from "@/lib/db/queries";
-import { LISTING_PARAMS } from "@/lib/listing";
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import type { ChangeEvent } from "react"
+import type { ProductSort } from "@/lib/db/queries"
+import { LISTING_PARAMS } from "@/lib/listing"
 
 const OPTIONS: { value: ProductSort; label: string }[] = [
   { value: "featured", label: "Featured" },
   { value: "price-asc", label: "Price: Low to High" },
   { value: "price-desc", label: "Price: High to Low" },
   { value: "rating", label: "Top Rated" },
-];
+]
 
 /**
  * Sort control for the listing pages. Writes the choice to the `sort` search
@@ -18,23 +18,23 @@ const OPTIONS: { value: ProductSort; label: string }[] = [
  * navigation, then lets the server component re-query.
  */
 export function SortSelect({ value }: { value: ProductSort }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   function handleChange(event: ChangeEvent<HTMLSelectElement>) {
-    const next = event.target.value;
-    const params = new URLSearchParams(searchParams.toString());
+    const next = event.target.value
+    const params = new URLSearchParams(searchParams.toString())
     if (next === "featured") {
-      params.delete(LISTING_PARAMS.sort);
+      params.delete(LISTING_PARAMS.sort)
     } else {
-      params.set(LISTING_PARAMS.sort, next);
+      params.set(LISTING_PARAMS.sort, next)
     }
     // A re-sort can land the current page past the end (or just confuse the
     // user) — always back to page 1 (TASKS 4.17).
-    params.delete(LISTING_PARAMS.page);
-    const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    params.delete(LISTING_PARAMS.page)
+    const qs = params.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
   return (
@@ -54,5 +54,5 @@ export function SortSelect({ value }: { value: ProductSort }) {
         ))}
       </select>
     </label>
-  );
+  )
 }

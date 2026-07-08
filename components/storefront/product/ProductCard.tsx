@@ -1,10 +1,10 @@
-import Image from "next/image";
-import Link from "next/link";
-import type { ProductListItem } from "@/lib/db/queries";
-import { discountPercent, formatPaise } from "@/lib/utils/money";
-import { ROUTES } from "@/lib/routes";
-import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
-import { AddToCartButton } from "./AddToCartButton";
+import Image from "next/image"
+import Link from "next/link"
+import type { ProductListItem } from "@/lib/db/queries"
+import { discountPercent, formatPaise } from "@/lib/utils/money"
+import { ROUTES } from "@/lib/routes"
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
+import { AddToCartButton } from "./AddToCartButton"
 
 /**
  * Storefront product card, matched to the prototype's `ProductCard` component:
@@ -14,18 +14,18 @@ import { AddToCartButton } from "./AddToCartButton";
  * cart store lands in Phase 2.
  */
 export function ProductCard({ product }: { product: ProductListItem }) {
-  const { slug, name, category, badge, image } = product;
-  const off = discountPercent(product.price_paise, product.mrp_paise);
-  const hasSale = off > 0;
-  const hasBadge = Boolean(badge) && badge !== "None";
-  const background = image?.bg ?? PLACEHOLDER_GRADIENT;
-  const isOutOfStock = product.stock <= 0;
+  const { slug, name, category, badge, image } = product
+  const off = discountPercent(product.price_paise, product.mrp_paise)
+  const hasSale = off > 0
+  const hasBadge = Boolean(badge) && badge !== "None"
+  const background = image?.bg ?? PLACEHOLDER_GRADIENT
+  const isOutOfStock = product.stock <= 0
   // Below `sm` the 2-col grid leaves ~150px cards — a corner badge + corner
   // sale flag collide (TASKS 4.9). Stack the flag under the badge there;
   // `sm:` and up (3-col grid, wider cards) keep the original corner layout.
   const flagPositionClass = hasBadge
     ? "left-3 top-10 sm:left-auto sm:right-3 sm:top-3"
-    : "right-3 top-3";
+    : "right-3 top-3"
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-[3px] border border-[#EFE3D0] bg-white transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(74,14,28,0.15)]">
@@ -111,9 +111,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
               optionLabel: null,
               optionValue: null,
             }}
-            ariaLabel={
-              isOutOfStock ? `${name} is out of stock` : `Add ${name} to cart`
-            }
+            ariaLabel={isOutOfStock ? `${name} is out of stock` : `Add ${name} to cart`}
             addedLabel="✓"
             disabled={isOutOfStock}
             className="relative z-10 rounded-sm border border-gold-300 bg-[#FBF1E0] px-[13px] py-[9px] text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-gold-600 transition-colors duration-200 hover:border-maroon-700 hover:bg-maroon-700 hover:text-cream-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gold-300 disabled:hover:bg-[#FBF1E0] disabled:hover:text-gold-600"
@@ -123,7 +121,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
         </div>
       </div>
     </article>
-  );
+  )
 }
 
 /** Engraved sunburst placeholder shown when a product has no real photo. */
@@ -147,5 +145,5 @@ function JewelMotif() {
       <path d="M94 60 L66 55 L60 60 L66 65 Z" fill="#B58A3C" stroke="none" />
       <circle cx="60" cy="60" r="3.4" fill="#B58A3C" stroke="none" />
     </svg>
-  );
+  )
 }

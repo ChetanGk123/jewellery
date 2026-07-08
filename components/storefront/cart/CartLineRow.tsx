@@ -1,30 +1,25 @@
-"use client";
+"use client"
 
-import Image from "next/image";
-import { MAX_LINE_QUANTITY, type CartLine } from "@/lib/cart";
-import { formatPaise } from "@/lib/utils/money";
-import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
+import Image from "next/image"
+import { MAX_LINE_QUANTITY, type CartLine } from "@/lib/cart"
+import { formatPaise } from "@/lib/utils/money"
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
 
 type Props = {
-  line: CartLine;
-  onDecrement: (line: CartLine) => void;
-  onIncrement: (line: CartLine) => void;
-  onRemove: (line: CartLine) => void;
-};
+  line: CartLine
+  onDecrement: (line: CartLine) => void
+  onIncrement: (line: CartLine) => void
+  onRemove: (line: CartLine) => void
+}
 
 /**
  * A single cart line, matched to the storefront prototype's cart row: thumbnail
  * (real photo, else the seed gradient + engraved motif), name + chosen variant +
  * unit price, a quantity stepper, the line total, and a Remove link.
  */
-export function CartLineRow({
-  line,
-  onDecrement,
-  onIncrement,
-  onRemove,
-}: Props) {
-  const background = line.imageBg ?? PLACEHOLDER_GRADIENT;
-  const lineTotalPaise = line.pricePaise * line.quantity;
+export function CartLineRow({ line, onDecrement, onIncrement, onRemove }: Props) {
+  const background = line.imageBg ?? PLACEHOLDER_GRADIENT
+  const lineTotalPaise = line.pricePaise * line.quantity
 
   return (
     <li className="flex items-center gap-[18px] border-b border-[#EFE3D0] py-5">
@@ -33,13 +28,7 @@ export function CartLineRow({
         style={{ background }}
       >
         {line.imageUrl ? (
-          <Image
-            src={line.imageUrl}
-            alt={line.name}
-            fill
-            sizes="92px"
-            className="object-cover"
-          />
+          <Image src={line.imageUrl} alt={line.name} fill sizes="92px" className="object-cover" />
         ) : (
           <CartMotif />
         )}
@@ -70,10 +59,7 @@ export function CartLineRow({
           >
             −
           </button>
-          <span
-            aria-live="polite"
-            className="w-8 text-center text-[14px] font-medium leading-none"
-          >
+          <span aria-live="polite" className="w-8 text-center text-[14px] font-medium leading-none">
             {line.quantity}
           </span>
           <button
@@ -98,7 +84,7 @@ export function CartLineRow({
         </button>
       </div>
     </li>
-  );
+  )
 }
 
 /** Engraved ring placeholder shown on a line with no real photo. */
@@ -117,5 +103,5 @@ function CartMotif() {
       <circle cx="60" cy="60" r="40" />
       <circle cx="60" cy="60" r="4" fill="#A88A55" stroke="none" />
     </svg>
-  );
+  )
 }

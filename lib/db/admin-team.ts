@@ -1,7 +1,7 @@
-import "server-only";
-import type { AdminUser, RoleAuditEntry } from "@/lib/admin/team";
-import { type AdminRead, loadAdmin } from "./admin-read";
-import { createServerClient } from "./server";
+import "server-only"
+import type { AdminUser, RoleAuditEntry } from "@/lib/admin/team"
+import { type AdminRead, loadAdmin } from "./admin-read"
+import { createServerClient } from "./server"
 
 /**
  * Admin team management (in-console admin grant/revoke). Both reads go through
@@ -16,19 +16,19 @@ export async function listAdmins(): Promise<AdminRead<AdminUser[]>> {
   return loadAdmin(
     "team",
     async () => {
-      const supabase = await createServerClient();
-      const { data, error } = await supabase.rpc("admin_list_admins");
-      if (error) throw error;
+      const supabase = await createServerClient()
+      const { data, error } = await supabase.rpc("admin_list_admins")
+      if (error) throw error
 
       return (data ?? []).map((row) => ({
         id: row.id,
         email: row.email,
         grantedAt: row.granted_at,
         isSelf: row.is_self,
-      }));
+      }))
     },
     [],
-  );
+  )
 }
 
 /** Recent grant/revoke history, newest first (capped). */
@@ -36,13 +36,13 @@ export async function listRoleAudit(): Promise<AdminRead<RoleAuditEntry[]>> {
   return loadAdmin(
     "team-audit",
     async () => {
-      const supabase = await createServerClient();
+      const supabase = await createServerClient()
       const { data, error } = await supabase
         .from("admin_role_audit")
         .select("id, action, actor_email, target_email, created_at")
         .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
+        .limit(50)
+      if (error) throw error
 
       return (data ?? []).map((row) => ({
         id: row.id,
@@ -50,8 +50,8 @@ export async function listRoleAudit(): Promise<AdminRead<RoleAuditEntry[]>> {
         actorEmail: row.actor_email,
         targetEmail: row.target_email,
         createdAt: row.created_at,
-      }));
+      }))
     },
     [],
-  );
+  )
 }

@@ -5,26 +5,26 @@
  * (webfonts are unreliable in mail clients), brand palette from CLAUDE.md.
  */
 
-import { STORE_INFO } from "@/lib/store-info";
-import { formatPaise } from "@/lib/utils/money";
+import { STORE_INFO } from "@/lib/store-info"
+import { formatPaise } from "@/lib/utils/money"
 
 export type OrderConfirmationEmailInput = {
-  orderNo: string;
-  customerName: string;
-  addressLine: string;
-  city: string;
-  state: string;
-  pincode: string;
-  totalPaise: number;
+  orderNo: string
+  customerName: string
+  addressLine: string
+  city: string
+  state: string
+  pincode: string
+  totalPaise: number
   /** Absolute URL of the order confirmation page. */
-  orderUrl: string;
-};
+  orderUrl: string
+}
 
 export type EmailMessage = {
-  subject: string;
-  html: string;
-  text: string;
-};
+  subject: string
+  html: string
+  text: string
+}
 
 /** Escape user-provided values before interpolating into HTML markup. */
 export function escapeHtml(value: string): string {
@@ -33,27 +33,22 @@ export function escapeHtml(value: string): string {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+    .replaceAll("'", "&#39;")
 }
 
-const HEADING_FONT = "Georgia, 'Times New Roman', serif";
-const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif";
+const HEADING_FONT = "Georgia, 'Times New Roman', serif"
+const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 
 /**
  * Build the COD order-confirmation message. Every customer-entered field is
  * HTML-escaped; totals are formatted from integer paise at this UI boundary.
  */
-export function buildOrderConfirmationEmail(
-  input: OrderConfirmationEmailInput,
-): EmailMessage {
-  const total = formatPaise(input.totalPaise);
-  const name = input.customerName.trim() || "there";
-  const addressLines = [
-    input.addressLine,
-    `${input.city}, ${input.state} ${input.pincode}`,
-  ];
+export function buildOrderConfirmationEmail(input: OrderConfirmationEmailInput): EmailMessage {
+  const total = formatPaise(input.totalPaise)
+  const name = input.customerName.trim() || "there"
+  const addressLines = [input.addressLine, `${input.city}, ${input.state} ${input.pincode}`]
 
-  const subject = `Order confirmed — ${input.orderNo} · ${STORE_INFO.name}`;
+  const subject = `Order confirmed — ${input.orderNo} · ${STORE_INFO.name}`
 
   const text = [
     `Namaste ${name},`,
@@ -68,7 +63,7 @@ export function buildOrderConfirmationEmail(
     "",
     `Questions? WhatsApp us at ${STORE_INFO.phone.display} or reply to this email.`,
     `— ${STORE_INFO.name}`,
-  ].join("\n");
+  ].join("\n")
 
   const html = `
 <div style="margin:0;padding:32px 12px;background:#FBF6EE;">
@@ -104,7 +99,7 @@ export function buildOrderConfirmationEmail(
       ${escapeHtml(STORE_INFO.address.line)}
     </td></tr>
   </table>
-</div>`;
+</div>`
 
-  return { subject, html, text };
+  return { subject, html, text }
 }

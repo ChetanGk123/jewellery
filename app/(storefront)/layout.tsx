@@ -1,6 +1,6 @@
-import { Header } from "@/components/storefront/layout/Header";
-import { Footer } from "@/components/storefront/layout/Footer";
-import { getStoreSettings } from "@/lib/db/settings";
+import { Header } from "@/components/storefront/layout/Header"
+import { Footer } from "@/components/storefront/layout/Footer"
+import { getStoreSettings } from "@/lib/db/settings"
 
 /**
  * Storefront chrome. Scoped to the `(storefront)` route group so the customer
@@ -10,7 +10,7 @@ import { getStoreSettings } from "@/lib/db/settings";
 export default async function StorefrontLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const settings = await getStoreSettings();
+  const settings = await getStoreSettings()
 
   return (
     <>
@@ -18,5 +18,5 @@ export default async function StorefrontLayout({
       {children}
       <Footer />
     </>
-  );
+  )
 }

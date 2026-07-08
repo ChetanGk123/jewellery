@@ -7,27 +7,27 @@
  * profile exists to prefill checkout, so the two field sets must never drift.
  */
 
-import { z } from "zod";
-import { checkoutSchema, type CheckoutFormValues } from "@/lib/checkout/schema";
+import { z } from "zod"
+import { checkoutSchema, type CheckoutFormValues } from "@/lib/checkout/schema"
 
 export const profileSchema = checkoutSchema.omit({
   email: true,
   paymentMethod: true,
-});
-export type ProfileValues = z.infer<typeof profileSchema>;
+})
+export type ProfileValues = z.infer<typeof profileSchema>
 
 /** A customer's saved contact + default address (camelCase view of the row). */
-export type CustomerProfile = ProfileValues;
+export type CustomerProfile = ProfileValues
 
 /** Snake_case row shape returned by Supabase for `customer_profile`. */
 type ProfileRow = {
-  full_name: string;
-  phone: string;
-  address_line: string;
-  city: string;
-  state: string;
-  pincode: string;
-};
+  full_name: string
+  phone: string
+  address_line: string
+  city: string
+  state: string
+  pincode: string
+}
 
 /** Map a `customer_profile` row to the camelCase domain shape. */
 export function toCustomerProfile(row: ProfileRow): CustomerProfile {
@@ -38,7 +38,7 @@ export function toCustomerProfile(row: ProfileRow): CustomerProfile {
     city: row.city,
     state: row.state,
     pincode: row.pincode,
-  };
+  }
 }
 
 /**
@@ -58,5 +58,5 @@ export function profileToCheckoutDefaults(
     state: profile?.state ?? "",
     pincode: profile?.pincode ?? "",
     paymentMethod: "cod",
-  };
+  }
 }

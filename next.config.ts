@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 /**
  * Static security response headers applied to every route. The per-request,
@@ -23,7 +23,7 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
   },
-] as const;
+] as const
 
 const nextConfig: NextConfig = {
   // Trace only the files the server actually needs into `.next/standalone`, so
@@ -40,8 +40,8 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    return [{ source: "/:path*", headers: [...securityHeaders] }];
+    return [{ source: "/:path*", headers: [...securityHeaders] }]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

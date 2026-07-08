@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
-import { AnalyticsView } from "@/components/admin/analytics/AnalyticsView";
-import { AdminErrorBanner } from "@/components/admin/ui/AdminErrorBanner";
-import { ADMIN_PAGE_META } from "@/lib/admin/nav";
-import { getProductAnalytics } from "@/lib/db/admin-analytics";
-import { ROUTES } from "@/lib/routes";
+import type { Metadata } from "next"
+import { AnalyticsView } from "@/components/admin/analytics/AnalyticsView"
+import { AdminErrorBanner } from "@/components/admin/ui/AdminErrorBanner"
+import { ADMIN_PAGE_META } from "@/lib/admin/nav"
+import { getProductAnalytics } from "@/lib/db/admin-analytics"
+import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
   title: ADMIN_PAGE_META[ROUTES.adminAnalytics].title,
-};
+}
 
 /**
  * Product Analytics page (TASKS 3.10). Aggregates 6 months of `order_item`
@@ -19,24 +19,17 @@ export const metadata: Metadata = {
 export default async function AdminAnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ product?: string }>;
+  searchParams: Promise<{ product?: string }>
 }) {
-  const [{ product }, result] = await Promise.all([
-    searchParams,
-    getProductAnalytics(),
-  ]);
+  const [{ product }, result] = await Promise.all([searchParams, getProductAnalytics()])
   const {
     data: { kpis, products },
     error,
-  } = result;
+  } = result
   return (
     <div className="flex flex-col gap-6">
       {error && <AdminErrorBanner />}
-      <AnalyticsView
-        kpis={kpis}
-        products={products}
-        initialProductId={product ?? null}
-      />
+      <AnalyticsView kpis={kpis} products={products} initialProductId={product ?? null} />
     </div>
-  );
+  )
 }

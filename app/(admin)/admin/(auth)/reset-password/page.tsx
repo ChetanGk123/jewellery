@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
-import { AdminAuthShell } from "@/components/admin/auth/AdminAuthShell";
-import { AdminResetPasswordForm } from "@/components/admin/auth/AdminResetPasswordForm";
+import type { Metadata } from "next"
+import { AdminAuthShell } from "@/components/admin/auth/AdminAuthShell"
+import { AdminResetPasswordForm } from "@/components/admin/auth/AdminResetPasswordForm"
 
-export const metadata: Metadata = { title: "Choose a new password" };
+export const metadata: Metadata = { title: "Choose a new password" }
 
 export default function AdminResetPasswordPage() {
   return (
@@ -12,5 +12,5 @@ export default function AdminResetPasswordPage() {
     >
       <AdminResetPasswordForm />
     </AdminAuthShell>
-  );
+  )
 }

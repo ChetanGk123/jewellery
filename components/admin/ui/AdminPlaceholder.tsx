@@ -8,10 +8,10 @@ export function AdminPlaceholder({
   phase,
   description,
 }: {
-  title: string;
+  title: string
   /** The Phase 3 task that builds this view, e.g. "3.3". */
-  phase: string;
-  description: string;
+  phase: string
+  description: string
 }) {
   return (
     <div className="rounded-xl border border-[#EAE3D7] bg-white p-8 sm:p-10">
@@ -43,9 +43,9 @@ export function AdminPlaceholder({
         {description}
       </p>
       <p className="mt-4 text-[12.5px] leading-relaxed text-[#8A7E74]">
-        The sidebar, topbar and routing are live. This view is scaffolded and
-        gets its data and controls in Phase {phase}.
+        The sidebar, topbar and routing are live. This view is scaffolded and gets its data and
+        controls in Phase {phase}.
       </p>
     </div>
-  );
+  )
 }

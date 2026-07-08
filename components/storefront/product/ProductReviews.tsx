@@ -1,17 +1,17 @@
-import type { Review } from "@/lib/db/queries";
-import { ReviewForm } from "./ReviewForm";
-import { StarRating } from "./StarRating";
+import type { Review } from "@/lib/db/queries"
+import { ReviewForm } from "./ReviewForm"
+import { StarRating } from "./StarRating"
 
 const dateFormatter = new Intl.DateTimeFormat("en-IN", {
   day: "numeric",
   month: "short",
   year: "numeric",
-});
+})
 
 /** Format an ISO timestamp as e.g. "12 Jun 2026"; blank if unparseable. */
 function formatReviewDate(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? "" : dateFormatter.format(date);
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? "" : dateFormatter.format(date)
 }
 
 /**
@@ -21,23 +21,15 @@ function formatReviewDate(iso: string): string {
  * has no approved reviews yet.
  */
 type Props = {
-  reviews: Review[];
-  productId: string;
-  hasPurchased: boolean;
-  prefillName: string;
-};
+  reviews: Review[]
+  productId: string
+  hasPurchased: boolean
+  prefillName: string
+}
 
-export function ProductReviews({
-  reviews,
-  productId,
-  hasPurchased,
-  prefillName,
-}: Props) {
+export function ProductReviews({ reviews, productId, hasPurchased, prefillName }: Props) {
   return (
-    <section
-      aria-labelledby="reviews-heading"
-      className="mt-16 border-t border-[#E7D9C2] pt-10"
-    >
+    <section aria-labelledby="reviews-heading" className="mt-16 border-t border-[#E7D9C2] pt-10">
       <h2
         id="reviews-heading"
         className="m-0 mb-6 font-heading text-[32px] font-semibold leading-none text-maroon-900"
@@ -65,9 +57,7 @@ export function ProductReviews({
               )}
               <p className="m-0 mt-1 text-[12px] font-medium leading-none text-gold-600">
                 {review.name}{" "}
-                <span className="text-[#9C8A84]">
-                  · {formatReviewDate(review.created_at)}
-                </span>
+                <span className="text-[#9C8A84]">· {formatReviewDate(review.created_at)}</span>
               </p>
             </article>
           ))}
@@ -78,11 +68,7 @@ export function ProductReviews({
         </p>
       )}
 
-      <ReviewForm
-        productId={productId}
-        hasPurchased={hasPurchased}
-        prefillName={prefillName}
-      />
+      <ReviewForm productId={productId} hasPurchased={hasPurchased} prefillName={prefillName} />
     </section>
-  );
+  )
 }

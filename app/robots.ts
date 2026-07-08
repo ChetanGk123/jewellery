@@ -1,6 +1,6 @@
-import type { MetadataRoute } from "next";
-import { ROUTES } from "@/lib/routes";
-import { SITE_URL } from "@/lib/site-url";
+import type { MetadataRoute } from "next"
+import { ROUTES } from "@/lib/routes"
+import { SITE_URL } from "@/lib/site-url"
 
 /**
  * robots.txt (TASKS 4.16) — disallows the account/auth/cart/checkout funnel
@@ -28,5 +28,5 @@ export default function robots(): MetadataRoute.Robots {
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
-  };
+  }
 }

@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { updateStoreSettings } from "@/app/(admin)/admin/(console)/settings/actions";
-import type { SettingsFormValues } from "@/lib/admin/settings";
+import { useState, useTransition } from "react"
+import { updateStoreSettings } from "@/app/(admin)/admin/(console)/settings/actions"
+import type { SettingsFormValues } from "@/lib/admin/settings"
 
-type Props = { initial: SettingsFormValues };
+type Props = { initial: SettingsFormValues }
 
-const CARD = "rounded-xl border border-[#EAE3D7] bg-white p-6";
-const LABEL = "font-body text-[12px] font-medium text-[#8A7E74]";
+const CARD = "rounded-xl border border-[#EAE3D7] bg-white p-6"
+const LABEL = "font-body text-[12px] font-medium text-[#8A7E74]"
 const INPUT =
-  "mt-1.5 block w-full rounded-lg border border-[#E7E0D4] px-3 py-[11px] font-body text-[14px] text-[#2A1F1A] outline-none focus:border-[#C9A24B]";
-const HEADING = "font-heading text-[20px] font-semibold text-[#2A1F1A]";
+  "mt-1.5 block w-full rounded-lg border border-[#E7E0D4] px-3 py-[11px] font-body text-[14px] text-[#2A1F1A] outline-none focus:border-[#C9A24B]"
+const HEADING = "font-heading text-[20px] font-semibold text-[#2A1F1A]"
 
 /**
  * Store Settings (TASKS 3.11, prototype-matched). Four cards over the single
@@ -21,35 +21,32 @@ const HEADING = "font-heading text-[20px] font-semibold text-[#2A1F1A]";
  * ("Coming soon") until the payments phase.
  */
 export function SettingsView({ initial }: Props) {
-  const [values, setValues] = useState<SettingsFormValues>(initial);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [values, setValues] = useState<SettingsFormValues>(initial)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  const set = <K extends keyof SettingsFormValues>(
-    key: K,
-    value: SettingsFormValues[K],
-  ) => {
-    setSaved(false);
-    setValues((prev) => ({ ...prev, [key]: value }));
-  };
+  const set = <K extends keyof SettingsFormValues>(key: K, value: SettingsFormValues[K]) => {
+    setSaved(false)
+    setValues((prev) => ({ ...prev, [key]: value }))
+  }
   const setBanner = (patch: Partial<SettingsFormValues["banner"]>) => {
-    setSaved(false);
-    setValues((prev) => ({ ...prev, banner: { ...prev.banner, ...patch } }));
-  };
+    setSaved(false)
+    setValues((prev) => ({ ...prev, banner: { ...prev.banner, ...patch } }))
+  }
   const setPromo = (patch: Partial<SettingsFormValues["promo"]>) => {
-    setSaved(false);
-    setValues((prev) => ({ ...prev, promo: { ...prev.promo, ...patch } }));
-  };
+    setSaved(false)
+    setValues((prev) => ({ ...prev, promo: { ...prev.promo, ...patch } }))
+  }
 
   const save = () => {
-    setError(null);
+    setError(null)
     startTransition(async () => {
-      const res = await updateStoreSettings(values);
-      if (res.ok) setSaved(true);
-      else setError(res.error ?? "Couldn't save settings.");
-    });
-  };
+      const res = await updateStoreSettings(values)
+      if (res.ok) setSaved(true)
+      else setError(res.error ?? "Couldn't save settings.")
+    })
+  }
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -103,9 +100,7 @@ export function SettingsView({ initial }: Props) {
               className={INPUT}
               inputMode="numeric"
               value={String(values.freeShipThresholdRupees)}
-              onChange={(e) =>
-                set("freeShipThresholdRupees", toRupees(e.target.value))
-              }
+              onChange={(e) => set("freeShipThresholdRupees", toRupees(e.target.value))}
             />
           </label>
           <label className={LABEL}>
@@ -161,16 +156,12 @@ export function SettingsView({ initial }: Props) {
                   <Dot />
                   <span>
                     {values.banner.offerLabel}{" "}
-                    <span className="font-semibold text-gold-300">
-                      {values.banner.offerText}
-                    </span>
+                    <span className="font-semibold text-gold-300">{values.banner.offerText}</span>
                     {values.banner.code && (
                       <>
                         {" "}
                         with code{" "}
-                        <span className="font-semibold text-gold-300">
-                          {values.banner.code}
-                        </span>
+                        <span className="font-semibold text-gold-300">{values.banner.code}</span>
                       </>
                     )}
                   </span>
@@ -229,8 +220,8 @@ export function SettingsView({ initial }: Props) {
             </label>
           </div>
           <span className="font-body text-[11.5px] leading-[1.5] text-[#A99C90]">
-            Tip: leave a field empty to drop that part of the banner. The
-            highlight and promo code appear in gold.
+            Tip: leave a field empty to drop that part of the banner. The highlight and promo code
+            appear in gold.
           </span>
         </div>
 
@@ -240,8 +231,7 @@ export function SettingsView({ initial }: Props) {
             <div className="flex flex-col gap-1">
               <span className={HEADING}>Homepage Promo Block</span>
               <span className="font-body text-[12px] leading-[1.4] text-[#A99C90]">
-                The large festive offer block on your home page. Changes apply
-                live.
+                The large festive offer block on your home page. Changes apply live.
               </span>
             </div>
             <Toggle
@@ -264,9 +254,7 @@ export function SettingsView({ initial }: Props) {
                   {values.promo.code && (
                     <>
                       Use code{" "}
-                      <span className="font-semibold text-gold-300">
-                        {values.promo.code}
-                      </span>{" "}
+                      <span className="font-semibold text-gold-300">{values.promo.code}</span>{" "}
                     </>
                   )}
                   {values.promo.note}
@@ -350,36 +338,28 @@ export function SettingsView({ initial }: Props) {
         )}
       </div>
     </div>
-  );
+  )
 }
 
 /** Parse a rupee text input to a non-negative integer (digits only). */
 function toRupees(raw: string): number {
-  const digits = raw.replace(/[^\d]/g, "");
-  return digits === "" ? 0 : Number.parseInt(digits, 10);
+  const digits = raw.replace(/[^\d]/g, "")
+  return digits === "" ? 0 : Number.parseInt(digits, 10)
 }
 
 function Dot() {
-  return <span className="text-gold-300/60">·</span>;
+  return <span className="text-gold-300/60">·</span>
 }
 
-function Preview({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Preview({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-[7px]">
       <span className="font-body text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#A99C90]">
         {label}
       </span>
-      <div className="overflow-hidden rounded-lg border border-[#EFE9DE]">
-        {children}
-      </div>
+      <div className="overflow-hidden rounded-lg border border-[#EFE9DE]">{children}</div>
     </div>
-  );
+  )
 }
 
 function ToggleRow({
@@ -389,28 +369,21 @@ function ToggleRow({
   onChange,
   disabled,
 }: {
-  title: string;
-  hint: string;
-  checked: boolean;
-  onChange?: (value: boolean) => void;
-  disabled?: boolean;
+  title: string
+  hint: string
+  checked: boolean
+  onChange?: (value: boolean) => void
+  disabled?: boolean
 }) {
   return (
     <div className="flex items-center justify-between gap-3 border-t border-[#F0EADF] py-3">
       <div>
-        <div className="font-body text-[13px] font-medium text-[#2A1F1A]">
-          {title}
-        </div>
+        <div className="font-body text-[13px] font-medium text-[#2A1F1A]">{title}</div>
         <div className="mt-1 font-body text-[11px] text-[#A99C90]">{hint}</div>
       </div>
-      <Toggle
-        checked={checked}
-        onChange={onChange}
-        disabled={disabled}
-        label={title}
-      />
+      <Toggle checked={checked} onChange={onChange} disabled={disabled} label={title} />
     </div>
-  );
+  )
 }
 
 /** Pill switch matching the prototype (42×24, sliding knob). */
@@ -420,10 +393,10 @@ function Toggle({
   disabled,
   label,
 }: {
-  checked: boolean;
-  onChange?: (value: boolean) => void;
-  disabled?: boolean;
-  label: string;
+  checked: boolean
+  onChange?: (value: boolean) => void
+  disabled?: boolean
+  label: string
 }) {
   return (
     <button
@@ -441,5 +414,5 @@ function Toggle({
         style={{ left: checked ? "21px" : "3px" }}
       />
     </button>
-  );
+  )
 }

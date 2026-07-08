@@ -1,38 +1,32 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { type FieldError, useForm } from "react-hook-form";
-import { submitCheckout } from "@/app/(storefront)/checkout/actions";
-import { Honeypot } from "@/components/ui/Honeypot";
-import type { CartLine } from "@/lib/cart";
-import {
-  cartLinesToOrderItems,
-  type PlacedOrder,
-} from "@/lib/checkout/order";
-import {
-  type CheckoutFormValues,
-  checkoutSchema,
-} from "@/lib/checkout/schema";
-import { CheckoutSummary } from "./CheckoutSummary";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useState } from "react"
+import { type FieldError, useForm } from "react-hook-form"
+import { submitCheckout } from "@/app/(storefront)/checkout/actions"
+import { Honeypot } from "@/components/ui/Honeypot"
+import type { CartLine } from "@/lib/cart"
+import { cartLinesToOrderItems, type PlacedOrder } from "@/lib/checkout/order"
+import { type CheckoutFormValues, checkoutSchema } from "@/lib/checkout/schema"
+import { CheckoutSummary } from "./CheckoutSummary"
 
 /** Shown when the store has paused Cash on Delivery — its only tender (5.3). */
 const ORDERS_PAUSED_MESSAGE =
-  "We've paused online orders for a moment. Please contact us to place your order.";
+  "We've paused online orders for a moment. Please contact us to place your order."
 
 type Props = {
-  lines: readonly CartLine[];
+  lines: readonly CartLine[]
   /** Prefill from the signed-in customer's saved profile + account email. */
-  defaults: CheckoutFormValues;
+  defaults: CheckoutFormValues
   /** Cash on Delivery on? Off = the store paused its only tender (5.3). */
-  codEnabled: boolean;
-  couponCode: string | null;
-  subtotalPaise: number;
-  discountPaise: number;
-  shippingPaise: number;
-  totalPaise: number;
-  onPlaced: (order: PlacedOrder) => void;
-};
+  codEnabled: boolean
+  couponCode: string | null
+  subtotalPaise: number
+  discountPaise: number
+  shippingPaise: number
+  totalPaise: number
+  onPlaced: (order: PlacedOrder) => void
+}
 
 /**
  * Checkout form (TASKS 2.4). Client validation runs through React Hook Form with
@@ -61,33 +55,33 @@ export function CheckoutForm({
     resolver: zodResolver(checkoutSchema),
     defaultValues: defaults,
     mode: "onTouched",
-  });
-  const [formError, setFormError] = useState<string | null>(null);
-  const [honeypot, setHoneypot] = useState("");
+  })
+  const [formError, setFormError] = useState<string | null>(null)
+  const [honeypot, setHoneypot] = useState("")
 
   const onValid = async (values: CheckoutFormValues) => {
-    setFormError(null);
+    setFormError(null)
     // COD paused (5.3): the store's only tender is off, so no order can be
     // placed. Stop before the server round-trip; the RPC enforces this too.
     if (!codEnabled) {
-      setFormError(ORDERS_PAUSED_MESSAGE);
-      return;
+      setFormError(ORDERS_PAUSED_MESSAGE)
+      return
     }
     const result = await submitCheckout({
       values,
       items: cartLinesToOrderItems(lines),
       couponCode,
       honeypot,
-    });
+    })
     if (!result.ok) {
       for (const [field, message] of Object.entries(result.fieldErrors)) {
-        setError(field as keyof CheckoutFormValues, { message });
+        setError(field as keyof CheckoutFormValues, { message })
       }
-      setFormError(result.formError ?? "Something went wrong. Please try again.");
-      return;
+      setFormError(result.formError ?? "Something went wrong. Please try again.")
+      return
     }
-    onPlaced(result.order);
-  };
+    onPlaced(result.order)
+  }
 
   return (
     <form
@@ -146,7 +140,7 @@ export function CheckoutForm({
               autoComplete="address-level2"
               error={errors.city}
               registration={register("city")}
-              className="min-w-[140px] flex-1"
+              className="min-w-35 flex-1"
             />
             <Field
               id="state"
@@ -154,7 +148,7 @@ export function CheckoutForm({
               autoComplete="address-level1"
               error={errors.state}
               registration={register("state")}
-              className="min-w-[140px] flex-1"
+              className="min-w-35 flex-1"
             />
             <Field
               id="pincode"
@@ -191,19 +185,13 @@ export function CheckoutForm({
               <span className="text-[14px] font-medium leading-none text-[#9C8A84]">
                 Cash on Delivery
               </span>
-              <span className="ml-auto text-[12px] leading-none text-[#B79B7E]">
-                Paused
-              </span>
+              <span className="ml-auto text-[12px] leading-none text-[#B79B7E]">Paused</span>
             </div>
           )}
           <div className="flex items-center gap-3 rounded-sm border border-[#E7D9C2] bg-[#FBF7F0] px-4 py-[15px] opacity-60">
             <span className="h-[18px] w-[18px] rounded-full border-2 border-[#CDBBA0]" />
-            <span className="text-[14px] font-medium leading-none text-[#9C8A84]">
-              Card / UPI
-            </span>
-            <span className="ml-auto text-[12px] leading-none text-[#B79B7E]">
-              Coming soon
-            </span>
+            <span className="text-[14px] font-medium leading-none text-[#9C8A84]">Card / UPI</span>
+            <span className="ml-auto text-[12px] leading-none text-[#B79B7E]">Coming soon</span>
           </div>
 
           {!codEnabled && (
@@ -236,19 +224,19 @@ export function CheckoutForm({
         ordersPaused={!codEnabled}
       />
     </form>
-  );
+  )
 }
 
 type FieldProps = {
-  id: keyof CheckoutFormValues;
-  placeholder: string;
-  registration: ReturnType<ReturnType<typeof useForm<CheckoutFormValues>>["register"]>;
-  error?: FieldError;
-  type?: "text" | "email";
-  inputMode?: "text" | "numeric";
-  autoComplete?: string;
-  className?: string;
-};
+  id: keyof CheckoutFormValues
+  placeholder: string
+  registration: ReturnType<ReturnType<typeof useForm<CheckoutFormValues>>["register"]>
+  error?: FieldError
+  type?: "text" | "email"
+  inputMode?: "text" | "numeric"
+  autoComplete?: string
+  className?: string
+}
 
 /** One labelled text input with an inline validation message. */
 function Field({
@@ -263,7 +251,7 @@ function Field({
 }: FieldProps) {
   const borderClass = error
     ? "border-[#D98A94] focus:border-[#B23A48]"
-    : "border-[#E7D9C2] focus:border-gold-400";
+    : "border-[#E7D9C2] focus:border-gold-400"
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
@@ -282,13 +270,10 @@ function Field({
         {...registration}
       />
       {error && (
-        <p
-          id={`${id}-error`}
-          className="m-0 text-[12px] leading-snug text-[#B23A48]"
-        >
+        <p id={`${id}-error`} className="m-0 text-[12px] leading-snug text-[#B23A48]">
           {error.message}
         </p>
       )}
     </div>
-  );
+  )
 }

@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { HelpHeader } from "@/components/storefront/help/HelpHeader";
-import { HelpSection, IconCard } from "@/components/storefront/help/HelpBlocks";
-import { ABOUT_INTRO, ABOUT_VALUES } from "@/lib/help-content";
-import { ROUTES } from "@/lib/routes";
+import type { Metadata } from "next"
+import Link from "next/link"
+import { HelpHeader } from "@/components/storefront/help/HelpHeader"
+import { HelpSection, IconCard } from "@/components/storefront/help/HelpBlocks"
+import { ABOUT_INTRO, ABOUT_VALUES } from "@/lib/help-content"
+import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
   title: "About Us",
   description:
     "RJ Jewellers crafts artificial bridal jewellery from Jaipur — heritage Kundan, Polki and temple artistry reimagined for the modern celebration, at honest value.",
-};
+}
 
 /**
  * About Us (TASKS 1.7) — no prototype equivalent, authored to the brand voice
@@ -45,8 +45,7 @@ export default function AboutPage() {
               Find your bridal look
             </div>
             <p className="m-0 text-[13.5px] font-light leading-[1.5] text-[#E8CFC0]">
-              From mandap sets to everyday jhumkas — explore the full
-              collection.
+              From mandap sets to everyday jhumkas — explore the full collection.
             </p>
           </div>
           <Link
@@ -58,5 +57,5 @@ export default function AboutPage() {
         </div>
       </div>
     </main>
-  );
+  )
 }

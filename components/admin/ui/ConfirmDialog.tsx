@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { type ReactNode } from "react";
-import { useDialog } from "@/hooks/useDialog";
+import { type ReactNode } from "react"
+import { useDialog } from "@/hooks/useDialog"
 
 type Props = {
   /** Accessible label for the dialog + heading text. */
-  title: string;
+  title: string
   /** Explanatory copy — plain text or rich nodes (e.g. a highlighted name). */
-  body: ReactNode;
+  body: ReactNode
   /** Label on the destructive confirm button (e.g. "Cancel order"). */
-  confirmLabel: string;
+  confirmLabel: string
   /** Label shown on the confirm button while the action runs. */
-  pendingLabel: string;
+  pendingLabel: string
   /** Label on the dismiss button. Defaults to "Keep it". */
-  dismissLabel?: string;
-  isPending: boolean;
-  error: string | null;
-  onConfirm: () => void;
-  onClose: () => void;
-};
+  dismissLabel?: string
+  isPending: boolean
+  error: string | null
+  onConfirm: () => void
+  onClose: () => void
+}
 
 /**
  * Shared confirmation dialog for destructive admin actions (TASKS 5.4). An
@@ -43,13 +43,13 @@ export function ConfirmDialog({
     isOpen: true,
     onDismiss: onClose,
     isPending,
-  });
+  })
 
   return (
     <div
       className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(42,10,18,0.45)] p-6"
       onClick={() => {
-        if (!isPending) onClose();
+        if (!isPending) onClose()
       }}
     >
       <div
@@ -62,12 +62,8 @@ export function ConfirmDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col gap-2.5 px-[26px] py-6">
-          <h2 className="font-heading text-[22px] leading-tight text-[#2A1F1A]">
-            {title}
-          </h2>
-          <p className="font-body text-[13.5px] leading-relaxed text-[#5E4A40]">
-            {body}
-          </p>
+          <h2 className="font-heading text-[22px] leading-tight text-[#2A1F1A]">{title}</h2>
+          <p className="font-body text-[13.5px] leading-relaxed text-[#5E4A40]">{body}</p>
 
           {error && (
             <p className="mt-1 rounded-lg border border-[#F0C8CE] bg-[#FBE9E7] px-3 py-2.5 font-body text-[12.5px] leading-snug text-[#C0392F]">
@@ -96,5 +92,5 @@ export function ConfirmDialog({
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -19,7 +19,7 @@ export const CACHE_TAGS = {
   categories: "categories",
   reviews: "reviews",
   settings: "settings",
-} as const;
+} as const
 
 /** Staleness ceiling (seconds) for cached catalog reads. */
-export const CATALOG_REVALIDATE_SECONDS = 300;
+export const CATALOG_REVALIDATE_SECONDS = 300

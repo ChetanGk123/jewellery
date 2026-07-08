@@ -1,5 +1,5 @@
-import "server-only";
-import { headers } from "next/headers";
+import "server-only"
+import { headers } from "next/headers"
 
 /**
  * Best-effort in-memory fixed-window rate limiter (TASKS 3.9, 4.10).
@@ -14,24 +14,24 @@ import { headers } from "next/headers";
  * is purely an abuse throttle.
  */
 
-type Window = { count: number; resetAt: number };
+type Window = { count: number; resetAt: number }
 
-const store = new Map<string, Window>();
+const store = new Map<string, Window>()
 
 export type RateLimitResult = {
-  ok: boolean;
+  ok: boolean
   /** Seconds until the window resets (only meaningful when `ok` is false). */
-  retryAfterSec: number;
-};
+  retryAfterSec: number
+}
 
 type Options = {
   /** Max requests allowed per window. */
-  limit: number;
+  limit: number
   /** Window length in milliseconds. */
-  windowMs: number;
+  windowMs: number
   /** A monotonic timestamp; injectable so callers/tests aren't tied to the clock. */
-  now?: number;
-};
+  now?: number
+}
 
 /**
  * Records a hit for `key` and reports whether it's within the allowance. Expired
@@ -39,31 +39,31 @@ type Options = {
  * unboundedly under many distinct keys.
  */
 export function checkRateLimit(key: string, options: Options): RateLimitResult {
-  const now = options.now ?? Date.now();
-  const existing = store.get(key);
+  const now = options.now ?? Date.now()
+  const existing = store.get(key)
 
   if (!existing || existing.resetAt <= now) {
-    store.set(key, { count: 1, resetAt: now + options.windowMs });
-    sweep(now);
-    return { ok: true, retryAfterSec: 0 };
+    store.set(key, { count: 1, resetAt: now + options.windowMs })
+    sweep(now)
+    return { ok: true, retryAfterSec: 0 }
   }
 
   if (existing.count >= options.limit) {
     return {
       ok: false,
       retryAfterSec: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
-    };
+    }
   }
 
-  existing.count += 1;
-  return { ok: true, retryAfterSec: 0 };
+  existing.count += 1
+  return { ok: true, retryAfterSec: 0 }
 }
 
 /** Drop expired windows so a stream of unique keys can't leak memory. */
 function sweep(now: number): void {
-  if (store.size < 1000) return;
+  if (store.size < 1000) return
   for (const [key, window] of store) {
-    if (window.resetAt <= now) store.delete(key);
+    if (window.resetAt <= now) store.delete(key)
   }
 }
 
@@ -73,8 +73,8 @@ function sweep(now: number): void {
  * dev) — that only ever makes the limit stricter, never leakier.
  */
 export async function clientRateKey(scope: string): Promise<string> {
-  const headerList = await headers();
-  const forwarded = headerList.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() || "unknown";
-  return `${scope}:${ip}`;
+  const headerList = await headers()
+  const forwarded = headerList.get("x-forwarded-for")
+  const ip = forwarded?.split(",")[0]?.trim() || "unknown"
+  return `${scope}:${ip}`
 }

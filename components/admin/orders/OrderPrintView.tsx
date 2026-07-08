@@ -1,11 +1,11 @@
-import Link from "next/link";
-import type { PrintDoc } from "@/lib/admin/print";
-import type { AdminOrderRow } from "@/lib/db/admin-orders";
-import type { StoreSettings } from "@/lib/db/settings";
-import { ROUTES } from "@/lib/routes";
-import { STORE_INFO } from "@/lib/store-info";
-import { formatPaise } from "@/lib/utils/money";
-import { PrintButton } from "./PrintButton";
+import Link from "next/link"
+import type { PrintDoc } from "@/lib/admin/print"
+import type { AdminOrderRow } from "@/lib/db/admin-orders"
+import type { StoreSettings } from "@/lib/db/settings"
+import { ROUTES } from "@/lib/routes"
+import { STORE_INFO } from "@/lib/store-info"
+import { formatPaise } from "@/lib/utils/money"
+import { PrintButton } from "./PrintButton"
 
 /**
  * Print surface for one order (TASKS 5.12): renders **one** document per visit —
@@ -26,15 +26,14 @@ export function OrderPrintView({
   settings,
   doc,
 }: {
-  order: AdminOrderRow;
-  settings: StoreSettings;
-  doc: PrintDoc;
+  order: AdminOrderRow
+  settings: StoreSettings
+  doc: PrintDoc
 }) {
-  const isCancelled = order.status === "Cancelled";
-  const isDelivered = order.status === "Delivered";
-  const codOutstanding =
-    order.paymentMethod === "cod" && !isCancelled && !isDelivered;
-  const otherDoc: PrintDoc = doc === "invoice" ? "packing-slip" : "invoice";
+  const isCancelled = order.status === "Cancelled"
+  const isDelivered = order.status === "Delivered"
+  const codOutstanding = order.paymentMethod === "cod" && !isCancelled && !isDelivered
+  const otherDoc: PrintDoc = doc === "invoice" ? "packing-slip" : "invoice"
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[760px] flex-col gap-6 bg-white px-8 py-6 font-body text-[#1F1712] print:max-w-none print:gap-0 print:p-0">
@@ -66,7 +65,7 @@ export function OrderPrintView({
         <PackingSlipDocument order={order} codOutstanding={codOutstanding} />
       )}
     </div>
-  );
+  )
 }
 
 /* -------------------------------- Invoice -------------------------------- */
@@ -77,21 +76,17 @@ function InvoiceDocument({
   isCancelled,
   codOutstanding,
 }: {
-  order: AdminOrderRow;
-  settings: StoreSettings;
-  isCancelled: boolean;
-  codOutstanding: boolean;
+  order: AdminOrderRow
+  settings: StoreSettings
+  isCancelled: boolean
+  codOutstanding: boolean
 }) {
   return (
     <section>
       <header className="flex items-start justify-between gap-6 border-b-2 border-[#1F1712] pb-4">
         <div>
-          <div className="font-display text-[22px] tracking-[0.08em]">
-            {STORE_INFO.wordmark}
-          </div>
-          <div className="mt-0.5 text-[11.5px] text-[#5E4A40]">
-            {STORE_INFO.descriptor}
-          </div>
+          <div className="font-display text-[22px] tracking-[0.08em]">{STORE_INFO.wordmark}</div>
+          <div className="mt-0.5 text-[11.5px] text-[#5E4A40]">{STORE_INFO.descriptor}</div>
           <div className="mt-2 text-[11.5px] leading-relaxed text-[#5E4A40]">
             {STORE_INFO.address.line}
             <br />
@@ -99,9 +94,7 @@ function InvoiceDocument({
             {settings.gstin && (
               <>
                 <br />
-                <span className="font-semibold text-[#1F1712]">
-                  GSTIN: {settings.gstin}
-                </span>
+                <span className="font-semibold text-[#1F1712]">GSTIN: {settings.gstin}</span>
               </>
             )}
           </div>
@@ -146,9 +139,7 @@ function InvoiceDocument({
               <td className="py-2.5 pr-2 align-top text-[#5E4A40]">{i + 1}</td>
               <td className="py-2.5 pr-2 align-top">
                 <span className="font-medium">{it.name}</span>
-                {it.tone && (
-                  <span className="text-[#5E4A40]"> · {it.tone} plating</span>
-                )}
+                {it.tone && <span className="text-[#5E4A40]"> · {it.tone} plating</span>}
               </td>
               <td className="py-2.5 pr-2 text-center align-top">{it.qty}</td>
               <td className="py-2.5 pr-2 text-right align-top">
@@ -165,10 +156,7 @@ function InvoiceDocument({
       <div className="mt-4 ml-auto w-[260px] text-[12px]">
         <TotalRow label="Subtotal" value={formatPaise(order.subtotalPaise)} />
         {order.discountPaise > 0 && (
-          <TotalRow
-            label="Discount"
-            value={`− ${formatPaise(order.discountPaise)}`}
-          />
+          <TotalRow label="Discount" value={`− ${formatPaise(order.discountPaise)}`} />
         )}
         <TotalRow
           label="Shipping"
@@ -176,9 +164,7 @@ function InvoiceDocument({
         />
         <div className="mt-1 flex items-baseline justify-between border-t-2 border-[#1F1712] pt-2">
           <span className="text-[13px] font-semibold">Grand total</span>
-          <span className="text-[16px] font-semibold">
-            {formatPaise(order.totalPaise)}
-          </span>
+          <span className="text-[16px] font-semibold">{formatPaise(order.totalPaise)}</span>
         </div>
         <p className="mt-1 text-right text-[10.5px] text-[#5E4A40]">
           Inclusive of all applicable taxes.
@@ -193,11 +179,11 @@ function InvoiceDocument({
             : "Paid by Cash on Delivery."}
       </p>
       <p className="mt-6 border-t border-[#E5DED2] pt-3 text-[10.5px] text-[#8A7E74]">
-        This is a computer-generated invoice from {STORE_INFO.name} and needs no
-        signature. Questions? {STORE_INFO.email.display} · {STORE_INFO.phone.display}
+        This is a computer-generated invoice from {STORE_INFO.name} and needs no signature.
+        Questions? {STORE_INFO.email.display} · {STORE_INFO.phone.display}
       </p>
     </section>
-  );
+  )
 }
 
 /* ------------------------------ Packing slip ------------------------------ */
@@ -206,24 +192,20 @@ function PackingSlipDocument({
   order,
   codOutstanding,
 }: {
-  order: AdminOrderRow;
-  codOutstanding: boolean;
+  order: AdminOrderRow
+  codOutstanding: boolean
 }) {
   return (
     <section>
       <header className="flex items-start justify-between gap-6 border-b-2 border-[#1F1712] pb-4">
         <div>
-          <div className="font-display text-[22px] tracking-[0.08em]">
-            {STORE_INFO.wordmark}
-          </div>
+          <div className="font-display text-[22px] tracking-[0.08em]">{STORE_INFO.wordmark}</div>
           <div className="mt-0.5 text-[11.5px] text-[#5E4A40]">
             {STORE_INFO.address.line} · {STORE_INFO.phone.display}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-[16px] font-semibold tracking-[0.12em]">
-            PACKING SLIP
-          </div>
+          <div className="text-[16px] font-semibold tracking-[0.12em]">PACKING SLIP</div>
           <div className="mt-2 text-[11.5px] text-[#5E4A40]">
             Order: <span className="font-semibold text-[#1F1712]">{order.orderNo}</span>
             <br />
@@ -234,12 +216,8 @@ function PackingSlipDocument({
 
       {/* Big ship-to block — this face goes on the parcel */}
       <div className="mt-5 border-2 border-[#1F1712] p-4">
-        <div className="text-[10.5px] uppercase tracking-[0.1em] text-[#5E4A40]">
-          Deliver to
-        </div>
-        <div className="mt-1.5 text-[17px] font-semibold leading-snug">
-          {order.customerName}
-        </div>
+        <div className="text-[10.5px] uppercase tracking-[0.1em] text-[#5E4A40]">Deliver to</div>
+        <div className="mt-1.5 text-[17px] font-semibold leading-snug">{order.customerName}</div>
         <div className="mt-1 text-[14px] leading-relaxed">
           {order.addressLine}
           <br />
@@ -267,9 +245,7 @@ function PackingSlipDocument({
               <td className="py-2.5 pr-2 text-[#5E4A40]">{i + 1}</td>
               <td className="py-2.5 pr-2">
                 <span className="font-medium">{it.name}</span>
-                {it.tone && (
-                  <span className="text-[#5E4A40]"> · {it.tone} plating</span>
-                )}
+                {it.tone && <span className="text-[#5E4A40]"> · {it.tone} plating</span>}
               </td>
               <td className="py-2.5 text-center font-medium">{it.qty}</td>
             </tr>
@@ -284,7 +260,7 @@ function PackingSlipDocument({
         Fragile — jewellery, handle with care. Packed by {STORE_INFO.name}.
       </p>
     </section>
-  );
+  )
 }
 
 /* -------------------------------- Helpers -------------------------------- */
@@ -292,9 +268,7 @@ function PackingSlipDocument({
 function AddressBlock({ label, order }: { label: string; order: AdminOrderRow }) {
   return (
     <div className="text-[12px] leading-relaxed">
-      <div className="text-[10.5px] uppercase tracking-[0.08em] text-[#5E4A40]">
-        {label}
-      </div>
+      <div className="text-[10.5px] uppercase tracking-[0.08em] text-[#5E4A40]">{label}</div>
       <div className="mt-1 font-semibold">{order.customerName}</div>
       <div>
         {order.addressLine}
@@ -305,7 +279,7 @@ function AddressBlock({ label, order }: { label: string; order: AdminOrderRow })
         {order.phone} · {order.email}
       </div>
     </div>
-  );
+  )
 }
 
 function TotalRow({ label, value }: { label: string; value: string }) {
@@ -314,5 +288,5 @@ function TotalRow({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <span className="text-[#1F1712]">{value}</span>
     </div>
-  );
+  )
 }

@@ -16,7 +16,7 @@
  * recomputes from the same column server-side. This constant only backstops
  * callers/tests that don't supply one.
  */
-export const FLAT_SHIPPING_PAISE = 7900;
+export const FLAT_SHIPPING_PAISE = 7900
 
 /**
  * Delivery fee for a cart, in paise: free once the subtotal reaches the
@@ -28,19 +28,16 @@ export function shippingPaise(
   freeThresholdPaise: number,
   flatRatePaise: number = FLAT_SHIPPING_PAISE,
 ): number {
-  if (subtotalPaise <= 0) return 0;
-  return subtotalPaise >= freeThresholdPaise ? 0 : flatRatePaise;
+  if (subtotalPaise <= 0) return 0
+  return subtotalPaise >= freeThresholdPaise ? 0 : flatRatePaise
 }
 
 /**
  * How much more (in paise) the customer must spend to unlock free shipping —
  * 0 once they've qualified. Drives the "Add ₹X more for free shipping" hint.
  */
-export function amountToFreeShipPaise(
-  subtotalPaise: number,
-  freeThresholdPaise: number,
-): number {
-  return Math.max(0, freeThresholdPaise - subtotalPaise);
+export function amountToFreeShipPaise(subtotalPaise: number, freeThresholdPaise: number): number {
+  return Math.max(0, freeThresholdPaise - subtotalPaise)
 }
 
 /** Whether the cart already qualifies for free shipping. */
@@ -48,5 +45,5 @@ export function qualifiesForFreeShipping(
   subtotalPaise: number,
   freeThresholdPaise: number,
 ): boolean {
-  return subtotalPaise > 0 && subtotalPaise >= freeThresholdPaise;
+  return subtotalPaise > 0 && subtotalPaise >= freeThresholdPaise
 }

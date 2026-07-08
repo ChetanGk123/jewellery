@@ -1,0 +1,16 @@
+# Build output & deps
+.next/
+node_modules/
+playwright-report/
+test-results/
+
+# Builder-exported prototypes — encoded bundles, never hand-edited (CLAUDE.md)
+refereces/
+
+# Binary/visual assets
+e2e/visual.e2e.ts-snapshots/
+public/
+
+# Lockfiles & generated
+bun.lock
+bun.lockb

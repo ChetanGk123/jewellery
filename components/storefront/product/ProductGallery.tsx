@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Image from "next/image";
-import type { ProductImage } from "@/lib/db/queries";
-import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
+import { useState } from "react"
+import Image from "next/image"
+import type { ProductImage } from "@/lib/db/queries"
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
 
 /**
  * Product image gallery — a large primary frame with a row of selectable
@@ -16,12 +16,12 @@ export function ProductGallery({
   images,
   productName,
 }: {
-  images: ProductImage[];
-  productName: string;
+  images: ProductImage[]
+  productName: string
 }) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const active = images[activeIndex] ?? null;
-  const bigBackground = active?.bg ?? PLACEHOLDER_GRADIENT;
+  const [activeIndex, setActiveIndex] = useState(0)
+  const active = images[activeIndex] ?? null
+  const bigBackground = active?.bg ?? PLACEHOLDER_GRADIENT
 
   return (
     <div className="flex flex-col gap-3.5 md:min-w-[300px] md:flex-1">
@@ -52,7 +52,7 @@ export function ProductGallery({
       {images.length > 1 && (
         <div className="grid grid-cols-4 gap-3">
           {images.map((img, index) => {
-            const isActive = index === activeIndex;
+            const isActive = index === activeIndex
             return (
               <button
                 key={img.id}
@@ -61,24 +61,18 @@ export function ProductGallery({
                 aria-pressed={isActive}
                 onClick={() => setActiveIndex(index)}
                 className={`flex aspect-square items-center justify-center rounded-[3px] border-2 transition-colors ${
-                  isActive
-                    ? "border-gold-500"
-                    : "border-[#EFE3D0] hover:border-gold-300"
+                  isActive ? "border-gold-500" : "border-[#EFE3D0] hover:border-gold-300"
                 }`}
                 style={{ background: img.bg ?? PLACEHOLDER_GRADIENT }}
               >
-                {img.url ? (
-                  <span className="sr-only">Thumbnail {index + 1}</span>
-                ) : (
-                  <ThumbMotif />
-                )}
+                {img.url ? <span className="sr-only">Thumbnail {index + 1}</span> : <ThumbMotif />}
               </button>
-            );
+            )
           })}
         </div>
       )}
     </div>
-  );
+  )
 }
 
 /** Large engraved sunburst shown behind a photoless primary image. */
@@ -102,7 +96,7 @@ function GalleryMotif() {
       <path d="M96 60 L66 54 L60 60 L66 66 Z" fill="#9C7526" stroke="none" />
       <circle cx="60" cy="60" r="3.6" fill="#9C7526" stroke="none" />
     </svg>
-  );
+  )
 }
 
 /** Simple ring glyph for photoless thumbnails. */
@@ -121,5 +115,5 @@ function ThumbMotif() {
       <circle cx="60" cy="60" r="40" />
       <circle cx="60" cy="60" r="4" fill="#A88A55" stroke="none" />
     </svg>
-  );
+  )
 }

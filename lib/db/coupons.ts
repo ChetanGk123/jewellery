@@ -1,6 +1,6 @@
-import "server-only";
-import { type Coupon, type CouponKind, mapCouponRow } from "@/lib/coupons";
-import { createServerClient } from "./server";
+import "server-only"
+import { type Coupon, type CouponKind, mapCouponRow } from "@/lib/coupons"
+import { createServerClient } from "./server"
 
 /**
  * Storefront coupon registry (TASKS 3.6). Reads the currently-usable coupons
@@ -20,17 +20,15 @@ import { createServerClient } from "./server";
  */
 export async function getActiveCoupons(): Promise<Coupon[]> {
   try {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const { data } = await supabase
       .from("coupon")
       .select(
         "code, kind, value, min_subtotal_paise, max_discount_paise, expires_at, usage_limit, usage_count",
       )
-      .eq("is_active", true);
+      .eq("is_active", true)
     return (data ?? [])
-      .filter(
-        (row) => row.usage_limit == null || row.usage_count < row.usage_limit,
-      )
+      .filter((row) => row.usage_limit == null || row.usage_count < row.usage_limit)
       .map((row) =>
         mapCouponRow({
           code: row.code,
@@ -40,8 +38,8 @@ export async function getActiveCoupons(): Promise<Coupon[]> {
           max_discount_paise: row.max_discount_paise,
           expires_at: row.expires_at,
         }),
-      );
+      )
   } catch {
-    return [];
+    return []
   }
 }

@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
-import { HelpHeader } from "@/components/storefront/help/HelpHeader";
-import { LegalSection, LegalUpdatedNote } from "@/components/storefront/help/LegalBlocks";
-import { PRIVACY_SECTIONS } from "@/lib/legal-content";
-import { STORE_INFO } from "@/lib/store-info";
+import type { Metadata } from "next"
+import { HelpHeader } from "@/components/storefront/help/HelpHeader"
+import { LegalSection, LegalUpdatedNote } from "@/components/storefront/help/LegalBlocks"
+import { PRIVACY_SECTIONS } from "@/lib/legal-content"
+import { STORE_INFO } from "@/lib/store-info"
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "How RJ Jewellers collects, uses, and protects your personal information when you shop with us.",
-};
+}
 
 /**
  * Privacy Policy (Phase 4.2) — no prototype equivalent; authored to close the
@@ -40,5 +40,5 @@ export default function PrivacyPage() {
         />
       </div>
     </main>
-  );
+  )
 }

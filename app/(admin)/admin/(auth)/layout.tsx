@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata } from "next"
 
 /**
  * Admin auth screens (sign in / forgot / reset). A sibling group to `(console)`
@@ -9,10 +9,8 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s · RJ Jewellers Admin" },
   robots: { index: false, follow: false },
-};
+}
 
-export default function AdminAuthLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return <>{children}</>;
+export default function AdminAuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <>{children}</>
 }

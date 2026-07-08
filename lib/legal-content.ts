@@ -10,13 +10,13 @@
  * single source of truth.
  */
 
-export const LEGAL_LAST_UPDATED = "5 July 2026";
+export const LEGAL_LAST_UPDATED = "5 July 2026"
 
 export type LegalSectionData = {
-  heading: string;
-  paragraphs: string[];
-  list?: { items: string[]; ordered?: boolean };
-};
+  heading: string
+  paragraphs: string[]
+  list?: { items: string[]; ordered?: boolean }
+}
 
 export const PRIVACY_SECTIONS: LegalSectionData[] = [
   {
@@ -92,10 +92,10 @@ export const PRIVACY_SECTIONS: LegalSectionData[] = [
   {
     heading: "Changes to this policy",
     paragraphs: [
-      "We may update this policy from time to time. The \"last updated\" date at the top of this page reflects the most recent revision. Continued use of the site after a change means you accept the updated policy.",
+      'We may update this policy from time to time. The "last updated" date at the top of this page reflects the most recent revision. Continued use of the site after a change means you accept the updated policy.',
     ],
   },
-];
+]
 
 export const TERMS_SECTIONS: LegalSectionData[] = [
   {
@@ -161,10 +161,10 @@ export const TERMS_SECTIONS: LegalSectionData[] = [
   {
     heading: "Changes to these terms",
     paragraphs: [
-      "We may revise these terms from time to time; the \"last updated\" date above reflects the latest revision. Continued use of the site means you accept the current terms.",
+      'We may revise these terms from time to time; the "last updated" date above reflects the latest revision. Continued use of the site means you accept the current terms.',
     ],
   },
-];
+]
 
 export const REFUND_SECTIONS: LegalSectionData[] = [
   {
@@ -175,9 +175,7 @@ export const REFUND_SECTIONS: LegalSectionData[] = [
   },
   {
     heading: "Returns and exchanges",
-    paragraphs: [
-      "You have 7 days from the date of delivery to request a return or exchange.",
-    ],
+    paragraphs: ["You have 7 days from the date of delivery to request a return or exchange."],
     list: {
       items: [
         "Eligible: unworn items with tags intact and original packaging/pouch included; wrong, damaged, or defective items; size or plating-tone exchange requests.",
@@ -209,4 +207,4 @@ export const REFUND_SECTIONS: LegalSectionData[] = [
       "Reach our support team via the contact details below — we're happy to help with any order.",
     ],
   },
-];
+]

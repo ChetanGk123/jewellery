@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { HelpHeader } from "@/components/storefront/help/HelpHeader";
-import { LegalSection, LegalUpdatedNote } from "@/components/storefront/help/LegalBlocks";
-import { REFUND_SECTIONS } from "@/lib/legal-content";
-import { ROUTES } from "@/lib/routes";
-import { STORE_INFO } from "@/lib/store-info";
+import type { Metadata } from "next"
+import Link from "next/link"
+import { HelpHeader } from "@/components/storefront/help/HelpHeader"
+import { LegalSection, LegalUpdatedNote } from "@/components/storefront/help/LegalBlocks"
+import { REFUND_SECTIONS } from "@/lib/legal-content"
+import { ROUTES } from "@/lib/routes"
+import { STORE_INFO } from "@/lib/store-info"
 
 export const metadata: Metadata = {
   title: "Cancellation & Refund Policy",
   description:
     "How to cancel an order, request a return or exchange, and how refunds are processed at RJ Jewellers.",
-};
+}
 
 /**
  * Cancellation & Refund Policy (Phase 4.2) — the formal counterpart to the
@@ -32,12 +32,9 @@ export default function RefundPolicyPage() {
         <LegalUpdatedNote />
 
         <p className="m-0 text-[13.5px] font-light leading-[1.7] text-[#5E4A44]">
-          This is the formal policy referenced in our Terms of Use. For a more
-          visual walkthrough of delivery and returns, see{" "}
-          <Link
-            href={ROUTES.shipping}
-            className="text-maroon-700 underline hover:text-maroon-900"
-          >
+          This is the formal policy referenced in our Terms of Use. For a more visual walkthrough of
+          delivery and returns, see{" "}
+          <Link href={ROUTES.shipping} className="text-maroon-700 underline hover:text-maroon-900">
             Shipping &amp; Returns
           </Link>
           .
@@ -55,5 +52,5 @@ export default function RefundPolicyPage() {
         />
       </div>
     </main>
-  );
+  )
 }

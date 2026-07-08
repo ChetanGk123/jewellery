@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { ROUTES } from "@/lib/routes";
+import Link from "next/link"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Home hero — matched to the storefront prototype: a deep-maroon gradient panel
@@ -21,8 +21,8 @@ export function Hero() {
             <span className="italic text-gold-300"> radiant gold.</span>
           </h1>
           <p className="m-0 max-w-[440px] text-[16px] font-light leading-[1.7] text-[#E8CFC0]">
-            Kundan, polki and temple-inspired bridal jewellery — the heirloom
-            look, crafted to be light, affordable and skin-friendly.
+            Kundan, polki and temple-inspired bridal jewellery — the heirloom look, crafted to be
+            light, affordable and skin-friendly.
           </p>
           <div className="mt-1.5 flex flex-wrap gap-3.5">
             <Link
@@ -69,5 +69,5 @@ export function Hero() {
         </div>
       </div>
     </section>
-  );
+  )
 }

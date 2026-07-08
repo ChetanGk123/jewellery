@@ -1,31 +1,31 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import Link from "next/link"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import {
   LISTING_PARAMS,
   PRICE_MAX_RUPEES,
   PRICE_MIN_RUPEES,
   PRICE_STEP_RUPEES,
-} from "@/lib/listing";
-import { ROUTES } from "@/lib/routes";
-import { formatPaise } from "@/lib/utils/money";
+} from "@/lib/listing"
+import { ROUTES } from "@/lib/routes"
+import { formatPaise } from "@/lib/utils/money"
 
 export type CategoryFacet = {
-  slug: string;
-  name: string;
-  productCount: number;
-};
+  slug: string
+  name: string
+  productCount: number
+}
 
 type FilterSidebarProps = {
-  categories: CategoryFacet[];
-  activeCategorySlug?: string;
-  materials: string[];
-  selectedMaterial?: string;
-  maxRupees: number;
-  hasActiveFilters: boolean;
-};
+  categories: CategoryFacet[]
+  activeCategorySlug?: string
+  materials: string[]
+  selectedMaterial?: string
+  maxRupees: number
+  hasActiveFilters: boolean
+}
 
 /**
  * Facet sidebar for the listing pages: category navigation, a material toggle
@@ -41,58 +41,56 @@ export function FilterSidebar({
   maxRupees,
   hasActiveFilters,
 }: FilterSidebarProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   // Slider position mirrors the URL; keep a local copy for smooth dragging and
   // resync whenever navigation lands with a different committed value.
-  const [priceRupees, setPriceRupees] = useState(maxRupees);
-  useEffect(() => setPriceRupees(maxRupees), [maxRupees]);
+  const [priceRupees, setPriceRupees] = useState(maxRupees)
+  useEffect(() => setPriceRupees(maxRupees), [maxRupees])
 
   // Facets are collapsed behind a disclosure on mobile (TASKS 4.8) — the full
   // stack pushed the product grid ~2 viewports down. Ignored at `lg`, where
   // the sidebar is always visible.
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
 
   function pushParams(mutate: (params: URLSearchParams) => void) {
-    const params = new URLSearchParams(searchParams.toString());
-    mutate(params);
+    const params = new URLSearchParams(searchParams.toString())
+    mutate(params)
     // A filter change can invalidate the current page (fewer results, fewer
     // pages) — always land back on page 1 (TASKS 4.17).
-    params.delete(LISTING_PARAMS.page);
-    const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    params.delete(LISTING_PARAMS.page)
+    const qs = params.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
   function toggleMaterial(material: string) {
     pushParams((params) => {
       if (params.get(LISTING_PARAMS.material) === material) {
-        params.delete(LISTING_PARAMS.material);
+        params.delete(LISTING_PARAMS.material)
       } else {
-        params.set(LISTING_PARAMS.material, material);
+        params.set(LISTING_PARAMS.material, material)
       }
-    });
+    })
   }
 
   function commitPrice(rupees: number) {
     pushParams((params) => {
       if (rupees >= PRICE_MAX_RUPEES) {
-        params.delete(LISTING_PARAMS.maxPrice);
+        params.delete(LISTING_PARAMS.maxPrice)
       } else {
-        params.set(LISTING_PARAMS.maxPrice, String(rupees));
+        params.set(LISTING_PARAMS.maxPrice, String(rupees))
       }
-    });
+    })
   }
 
   function clearAll() {
-    router.push(pathname, { scroll: false });
+    router.push(pathname, { scroll: false })
   }
 
   const priceLabel =
-    priceRupees >= PRICE_MAX_RUPEES
-      ? "Any price"
-      : `Up to ${formatPaise(priceRupees * 100)}`;
+    priceRupees >= PRICE_MAX_RUPEES ? "Any price" : `Up to ${formatPaise(priceRupees * 100)}`
 
   return (
     <aside className="flex w-full flex-col gap-3.5 lg:sticky lg:top-[130px] lg:w-[230px] lg:flex-none lg:gap-[30px]">
@@ -111,9 +109,7 @@ export function FilterSidebar({
         </span>
       </button>
 
-      <div
-        className={`flex-col gap-[30px] ${isMobileOpen ? "flex" : "hidden"} lg:flex`}
-      >
+      <div className={`flex-col gap-[30px] ${isMobileOpen ? "flex" : "hidden"} lg:flex`}>
         <FacetGroup title="Category">
           <FacetRow
             as="link"
@@ -169,9 +165,7 @@ export function FilterSidebar({
             onKeyUp={() => commitPrice(priceRupees)}
             className="w-full cursor-pointer accent-maroon-700"
           />
-          <div className="text-[13px] leading-none text-[#7A655F]">
-            {priceLabel}
-          </div>
+          <div className="text-[13px] leading-none text-[#7A655F]">{priceLabel}</div>
         </div>
 
         {hasActiveFilters && (
@@ -185,16 +179,10 @@ export function FilterSidebar({
         )}
       </div>
     </aside>
-  );
+  )
 }
 
-function FacetGroup({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function FacetGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-maroon-900">
@@ -202,27 +190,27 @@ function FacetGroup({
       </div>
       {children}
     </div>
-  );
+  )
 }
 
 function Divider() {
-  return <div className="h-px bg-[#EFE3D0]" aria-hidden />;
+  return <div className="h-px bg-[#EFE3D0]" aria-hidden />
 }
 
 type FacetRowProps = {
-  label: string;
-  isActive: boolean;
-  count?: number;
-  dot?: boolean;
+  label: string
+  isActive: boolean
+  count?: number
+  dot?: boolean
 } & (
   | { as: "link"; href: string; onClick?: never }
   | { as: "button"; href?: never; onClick: () => void }
-);
+)
 
 /** A single facet entry — a category link or a material toggle button. */
 function FacetRow(props: FacetRowProps) {
-  const { label, isActive, count, dot } = props;
-  const textClass = isActive ? "text-maroon-700" : "text-[#5E4A44]";
+  const { label, isActive, count, dot } = props
+  const textClass = isActive ? "text-maroon-700" : "text-[#5E4A44]"
   const body = (
     <>
       <span className="flex items-center gap-2">
@@ -236,14 +224,12 @@ function FacetRow(props: FacetRowProps) {
         )}
         <span className={isActive ? "font-medium" : ""}>{label}</span>
       </span>
-      {typeof count === "number" && (
-        <span className="text-[11px] text-[#B5A39C]">{count}</span>
-      )}
+      {typeof count === "number" && <span className="text-[11px] text-[#B5A39C]">{count}</span>}
     </>
-  );
+  )
 
   const shared =
-    "flex items-center justify-between gap-2 text-left text-[13.5px] leading-none transition-colors hover:text-maroon-700";
+    "flex items-center justify-between gap-2 text-left text-[13.5px] leading-none transition-colors hover:text-maroon-700"
 
   if (props.as === "link") {
     return (
@@ -254,7 +240,7 @@ function FacetRow(props: FacetRowProps) {
       >
         {body}
       </Link>
-    );
+    )
   }
 
   return (
@@ -266,5 +252,5 @@ function FacetRow(props: FacetRowProps) {
     >
       {body}
     </button>
-  );
+  )
 }

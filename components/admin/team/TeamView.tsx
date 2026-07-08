@@ -1,23 +1,20 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import {
-  grantAdmin,
-  revokeAdmin,
-} from "@/app/(admin)/admin/(console)/team/actions";
+import { useState, useTransition } from "react"
+import { grantAdmin, revokeAdmin } from "@/app/(admin)/admin/(console)/team/actions"
 import {
   type AdminUser,
   type RoleAuditEntry,
   adminDateLabel,
   adminInitial,
   roleAuditSummary,
-} from "@/lib/admin/team";
-import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
+} from "@/lib/admin/team"
+import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog"
 
 type Props = {
-  admins: AdminUser[];
-  audit: RoleAuditEntry[];
-};
+  admins: AdminUser[]
+  audit: RoleAuditEntry[]
+}
 
 /**
  * Team manager (in-console admin management): grant access by email, see current
@@ -26,49 +23,47 @@ type Props = {
  * (`useTransition` + inline error/notice, buttons disabled while pending).
  */
 export function TeamView({ admins, audit }: Props) {
-  const [email, setEmail] = useState("");
-  const [grantError, setGrantError] = useState<string | null>(null);
-  const [grantNotice, setGrantNotice] = useState<string | null>(null);
-  const [isGranting, startGrant] = useTransition();
+  const [email, setEmail] = useState("")
+  const [grantError, setGrantError] = useState<string | null>(null)
+  const [grantNotice, setGrantNotice] = useState<string | null>(null)
+  const [isGranting, startGrant] = useTransition()
 
-  const [removing, setRemoving] = useState<AdminUser | null>(null);
-  const [revokeError, setRevokeError] = useState<string | null>(null);
-  const [isRevoking, startRevoke] = useTransition();
+  const [removing, setRemoving] = useState<AdminUser | null>(null)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
+  const [isRevoking, startRevoke] = useTransition()
 
   const onGrant = () => {
-    setGrantError(null);
-    setGrantNotice(null);
+    setGrantError(null)
+    setGrantNotice(null)
     startGrant(async () => {
-      const res = await grantAdmin(email);
+      const res = await grantAdmin(email)
       if (res.ok) {
-        setEmail("");
-        setGrantNotice(res.notice ?? "Access granted.");
+        setEmail("")
+        setGrantNotice(res.notice ?? "Access granted.")
       } else {
-        setGrantError(res.error ?? "Couldn't grant access.");
+        setGrantError(res.error ?? "Couldn't grant access.")
       }
-    });
-  };
+    })
+  }
 
   const onConfirmRemove = () => {
-    if (!removing) return;
-    setRevokeError(null);
+    if (!removing) return
+    setRevokeError(null)
     startRevoke(async () => {
-      const res = await revokeAdmin(removing.id);
-      if (res.ok) setRemoving(null);
-      else setRevokeError(res.error ?? "Couldn't remove access.");
-    });
-  };
+      const res = await revokeAdmin(removing.id)
+      if (res.ok) setRemoving(null)
+      else setRevokeError(res.error ?? "Couldn't remove access.")
+    })
+  }
 
   return (
     <div className="flex flex-col gap-6">
       {/* Grant access */}
       <section className="rounded-xl border border-[#EAE3D7] bg-white p-[22px]">
-        <h2 className="font-heading text-[19px] leading-none text-[#2A1F1A]">
-          Grant admin access
-        </h2>
+        <h2 className="font-heading text-[19px] leading-none text-[#2A1F1A]">Grant admin access</h2>
         <p className="mt-2 font-body text-[13px] leading-relaxed text-[#8A7E74]">
-          The person must already have a customer account. New admins must sign
-          out and back in for access to take effect.
+          The person must already have a customer account. New admins must sign out and back in for
+          access to take effect.
         </p>
 
         <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
@@ -77,7 +72,7 @@ export function TeamView({ admins, audit }: Props) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !isGranting) onGrant();
+              if (e.key === "Enter" && !isGranting) onGrant()
             }}
             placeholder="name@example.com"
             className="flex-1 rounded-lg border border-[#E7E0D4] bg-white px-3 py-[11px] font-body text-[14px] text-[#2A1F1A] outline-none focus:border-gold-400"
@@ -139,8 +134,8 @@ export function TeamView({ admins, audit }: Props) {
               <button
                 type="button"
                 onClick={() => {
-                  setRevokeError(null);
-                  setRemoving(a);
+                  setRevokeError(null)
+                  setRemoving(a)
                 }}
                 disabled={a.isSelf}
                 className="rounded-lg border border-[#DAD0C2] bg-white px-4 py-2 font-body text-[12px] font-semibold text-[#C0392F] transition-colors hover:bg-[#FBF8F2] disabled:cursor-not-allowed disabled:text-[#B9AEA2] disabled:opacity-70"
@@ -190,11 +185,8 @@ export function TeamView({ admins, audit }: Props) {
           title="Remove admin access?"
           body={
             <>
-              <span className="font-semibold text-maroon-700">
-                {removing.email}
-              </span>{" "}
-              will lose access to the admin console on their next sign-in. You
-              can grant it again any time.
+              <span className="font-semibold text-maroon-700">{removing.email}</span> will lose
+              access to the admin console on their next sign-in. You can grant it again any time.
             </>
           }
           confirmLabel="Remove access"
@@ -204,10 +196,10 @@ export function TeamView({ admins, audit }: Props) {
           error={revokeError}
           onConfirm={onConfirmRemove}
           onClose={() => {
-            if (!isRevoking) setRemoving(null);
+            if (!isRevoking) setRemoving(null)
           }}
         />
       )}
     </div>
-  );
+  )
 }

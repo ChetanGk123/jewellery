@@ -1,5 +1,5 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
+import Link from "next/link"
+import type { ReactNode } from "react"
 
 /**
  * Shared shell + primitives for the auth screens (sign in / sign up / password
@@ -14,11 +14,11 @@ export function AuthCard({
   children,
   footer,
 }: {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
+  title: string
+  subtitle?: string
+  children: ReactNode
   /** Small line under the card — e.g. "New here? Create an account". */
-  footer?: ReactNode;
+  footer?: ReactNode
 }) {
   return (
     <main className="flex flex-1 items-start justify-center bg-cream-100 px-6 py-16">
@@ -36,12 +36,10 @@ export function AuthCard({
           </header>
           {children}
         </div>
-        {footer && (
-          <p className="mt-4 text-center text-[13px] text-[#5E4A44]">{footer}</p>
-        )}
+        {footer && <p className="mt-4 text-center text-[13px] text-[#5E4A44]">{footer}</p>}
       </div>
     </main>
-  );
+  )
 }
 
 /** Text input matching the checkout form's field styling. */
@@ -54,18 +52,18 @@ export function AuthField({
   error,
   registration,
 }: {
-  id: string;
-  label: string;
-  type?: "text" | "email" | "password";
-  autoComplete?: string;
-  inputMode?: "text" | "email" | "numeric";
-  error?: string;
+  id: string
+  label: string
+  type?: "text" | "email" | "password"
+  autoComplete?: string
+  inputMode?: "text" | "email" | "numeric"
+  error?: string
   /** Spread of `register(...)` from react-hook-form. */
-  registration: Record<string, unknown>;
+  registration: Record<string, unknown>
 }) {
   const borderClass = error
     ? "border-[#D98A94] focus:border-[#B23A48]"
-    : "border-[#E7D9C2] focus:border-gold-400";
+    : "border-[#E7D9C2] focus:border-gold-400"
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -91,17 +89,11 @@ export function AuthField({
         </p>
       )}
     </div>
-  );
+  )
 }
 
 /** Gold-gradient primary submit, matching the checkout CTA. */
-export function AuthSubmit({
-  children,
-  isBusy,
-}: {
-  children: ReactNode;
-  isBusy?: boolean;
-}) {
+export function AuthSubmit({ children, isBusy }: { children: ReactNode; isBusy?: boolean }) {
   return (
     <button
       type="submit"
@@ -110,12 +102,12 @@ export function AuthSubmit({
     >
       {children}
     </button>
-  );
+  )
 }
 
 /** Inline form-level error, matching the checkout error panel. */
 export function AuthError({ message }: { message: string | null }) {
-  if (!message) return null;
+  if (!message) return null
   return (
     <p
       role="alert"
@@ -123,7 +115,7 @@ export function AuthError({ message }: { message: string | null }) {
     >
       {message}
     </p>
-  );
+  )
 }
 
 /** Quiet auxiliary link (forgot password, back to sign in, …). */
@@ -135,5 +127,5 @@ export function AuthLink({ href, children }: { href: string; children: ReactNode
     >
       {children}
     </Link>
-  );
+  )
 }

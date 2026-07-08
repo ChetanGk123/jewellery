@@ -1,30 +1,30 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import {
   exportSubscribers,
   removeSubscriber,
-} from "@/app/(admin)/admin/(console)/subscribers/actions";
-import { AdminPager } from "@/components/admin/ui/AdminPager";
-import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
-import { csvCell } from "@/lib/utils/csv";
+} from "@/app/(admin)/admin/(console)/subscribers/actions"
+import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog"
+import { csvCell } from "@/lib/utils/csv"
 import {
   ADMIN_SUBSCRIBERS_PAGE_SIZE,
   type AdminSubscriberRow,
   subscriberDateLabel,
   subscriberInitial,
   subscriberSourceChip,
-} from "@/lib/admin/subscriber";
-import type { AdminSubscribersPage } from "@/lib/db/admin-subscribers";
-import { ROUTES } from "@/lib/routes";
+} from "@/lib/admin/subscriber"
+import type { AdminSubscribersPage } from "@/lib/db/admin-subscribers"
+import { ROUTES } from "@/lib/routes"
 
 function hrefFor(search: string, page: number): string {
-  const params = new URLSearchParams();
-  if (search) params.set("q", search);
-  if (page > 1) params.set("page", String(page));
-  const qs = params.toString();
-  return qs ? `${ROUTES.adminSubscribers}?${qs}` : ROUTES.adminSubscribers;
+  const params = new URLSearchParams()
+  if (search) params.set("q", search)
+  if (page > 1) params.set("page", String(page))
+  const qs = params.toString()
+  return qs ? `${ROUTES.adminSubscribers}?${qs}` : ROUTES.adminSubscribers
 }
 
 /**
@@ -36,79 +36,76 @@ function hrefFor(search: string, page: number): string {
  * just the current page); remove goes through the `removeSubscriber` action.
  */
 export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
-  const router = useRouter();
-  const [query, setQuery] = useState(page.search);
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+  const router = useRouter()
+  const [query, setQuery] = useState(page.search)
+  const [pendingId, setPendingId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   // Removing is permanent — hold the row pending a confirm dialog rather than
   // deleting on the single × click (TASKS 5.4).
-  const [confirming, setConfirming] = useState<AdminSubscriberRow | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [confirming, setConfirming] = useState<AdminSubscriberRow | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   const submitSearch = (raw: string) => {
-    router.push(hrefFor(raw.trim(), 1));
-  };
+    router.push(hrefFor(raw.trim(), 1))
+  }
 
   const confirmRemove = () => {
-    if (!confirming) return;
-    const row = confirming;
-    setError(null);
-    setPendingId(row.id);
+    if (!confirming) return
+    const row = confirming
+    setError(null)
+    setPendingId(row.id)
     startTransition(async () => {
-      const res = await removeSubscriber(row.id);
-      setPendingId(null);
+      const res = await removeSubscriber(row.id)
+      setPendingId(null)
       if (res.ok) {
-        setConfirming(null);
+        setConfirming(null)
       } else {
-        setError(res.error ?? "Couldn't remove the subscriber.");
+        setError(res.error ?? "Couldn't remove the subscriber.")
       }
-    });
-  };
+    })
+  }
 
   const copyEmails = async () => {
-    setError(null);
-    setIsExporting(true);
+    setError(null)
+    setIsExporting(true)
     try {
-      const all = await exportSubscribers();
-      await navigator.clipboard.writeText(all.map((s) => s.email).join("\n"));
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+      const all = await exportSubscribers()
+      await navigator.clipboard.writeText(all.map((s) => s.email).join("\n"))
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
     } catch {
-      setError("Couldn't copy to the clipboard.");
+      setError("Couldn't copy to the clipboard.")
     } finally {
-      setIsExporting(false);
+      setIsExporting(false)
     }
-  };
+  }
 
   const exportCsv = async () => {
-    setError(null);
-    setIsExporting(true);
+    setError(null)
+    setIsExporting(true)
     try {
-      const all = await exportSubscribers();
-      const header = "email,source,joined\n";
+      const all = await exportSubscribers()
+      const header = "email,source,joined\n"
       const body = all
-        .map(
-          (s) =>
-            `${csvCell(s.email)},${csvCell(s.source)},${csvCell(s.createdAt)}`,
-        )
-        .join("\n");
+        .map((s) => `${csvCell(s.email)},${csvCell(s.source)},${csvCell(s.createdAt)}`)
+        .join("\n")
       const blob = new Blob([header + body], {
         type: "text/csv;charset=utf-8",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "subscribers.csv";
-      link.click();
-      URL.revokeObjectURL(url);
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = "subscribers.csv"
+      link.click()
+      URL.revokeObjectURL(url)
     } catch {
-      setError("Couldn't export the list.");
+      setError("Couldn't export the list.")
     } finally {
-      setIsExporting(false);
+      setIsExporting(false)
     }
-  };
+  }
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -141,14 +138,12 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
       {/* Mailing list */}
       <div className="overflow-hidden rounded-xl border border-[#EAE3D7] bg-white">
         <div className="flex flex-wrap items-center gap-3 border-b border-[#EFE9DE] px-[22px] py-4">
-          <span className="font-body text-[15px] font-semibold text-[#2A1F1A]">
-            Mailing list
-          </span>
+          <span className="font-body text-[15px] font-semibold text-[#2A1F1A]">Mailing list</span>
           <form
             role="search"
             onSubmit={(event) => {
-              event.preventDefault();
-              submitSearch(query);
+              event.preventDefault()
+              submitSearch(query)
             }}
             className="ml-auto flex min-w-[170px] max-w-[300px] items-center rounded-lg border border-[#E7E0D4] bg-[#FBF8F2] px-3"
           >
@@ -194,14 +189,12 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
 
             {page.rows.length === 0 ? (
               <div className="px-[22px] py-[50px] text-center font-body text-[13px] text-[#A99C90]">
-                {page.search
-                  ? "No subscribers match your search."
-                  : "No subscribers yet."}
+                {page.search ? "No subscribers match your search." : "No subscribers yet."}
               </div>
             ) : (
               page.rows.map((s) => {
-                const chip = subscriberSourceChip(s.source);
-                const isBusy = pendingId === s.id;
+                const chip = subscriberSourceChip(s.source)
+                const isBusy = pendingId === s.id
                 return (
                   <div
                     key={s.id}
@@ -212,8 +205,7 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
                         aria-hidden="true"
                         className="inline-flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full font-body text-[13px] font-semibold text-[#2A0A12]"
                         style={{
-                          background:
-                            "linear-gradient(135deg, #E6CA7E, #A87A1E)",
+                          background: "linear-gradient(135deg, #E6CA7E, #A87A1E)",
                         }}
                       >
                         {subscriberInitial(s.email)}
@@ -236,8 +228,8 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
                     <button
                       type="button"
                       onClick={() => {
-                        setError(null);
-                        setConfirming(s);
+                        setError(null)
+                        setConfirming(s)
                       }}
                       disabled={isBusy}
                       title="Remove subscriber"
@@ -247,7 +239,7 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
                       ×
                     </button>
                   </div>
-                );
+                )
               })
             )}
           </div>
@@ -267,11 +259,9 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
           title="Remove subscriber?"
           body={
             <>
-              <span className="font-semibold text-maroon-700">
-                {confirming.email}
-              </span>{" "}
-              will be removed from the mailing list. They&rsquo;d need to
-              re-subscribe to receive future updates.
+              <span className="font-semibold text-maroon-700">{confirming.email}</span> will be
+              removed from the mailing list. They&rsquo;d need to re-subscribe to receive future
+              updates.
             </>
           }
           confirmLabel="Remove"
@@ -282,14 +272,14 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
           onConfirm={confirmRemove}
           onClose={() => {
             if (!isPending) {
-              setConfirming(null);
-              setError(null);
+              setConfirming(null)
+              setError(null)
             }
           }}
         />
       )}
     </div>
-  );
+  )
 }
 
 function SearchIcon() {
@@ -306,7 +296,7 @@ function SearchIcon() {
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3-3" />
     </svg>
-  );
+  )
 }
 
 function CopyIcon() {
@@ -323,7 +313,7 @@ function CopyIcon() {
       <rect x="9" y="9" width="11" height="11" rx="2" />
       <path d="M5 15V5a2 2 0 0 1 2-2h8" />
     </svg>
-  );
+  )
 }
 
 function ExportIcon() {
@@ -340,5 +330,5 @@ function ExportIcon() {
       <path d="M12 4v11m0 0 4-4m-4 4-4-4" />
       <path d="M5 19h14" />
     </svg>
-  );
+  )
 }

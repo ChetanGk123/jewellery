@@ -1,28 +1,28 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { cartSubtotalPaise } from "@/lib/cart";
-import type { PlacedOrder } from "@/lib/checkout/order";
-import type { CheckoutFormValues } from "@/lib/checkout/schema";
-import { type Coupon, validateCoupon } from "@/lib/coupons";
-import { ROUTES } from "@/lib/routes";
-import { shippingPaise } from "@/lib/shipping";
-import { useCartHydrated, useCartStore } from "@/stores/cart";
-import { CheckoutForm } from "./CheckoutForm";
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { cartSubtotalPaise } from "@/lib/cart"
+import type { PlacedOrder } from "@/lib/checkout/order"
+import type { CheckoutFormValues } from "@/lib/checkout/schema"
+import { type Coupon, validateCoupon } from "@/lib/coupons"
+import { ROUTES } from "@/lib/routes"
+import { shippingPaise } from "@/lib/shipping"
+import { useCartHydrated, useCartStore } from "@/stores/cart"
+import { CheckoutForm } from "./CheckoutForm"
 
 type Props = {
-  freeShipThresholdPaise: number;
+  freeShipThresholdPaise: number
   /** Store's flat delivery fee (Settings 3.11), used below the free-ship threshold. */
-  flatRatePaise: number;
+  flatRatePaise: number
   /** Whether Cash on Delivery (the only tender) is on. Off = orders paused (5.3). */
-  codEnabled: boolean;
+  codEnabled: boolean
   /** Form defaults prefilled server-side from the customer's saved profile. */
-  defaults: CheckoutFormValues;
+  defaults: CheckoutFormValues
   /** Currently-usable coupons, loaded server-side (display-only preview). */
-  coupons: Coupon[];
-};
+  coupons: Coupon[]
+}
 
 /**
  * Client container for the checkout page. Owns the cart-store subscription and
@@ -39,47 +39,41 @@ export function CheckoutView({
   defaults,
   coupons,
 }: Props) {
-  const router = useRouter();
-  const hasHydrated = useCartHydrated();
-  const lines = useCartStore((state) => state.lines);
-  const couponCode = useCartStore((state) => state.couponCode);
-  const clearCart = useCartStore((state) => state.clearCart);
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  const router = useRouter()
+  const hasHydrated = useCartHydrated()
+  const lines = useCartStore((state) => state.lines)
+  const couponCode = useCartStore((state) => state.couponCode)
+  const clearCart = useCartStore((state) => state.clearCart)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   // On a successful order, clear the cart and hand off to the confirmation page
   // (keyed on the unguessable order id). `isRedirecting` is checked ABOVE the
   // empty-cart guard so clearing the cart doesn't flash the empty prompt.
   const handlePlaced = (order: PlacedOrder) => {
-    setIsRedirecting(true);
-    clearCart();
+    setIsRedirecting(true)
+    clearCart()
     // A coupon entered but not applied at placement (expired/exhausted) is
     // flagged so the confirmation page can tell the customer (TASKS 3.6b).
     const href = order.couponDropped
       ? `${ROUTES.order(order.orderNo)}?coupon=dropped`
-      : ROUTES.order(order.orderNo);
-    router.push(href);
-  };
+      : ROUTES.order(order.orderNo)
+    router.push(href)
+  }
 
   if (!hasHydrated) {
     return (
-      <div
-        aria-busy="true"
-        className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]"
-      >
+      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]">
         Loading checkout…
       </div>
-    );
+    )
   }
 
   if (isRedirecting) {
     return (
-      <div
-        aria-busy="true"
-        className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]"
-      >
+      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]">
         Taking you to your order confirmation…
       </div>
-    );
+    )
   }
 
   if (lines.length === 0) {
@@ -98,19 +92,17 @@ export function CheckoutView({
           Start shopping
         </Link>
       </div>
-    );
+    )
   }
 
-  const subtotalPaise = cartSubtotalPaise(lines);
-  const couponResult = couponCode
-    ? validateCoupon(couponCode, subtotalPaise, coupons)
-    : null;
-  const discountPaise = couponResult?.ok ? couponResult.discountPaise : 0;
-  const freeShipping = couponResult?.ok ? couponResult.freeShipping : false;
+  const subtotalPaise = cartSubtotalPaise(lines)
+  const couponResult = couponCode ? validateCoupon(couponCode, subtotalPaise, coupons) : null
+  const discountPaise = couponResult?.ok ? couponResult.discountPaise : 0
+  const freeShipping = couponResult?.ok ? couponResult.freeShipping : false
   const shipPaise = freeShipping
     ? 0
-    : shippingPaise(subtotalPaise, freeShipThresholdPaise, flatRatePaise);
-  const totalPaise = subtotalPaise - discountPaise + shipPaise;
+    : shippingPaise(subtotalPaise, freeShipThresholdPaise, flatRatePaise)
+  const totalPaise = subtotalPaise - discountPaise + shipPaise
 
   return (
     <CheckoutForm
@@ -124,5 +116,5 @@ export function CheckoutView({
       totalPaise={totalPaise}
       onPlaced={handlePlaced}
     />
-  );
+  )
 }

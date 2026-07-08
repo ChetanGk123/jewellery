@@ -1,16 +1,12 @@
-import { Hero } from "@/components/storefront/home/Hero";
-import { TrustStrip } from "@/components/storefront/home/TrustStrip";
-import { CategoryTiles } from "@/components/storefront/home/CategoryTiles";
-import { ProductSection } from "@/components/storefront/home/ProductSection";
-import { PromoBanner } from "@/components/storefront/home/PromoBanner";
-import { StoryBlock } from "@/components/storefront/home/StoryBlock";
-import {
-  getCategoryTiles,
-  getFeaturedProducts,
-  getFreshProducts,
-} from "@/lib/db/queries";
-import { getStoreSettings } from "@/lib/db/settings";
-import { ROUTES } from "@/lib/routes";
+import { Hero } from "@/components/storefront/home/Hero"
+import { TrustStrip } from "@/components/storefront/home/TrustStrip"
+import { CategoryTiles } from "@/components/storefront/home/CategoryTiles"
+import { ProductSection } from "@/components/storefront/home/ProductSection"
+import { PromoBanner } from "@/components/storefront/home/PromoBanner"
+import { StoryBlock } from "@/components/storefront/home/StoryBlock"
+import { getCategoryTiles, getFeaturedProducts, getFreshProducts } from "@/lib/db/queries"
+import { getStoreSettings } from "@/lib/db/settings"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Storefront home page (TASKS 1.3) — mirrors the prototype's home route:
@@ -23,7 +19,7 @@ export default async function HomePage() {
     getFeaturedProducts(8),
     getFreshProducts(8),
     getStoreSettings(),
-  ]);
+  ])
 
   return (
     <main className="flex-1">
@@ -40,5 +36,5 @@ export default async function HomePage() {
       <ProductSection eyebrow="Just In" title="New Arrivals" products={fresh} />
       <StoryBlock />
     </main>
-  );
+  )
 }

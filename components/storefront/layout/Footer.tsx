@@ -1,14 +1,14 @@
-import Link from "next/link";
-import { NewsletterForm } from "./NewsletterForm";
-import { FacebookIcon } from "@/components/ui/FacebookIcon";
-import { InstagramIcon } from "@/components/ui/InstagramIcon";
-import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
-import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation";
-import { ROUTES } from "@/lib/routes";
-import { STORE_INFO, type SocialLink } from "@/lib/store-info";
+import Link from "next/link"
+import { NewsletterForm } from "./NewsletterForm"
+import { FacebookIcon } from "@/components/ui/FacebookIcon"
+import { InstagramIcon } from "@/components/ui/InstagramIcon"
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon"
+import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation"
+import { ROUTES } from "@/lib/routes"
+import { STORE_INFO, type SocialLink } from "@/lib/store-info"
 
 const socialBadgeClass =
-  "flex h-[34px] w-[34px] items-center justify-center rounded-full border border-gold-300/40 text-sm text-gold-300 transition-colors hover:bg-gold-300/10";
+  "flex h-[34px] w-[34px] items-center justify-center rounded-full border border-gold-300/40 text-sm text-gold-300 transition-colors hover:bg-gold-300/10"
 
 /**
  * Storefront footer, matched to `refereces/JR Jewellers Storefront.html`:
@@ -40,11 +40,7 @@ export function Footer() {
                   <SocialGlyph social={social} />
                 </a>
               ) : (
-                <span
-                  key={social.label}
-                  aria-label={social.label}
-                  className={socialBadgeClass}
-                >
+                <span key={social.label} aria-label={social.label} className={socialBadgeClass}>
                   <SocialGlyph social={social} />
                 </span>
               ),
@@ -98,26 +94,26 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  );
+  )
 }
 
 /** Renders a social badge's mark: a self-hosted SVG where we have one, else the text glyph. */
 function SocialGlyph({ social }: { social: SocialLink }) {
-  if (social.label === "WhatsApp") return <WhatsAppIcon size={16} />;
-  if (social.label === "Facebook") return <FacebookIcon size={16} />;
-  if (social.label === "Instagram") return <InstagramIcon size={16} />;
-  return <>{social.glyph}</>;
+  if (social.label === "WhatsApp") return <WhatsAppIcon size={16} />
+  if (social.label === "Facebook") return <FacebookIcon size={16} />
+  if (social.label === "Instagram") return <InstagramIcon size={16} />
+  return <>{social.glyph}</>
 }
 
 function FooterColumn({
   title,
   links,
 }: {
-  title: string;
-  links: { href: string; label: string }[];
+  title: string
+  links: { href: string; label: string }[]
 }) {
   return (
-    <div className="flex min-w-[140px] flex-col gap-3">
+    <div className="flex min-w-35 flex-col gap-3">
       <span className="text-xs font-semibold uppercase leading-none tracking-[0.16em] text-gold-300">
         {title}
       </span>
@@ -131,5 +127,5 @@ function FooterColumn({
         </Link>
       ))}
     </div>
-  );
+  )
 }

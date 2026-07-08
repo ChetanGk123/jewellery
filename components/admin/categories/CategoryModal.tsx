@@ -1,17 +1,14 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import {
-  deleteCategory,
-  upsertCategory,
-} from "@/app/(admin)/admin/(console)/categories/actions";
-import { useDialog } from "@/hooks/useDialog";
-import type { AdminCategoryRow } from "@/lib/admin/category";
+import { useState, useTransition } from "react"
+import { deleteCategory, upsertCategory } from "@/app/(admin)/admin/(console)/categories/actions"
+import { useDialog } from "@/hooks/useDialog"
+import type { AdminCategoryRow } from "@/lib/admin/category"
 
 type Props = {
-  category: AdminCategoryRow | null;
-  onClose: () => void;
-};
+  category: AdminCategoryRow | null
+  onClose: () => void
+}
 
 /**
  * Add/edit category modal (prototype-matched — 440px card, name + description,
@@ -20,47 +17,47 @@ type Props = {
  * refresh via revalidatePath in the action.
  */
 export function CategoryModal({ category, onClose }: Props) {
-  const editing = category !== null;
-  const [name, setName] = useState(category?.name ?? "");
-  const [description, setDescription] = useState(category?.description ?? "");
-  const [error, setError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const editing = category !== null
+  const [name, setName] = useState(category?.name ?? "")
+  const [description, setDescription] = useState(category?.description ?? "")
+  const [error, setError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const dialogRef = useDialog<HTMLDivElement>({
     isOpen: true,
     onDismiss: onClose,
     isPending,
-  });
+  })
 
   const onSave = () => {
-    setError(null);
+    setError(null)
     startTransition(async () => {
       const res = await upsertCategory({
         id: category?.id ?? null,
         name,
         description,
-      });
-      if (res.ok) onClose();
-      else setError(res.error ?? "Couldn't save the category.");
-    });
-  };
+      })
+      if (res.ok) onClose()
+      else setError(res.error ?? "Couldn't save the category.")
+    })
+  }
 
   const onDelete = () => {
-    if (!category) return;
+    if (!category) return
     if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
+      setConfirmDelete(true)
+      return
     }
-    setError(null);
+    setError(null)
     startTransition(async () => {
-      const res = await deleteCategory(category.id);
-      if (res.ok) onClose();
+      const res = await deleteCategory(category.id)
+      if (res.ok) onClose()
       else {
-        setConfirmDelete(false);
-        setError(res.error ?? "Couldn't delete the category.");
+        setConfirmDelete(false)
+        setError(res.error ?? "Couldn't delete the category.")
       }
-    });
-  };
+    })
+  }
 
   return (
     <div
@@ -146,14 +143,10 @@ export function CategoryModal({ category, onClose }: Props) {
             disabled={isPending}
             className="rounded-lg bg-maroon-700 px-6 py-[11px] font-body text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {isPending
-              ? "Saving…"
-              : editing
-                ? "Save Changes"
-                : "Add Category"}
+            {isPending ? "Saving…" : editing ? "Save Changes" : "Add Category"}
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }

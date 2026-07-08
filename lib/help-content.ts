@@ -9,11 +9,11 @@
  * doesn't mean editing this file too.
  */
 
-import { STORE_INFO } from "@/lib/store-info";
+import { STORE_INFO } from "@/lib/store-info"
 
-export type IconItem = { icon: string; title: string; body: string };
-export type NumberedItem = { n: string; title: string; body: string };
-export type RateRow = { label: string; value: string; highlight?: boolean };
+export type IconItem = { icon: string; title: string; body: string }
+export type NumberedItem = { n: string; title: string; body: string }
+export type RateRow = { label: string; value: string; highlight?: boolean }
 
 export const SHIP_CARDS: IconItem[] = [
   {
@@ -36,13 +36,13 @@ export const SHIP_CARDS: IconItem[] = [
     title: "Order tracking",
     body: "A tracking link is sent by SMS & email the moment your parcel ships.",
   },
-];
+]
 
 export const SHIP_RATES: RateRow[] = [
   { label: "Orders of ₹999 and above", value: "FREE", highlight: true },
   { label: "Orders below ₹999", value: "₹79 flat" },
   { label: "Cash on Delivery handling", value: "₹49" },
-];
+]
 
 export const RETURN_STEPS: NumberedItem[] = [
   {
@@ -65,21 +65,21 @@ export const RETURN_STEPS: NumberedItem[] = [
     title: "Refund",
     body: "Refund issued within 5–7 working days of the quality check.",
   },
-];
+]
 
 export const RETURN_YES: string[] = [
   "Unworn items with tags intact",
   "Original packaging & pouch included",
   "Wrong, damaged or defective item received",
   "Size or plating-tone exchange requests",
-];
+]
 
 export const RETURN_NO: string[] = [
   "Items worn or showing signs of use",
   "Nose pins & ear studs (hygiene reasons)",
   "Customised or made-to-order pieces",
   "Returns requested after 7 days",
-];
+]
 
 export const CARE_RULES: NumberedItem[] = [
   {
@@ -102,21 +102,21 @@ export const CARE_RULES: NumberedItem[] = [
     title: "Wipe after wear",
     body: "Gently buff with a soft, dry cloth before storing to lift oils and moisture.",
   },
-];
+]
 
 export const CARE_DO: string[] = [
   "Store in the pouch or a zip-lock pouch with anti-tarnish strips",
   "Wipe with a soft dry cloth after each wear",
   "Keep away from direct sunlight and heat",
   "Handle stones gently from the metal frame",
-];
+]
 
 export const CARE_DONT: string[] = [
   "Don’t spray perfume or deodorant onto the jewellery",
   "Don’t use water, soap or chemical cleaners",
   "Don’t wear during workouts, swimming or sleep",
   "Don’t store loose with other pieces in one box",
-];
+]
 
 export const CARE_HOW: IconItem[] = [
   {
@@ -129,15 +129,15 @@ export const CARE_HOW: IconItem[] = [
     title: "Storage",
     body: "Store each piece flat in its individual pouch, away from humidity. Tuck a silica or anti-tarnish strip into your jewellery box, and keep it in a cool, dry drawer rather than a bathroom shelf.",
   },
-];
+]
 
 export type ContactChannel = {
-  icon: string;
-  label: string;
-  value: string;
-  note: string;
-  href?: string;
-};
+  icon: string
+  label: string
+  value: string
+  note: string
+  href?: string
+}
 
 export const CONTACT_CHANNELS: ContactChannel[] = [
   {
@@ -167,15 +167,15 @@ export const CONTACT_CHANNELS: ContactChannel[] = [
     value: STORE_INFO.address.line,
     note: STORE_INFO.address.note,
   },
-];
+]
 
 export const SUPPORT_HOURS = {
   title: "Support hours",
   line: STORE_INFO.hours.long,
   note: STORE_INFO.hours.note,
-};
+}
 
-export type FaqItem = { q: string; a: string };
+export type FaqItem = { q: string; a: string }
 
 export const FAQ_ITEMS: FaqItem[] = [
   {
@@ -202,10 +202,10 @@ export const FAQ_ITEMS: FaqItem[] = [
     q: "Do you make custom or made-to-order bridal sets?",
     a: "Yes — message us on WhatsApp with your requirement and event date, and our team will help you plan a custom bridal set.",
   },
-];
+]
 
 export const ABOUT_INTRO =
-  "RJ Jewellers began with a simple belief — that every bride deserves to feel like royalty, without the weight of a gold budget. From our studio in Jaipur, we craft artificial bridal jewellery that carries the soul of traditional Kundan, Polki and temple work, reimagined for the modern celebration.";
+  "RJ Jewellers began with a simple belief — that every bride deserves to feel like royalty, without the weight of a gold budget. From our studio in Jaipur, we craft artificial bridal jewellery that carries the soul of traditional Kundan, Polki and temple work, reimagined for the modern celebration."
 
 export const ABOUT_VALUES: IconItem[] = [
   {
@@ -223,4 +223,4 @@ export const ABOUT_VALUES: IconItem[] = [
     title: "Made for brides",
     body: "From mandap sets to everyday jhumkas, each piece is designed to photograph beautifully and feel light through long celebrations.",
   },
-];
+]

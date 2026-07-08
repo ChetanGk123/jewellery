@@ -1,29 +1,25 @@
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { AuthCard, AuthError, AuthLink } from "@/components/storefront/auth/AuthCard";
-import { SignInForm } from "@/components/storefront/auth/SignInForm";
-import { safeNext } from "@/lib/auth/redirect";
-import { getCurrentUser } from "@/lib/db/server";
-import { ROUTES } from "@/lib/routes";
+import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { AuthCard, AuthError, AuthLink } from "@/components/storefront/auth/AuthCard"
+import { SignInForm } from "@/components/storefront/auth/SignInForm"
+import { safeNext } from "@/lib/auth/redirect"
+import { getCurrentUser } from "@/lib/db/server"
+import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
   title: "Sign In",
   robots: { index: false },
-};
+}
 
-type Search = Promise<{ next?: string; error?: string }>;
+type Search = Promise<{ next?: string; error?: string }>
 
 /** Sign-in screen. Already signed in? Straight through to the target. */
-export default async function SignInPage({
-  searchParams,
-}: {
-  searchParams: Search;
-}) {
-  const { next, error } = await searchParams;
-  const target = safeNext(next);
+export default async function SignInPage({ searchParams }: { searchParams: Search }) {
+  const { next, error } = await searchParams
+  const target = safeNext(next)
 
-  const user = await getCurrentUser();
-  if (user) redirect(target);
+  const user = await getCurrentUser()
+  if (user) redirect(target)
 
   return (
     <AuthCard
@@ -32,9 +28,7 @@ export default async function SignInPage({
       footer={
         <>
           New to RJ Jewellers?{" "}
-          <AuthLink
-            href={`${ROUTES.signUp}?next=${encodeURIComponent(target)}`}
-          >
+          <AuthLink href={`${ROUTES.signUp}?next=${encodeURIComponent(target)}`}>
             Create an account
           </AuthLink>
         </>
@@ -51,5 +45,5 @@ export default async function SignInPage({
       )}
       <SignInForm next={target} />
     </AuthCard>
-  );
+  )
 }

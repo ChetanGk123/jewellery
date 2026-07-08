@@ -1,20 +1,16 @@
-import type { Metadata } from "next";
-import { HelpHeader } from "@/components/storefront/help/HelpHeader";
-import { ContactForm } from "@/components/storefront/help/ContactForm";
-import {
-  CONTACT_CHANNELS,
-  SUPPORT_HOURS,
-  type ContactChannel,
-} from "@/lib/help-content";
+import type { Metadata } from "next"
+import { HelpHeader } from "@/components/storefront/help/HelpHeader"
+import { ContactForm } from "@/components/storefront/help/ContactForm"
+import { CONTACT_CHANNELS, SUPPORT_HOURS, type ContactChannel } from "@/lib/help-content"
 
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
     "Questions about an order, sizing, or a custom bridal set? Call, email, or WhatsApp RJ Jewellers — we usually reply within a few hours.",
-};
+}
 
 const channelCardClass =
-  "flex items-center gap-4 rounded-md border border-[#E7D9C2] bg-cream-50 p-[18px_20px] transition-colors hover:border-gold-400";
+  "flex items-center gap-4 rounded-md border border-[#E7D9C2] bg-cream-50 p-[18px_20px] transition-colors hover:border-gold-400"
 
 function ChannelBody({ channel }: { channel: ContactChannel }) {
   return (
@@ -29,15 +25,11 @@ function ChannelBody({ channel }: { channel: ContactChannel }) {
         <span className="text-[12px] font-semibold uppercase leading-none tracking-[0.08em] text-gold-600">
           {channel.label}
         </span>
-        <span className="text-[15px] leading-[1.3] text-maroon-900">
-          {channel.value}
-        </span>
-        <span className="text-[12px] font-light leading-[1.3] text-[#7A655F]">
-          {channel.note}
-        </span>
+        <span className="text-[15px] leading-[1.3] text-maroon-900">{channel.value}</span>
+        <span className="text-[12px] font-light leading-[1.3] text-[#7A655F]">{channel.note}</span>
       </span>
     </>
-  );
+  )
 }
 
 /**
@@ -66,11 +58,7 @@ export default function ContactPage() {
                 key={channel.label}
                 href={channel.href}
                 target={channel.href.startsWith("http") ? "_blank" : undefined}
-                rel={
-                  channel.href.startsWith("http")
-                    ? "noopener noreferrer"
-                    : undefined
-                }
+                rel={channel.href.startsWith("http") ? "noopener noreferrer" : undefined}
                 className={channelCardClass}
               >
                 <ChannelBody channel={channel} />
@@ -85,9 +73,7 @@ export default function ContactPage() {
             <span className="text-[12px] font-semibold uppercase leading-none tracking-[0.08em] text-gold-600">
               {SUPPORT_HOURS.title}
             </span>
-            <span className="text-[14px] leading-[1.6] text-maroon-900">
-              {SUPPORT_HOURS.line}
-            </span>
+            <span className="text-[14px] leading-[1.6] text-maroon-900">{SUPPORT_HOURS.line}</span>
             <span className="text-[12.5px] font-light leading-[1.5] text-[#7A655F]">
               {SUPPORT_HOURS.note}
             </span>
@@ -99,5 +85,5 @@ export default function ContactPage() {
         </div>
       </div>
     </main>
-  );
+  )
 }

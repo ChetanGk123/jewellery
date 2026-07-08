@@ -1,21 +1,21 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { supabase } from "@/lib/db/client";
-import { ROUTES } from "@/lib/routes";
+import { useState } from "react"
+import { supabase } from "@/lib/db/client"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Sidebar sign-out. Full navigation to the admin sign-in so the server layout
  * re-renders with the cleared session (the gate then keeps the console closed).
  */
 export function AdminSignOutButton() {
-  const [isBusy, setIsBusy] = useState(false);
+  const [isBusy, setIsBusy] = useState(false)
 
   const signOut = async () => {
-    setIsBusy(true);
-    await supabase.auth.signOut();
-    window.location.assign(ROUTES.adminSignIn);
-  };
+    setIsBusy(true)
+    await supabase.auth.signOut()
+    window.location.assign(ROUTES.adminSignIn)
+  }
 
   return (
     <button
@@ -40,5 +40,5 @@ export function AdminSignOutButton() {
         <path d="M21 12H9" />
       </svg>
     </button>
-  );
+  )
 }

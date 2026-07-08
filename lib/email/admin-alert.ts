@@ -5,34 +5,32 @@
  * customer emails.
  */
 
-import { type EmailMessage, escapeHtml } from "./order-confirmation";
-import { STORE_INFO } from "@/lib/store-info";
-import { formatPaise } from "@/lib/utils/money";
+import { type EmailMessage, escapeHtml } from "./order-confirmation"
+import { STORE_INFO } from "@/lib/store-info"
+import { formatPaise } from "@/lib/utils/money"
 
 export type NewOrderAdminEmailInput = {
-  orderNo: string;
-  customerName: string;
-  city: string;
-  state: string;
-  itemCount: number;
-  totalPaise: number;
+  orderNo: string
+  customerName: string
+  city: string
+  state: string
+  itemCount: number
+  totalPaise: number
   /** Absolute URL of the admin order queue. */
-  adminUrl: string;
-};
+  adminUrl: string
+}
 
-const HEADING_FONT = "Georgia, 'Times New Roman', serif";
-const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif";
+const HEADING_FONT = "Georgia, 'Times New Roman', serif"
+const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 
 /** Build the internal new-order alert. All customer-derived fields escaped. */
-export function buildNewOrderAdminEmail(
-  input: NewOrderAdminEmailInput,
-): EmailMessage {
-  const total = formatPaise(input.totalPaise);
-  const name = input.customerName.trim() || "A customer";
-  const where = `${input.city}, ${input.state}`;
-  const items = `${input.itemCount} item${input.itemCount === 1 ? "" : "s"}`;
+export function buildNewOrderAdminEmail(input: NewOrderAdminEmailInput): EmailMessage {
+  const total = formatPaise(input.totalPaise)
+  const name = input.customerName.trim() || "A customer"
+  const where = `${input.city}, ${input.state}`
+  const items = `${input.itemCount} item${input.itemCount === 1 ? "" : "s"}`
 
-  const subject = `New COD order ${input.orderNo} — ${total}`;
+  const subject = `New COD order ${input.orderNo} — ${total}`
 
   const text = [
     `New order placed: ${input.orderNo}`,
@@ -43,7 +41,7 @@ export function buildNewOrderAdminEmail(
     `Total (COD): ${total}`,
     "",
     `Process it in the console: ${input.adminUrl}`,
-  ].join("\n");
+  ].join("\n")
 
   const rows: Array<[string, string]> = [
     ["Order", input.orderNo],
@@ -51,7 +49,7 @@ export function buildNewOrderAdminEmail(
     ["Deliver to", where],
     ["Items", items],
     ["Total · COD", total],
-  ];
+  ]
 
   const rowHtml = rows
     .map(
@@ -61,7 +59,7 @@ export function buildNewOrderAdminEmail(
           <td style="font-family:${BODY_FONT};font-size:14px;color:#2A0A12;padding:8px 0;">${escapeHtml(value)}</td>
         </tr>`,
     )
-    .join("");
+    .join("")
 
   const html = `
 <div style="margin:0;padding:32px 12px;background:#F5F1EA;">
@@ -79,7 +77,7 @@ export function buildNewOrderAdminEmail(
       </table>
     </td></tr>
   </table>
-</div>`;
+</div>`
 
-  return { subject, html, text };
+  return { subject, html, text }
 }

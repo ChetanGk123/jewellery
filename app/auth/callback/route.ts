@@ -1,9 +1,9 @@
-import { type EmailOtpType } from "@supabase/supabase-js";
-import { NextResponse, type NextRequest } from "next/server";
-import { isAdmin } from "@/lib/admin/roles";
-import { safeNext } from "@/lib/auth/redirect";
-import { createServerClient } from "@/lib/db/server";
-import { ROUTES } from "@/lib/routes";
+import { type EmailOtpType } from "@supabase/supabase-js"
+import { NextResponse, type NextRequest } from "next/server"
+import { isAdmin } from "@/lib/admin/roles"
+import { safeNext } from "@/lib/auth/redirect"
+import { createServerClient } from "@/lib/db/server"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Landing point for every emailed auth link + Google OAuth (TASKS 2.8).
@@ -27,66 +27,61 @@ const EMAIL_OTP_TYPES: readonly EmailOtpType[] = [
   "recovery",
   "email_change",
   "email",
-];
+]
 
 function isEmailOtpType(value: string): value is EmailOtpType {
-  return (EMAIL_OTP_TYPES as readonly string[]).includes(value);
+  return (EMAIL_OTP_TYPES as readonly string[]).includes(value)
 }
 
 export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  const next = safeNext(url.searchParams.get("next"));
-  const tokenHash = url.searchParams.get("token_hash");
-  const type = url.searchParams.get("type");
-  const code = url.searchParams.get("code");
-  const errorCode = url.searchParams.get("error_code");
+  const url = new URL(request.url)
+  const next = safeNext(url.searchParams.get("next"))
+  const tokenHash = url.searchParams.get("token_hash")
+  const type = url.searchParams.get("type")
+  const code = url.searchParams.get("code")
+  const errorCode = url.searchParams.get("error_code")
 
   // 1) Template-based link: verify the hash server-side.
   if (tokenHash && type && isEmailOtpType(type)) {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const { data, error } = await supabase.auth.verifyOtp({
       type,
       token_hash: tokenHash,
-    });
+    })
     if (!error) {
       // Recovery links continue to a choose-new-password screen. The email
       // carries no app context (the shared recovery template has no `next`), so
       // route by the recovering user's ROLE: an admin lands on the admin reset
       // page, a customer on theirs.
       if (type === "recovery") {
-        const dest = isAdmin(data.user)
-          ? ROUTES.adminResetPassword
-          : ROUTES.resetPassword;
-        return NextResponse.redirect(new URL(dest, url.origin));
+        const dest = isAdmin(data.user) ? ROUTES.adminResetPassword : ROUTES.resetPassword
+        return NextResponse.redirect(new URL(dest, url.origin))
       }
-      return NextResponse.redirect(new URL(next, url.origin));
+      return NextResponse.redirect(new URL(next, url.origin))
     }
-    return redirectToSignIn(url.origin, isExpired(error.code) ? "expired" : "link");
+    return redirectToSignIn(url.origin, isExpired(error.code) ? "expired" : "link")
   }
 
   // 2) PKCE code (OAuth / same-browser default-template links).
   if (code) {
-    const supabase = await createServerClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const supabase = await createServerClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(new URL(next, url.origin));
+      return NextResponse.redirect(new URL(next, url.origin))
     }
-    return redirectToSignIn(url.origin, "link");
+    return redirectToSignIn(url.origin, "link")
   }
 
   // 3) Supabase bounced here with an error (expired/used link).
-  return redirectToSignIn(
-    url.origin,
-    errorCode && isExpired(errorCode) ? "expired" : "link",
-  );
+  return redirectToSignIn(url.origin, errorCode && isExpired(errorCode) ? "expired" : "link")
 }
 
 function isExpired(code: string | null | undefined): boolean {
-  return code === "otp_expired";
+  return code === "otp_expired"
 }
 
 function redirectToSignIn(origin: string, error: "expired" | "link") {
-  const signIn = new URL(ROUTES.signIn, origin);
-  signIn.searchParams.set("error", error);
-  return NextResponse.redirect(signIn);
+  const signIn = new URL(ROUTES.signIn, origin)
+  signIn.searchParams.set("error", error)
+  return NextResponse.redirect(signIn)
 }

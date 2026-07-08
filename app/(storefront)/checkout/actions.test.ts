@@ -1,4 +1,4 @@
-import { beforeEach, expect, mock, test } from "bun:test";
+import { beforeEach, expect, mock, test } from "bun:test"
 
 /**
  * Unit tests for the `submitCheckout` server action — the authoritative checkout
@@ -14,42 +14,42 @@ import { beforeEach, expect, mock, test } from "bun:test";
 const rpc = mock(async (_name: string, _args: unknown) => ({
   data: null as unknown,
   error: null as unknown,
-}));
+}))
 
 /** Mutable session holder — tests flip this to simulate signed in / out. */
 const session = {
   user: { id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99", email: "asha@example.com" } as {
-    id: string;
-    email: string;
+    id: string
+    email: string
   } | null,
-};
+}
 
-const upsertCustomerProfile = mock(async () => ({ ok: true }));
+const upsertCustomerProfile = mock(async () => ({ ok: true }))
 
 mock.module("@/lib/db/server", () => ({
   createServerClient: async () => ({ rpc }),
   getCurrentUser: async () => session.user,
-}));
+}))
 
-mock.module("@/lib/db/profile", () => ({ upsertCustomerProfile }));
+mock.module("@/lib/db/profile", () => ({ upsertCustomerProfile }))
 
 // The real limiter is an in-process Map that would trip once 5 tests reuse
 // the same user id; the throttle itself isn't under test here.
 mock.module("@/lib/rate-limit", () => ({
   checkRateLimit: () => ({ ok: true, retryAfterSec: 0 }),
-}));
+}))
 
 /** Captures the confirmation-email queue call (TASKS 4.6) — no real sends. */
-const queueOrderConfirmationEmail = mock((_input: unknown) => undefined);
-const queueNewOrderAdminEmail = mock((_input: unknown) => undefined);
+const queueOrderConfirmationEmail = mock((_input: unknown) => undefined)
+const queueNewOrderAdminEmail = mock((_input: unknown) => undefined)
 
 mock.module("@/lib/email/send", () => ({
   isEmailEnabled: () => true,
   queueOrderConfirmationEmail,
   queueNewOrderAdminEmail,
-}));
+}))
 
-const { submitCheckout } = await import("./actions");
+const { submitCheckout } = await import("./actions")
 
 const validValues = {
   fullName: "Asha Rao",
@@ -60,11 +60,9 @@ const validValues = {
   state: "Maharashtra",
   pincode: "411001",
   paymentMethod: "cod",
-};
+}
 
-const validItems = [
-  { productId: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", tone: "Gold", qty: 2 },
-];
+const validItems = [{ productId: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", tone: "Gold", qty: 2 }]
 
 /** A well-formed `place_order` return row (integer paise). */
 const rpcOk = {
@@ -73,171 +71,171 @@ const rpcOk = {
   discount_paise: 0,
   shipping_paise: 7900,
   total_paise: 507900,
-};
+}
 
 beforeEach(() => {
-  rpc.mockClear();
-  rpc.mockImplementation(async () => ({ data: null, error: null }));
-  upsertCustomerProfile.mockClear();
-  queueOrderConfirmationEmail.mockClear();
-  queueNewOrderAdminEmail.mockClear();
+  rpc.mockClear()
+  rpc.mockImplementation(async () => ({ data: null, error: null }))
+  upsertCustomerProfile.mockClear()
+  queueOrderConfirmationEmail.mockClear()
+  queueNewOrderAdminEmail.mockClear()
   session.user = {
     id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99",
     email: "asha@example.com",
-  };
-});
+  }
+})
 
 test("declines an unauthenticated submission before touching the DB", async () => {
-  session.user = null;
+  session.user = null
 
-  const result = await submitCheckout({ values: validValues, items: validItems });
+  const result = await submitCheckout({ values: validValues, items: validItems })
 
-  expect(result.ok).toBe(false);
-  if (!result.ok) expect(result.formError).toContain("sign in");
-  expect(rpc).not.toHaveBeenCalled();
-});
+  expect(result.ok).toBe(false)
+  if (!result.ok) expect(result.formError).toContain("sign in")
+  expect(rpc).not.toHaveBeenCalled()
+})
 
 test("saves the checkout contact as the customer profile on success", async () => {
-  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }));
+  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }))
 
-  const result = await submitCheckout({ values: validValues, items: validItems });
+  const result = await submitCheckout({ values: validValues, items: validItems })
 
-  expect(result.ok).toBe(true);
-  expect(upsertCustomerProfile).toHaveBeenCalledTimes(1);
+  expect(result.ok).toBe(true)
+  expect(upsertCustomerProfile).toHaveBeenCalledTimes(1)
   const [userId, profile] = upsertCustomerProfile.mock.calls[0] as unknown as [
     string,
     Record<string, string>,
-  ];
-  expect(userId).toBe("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99");
-  expect(profile.fullName).toBe("Asha Rao");
-  expect(profile.pincode).toBe("411001");
-});
+  ]
+  expect(userId).toBe("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99")
+  expect(profile.fullName).toBe("Asha Rao")
+  expect(profile.pincode).toBe("411001")
+})
 
 test("drops a submission with a filled honeypot before touching the DB", async () => {
   const result = await submitCheckout({
     values: validValues,
     items: validItems,
     honeypot: "Acme Corp",
-  });
+  })
 
-  expect(result.ok).toBe(false);
-  expect(rpc).not.toHaveBeenCalled();
-});
+  expect(result.ok).toBe(false)
+  expect(rpc).not.toHaveBeenCalled()
+})
 
 test("treats a whitespace-only honeypot as empty (real user)", async () => {
-  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }));
+  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }))
 
   const result = await submitCheckout({
     values: validValues,
     items: validItems,
     honeypot: "   ",
-  });
+  })
 
-  expect(result.ok).toBe(true);
-  expect(rpc).toHaveBeenCalledTimes(1);
-});
+  expect(result.ok).toBe(true)
+  expect(rpc).toHaveBeenCalledTimes(1)
+})
 
 test("rejects an empty cart without calling the RPC", async () => {
-  const result = await submitCheckout({ values: validValues, items: [] });
+  const result = await submitCheckout({ values: validValues, items: [] })
 
-  expect(result.ok).toBe(false);
-  if (!result.ok) expect(result.formError).toContain("out of date");
-  expect(rpc).not.toHaveBeenCalled();
-});
+  expect(result.ok).toBe(false)
+  if (!result.ok) expect(result.formError).toContain("out of date")
+  expect(rpc).not.toHaveBeenCalled()
+})
 
 test("returns a field error for invalid contact details", async () => {
   const result = await submitCheckout({
     values: { ...validValues, phone: "123" },
     items: validItems,
-  });
+  })
 
-  expect(result.ok).toBe(false);
-  if (!result.ok) expect(result.fieldErrors.phone).toBeTruthy();
-  expect(rpc).not.toHaveBeenCalled();
-});
+  expect(result.ok).toBe(false)
+  if (!result.ok) expect(result.fieldErrors.phone).toBeTruthy()
+  expect(rpc).not.toHaveBeenCalled()
+})
 
 test("never sends a price to the RPC — only product_id, tone, qty", async () => {
-  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }));
+  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }))
 
-  await submitCheckout({ values: validValues, items: validItems, honeypot: "" });
+  await submitCheckout({ values: validValues, items: validItems, honeypot: "" })
 
-  expect(rpc).toHaveBeenCalledTimes(1);
-  const [name, args] = rpc.mock.calls[0] as [string, Record<string, unknown>];
-  expect(name).toBe("place_order");
-  const items = args.p_items as Array<Record<string, unknown>>;
+  expect(rpc).toHaveBeenCalledTimes(1)
+  const [name, args] = rpc.mock.calls[0] as [string, Record<string, unknown>]
+  expect(name).toBe("place_order")
+  const items = args.p_items as Array<Record<string, unknown>>
   expect(items[0]).toEqual({
     product_id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
     tone: "Gold",
     qty: 2,
-  });
-  const serialized = JSON.stringify(args);
-  expect(serialized).not.toContain("paise");
-  expect(serialized).not.toContain("price");
-});
+  })
+  const serialized = JSON.stringify(args)
+  expect(serialized).not.toContain("paise")
+  expect(serialized).not.toContain("price")
+})
 
 test("maps a successful RPC result to a PlacedOrder", async () => {
-  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }));
+  rpc.mockImplementation(async () => ({ data: rpcOk, error: null }))
 
-  const result = await submitCheckout({ values: validValues, items: validItems });
+  const result = await submitCheckout({ values: validValues, items: validItems })
 
-  expect(result.ok).toBe(true);
+  expect(result.ok).toBe(true)
   if (result.ok) {
-    expect(result.order.orderNo).toBe("JR-260703-1001-AB12");
-    expect(result.order.totalPaise).toBe(507900);
-    expect(result.order.shippingPaise).toBe(7900);
+    expect(result.order.orderNo).toBe("JR-260703-1001-AB12")
+    expect(result.order.totalPaise).toBe(507900)
+    expect(result.order.shippingPaise).toBe(7900)
   }
 
   // A confirmation email is queued for the placed order (TASKS 4.6).
-  expect(queueOrderConfirmationEmail).toHaveBeenCalledTimes(1);
-  expect(queueNewOrderAdminEmail).toHaveBeenCalledTimes(1);
+  expect(queueOrderConfirmationEmail).toHaveBeenCalledTimes(1)
+  expect(queueNewOrderAdminEmail).toHaveBeenCalledTimes(1)
   const queued = queueOrderConfirmationEmail.mock.calls[0][0] as {
-    to: string;
-    orderNo: string;
-    totalPaise: number;
-  };
-  expect(queued.to).toBe(validValues.email);
-  expect(queued.orderNo).toBe("JR-260703-1001-AB12");
-  expect(queued.totalPaise).toBe(507900);
-});
+    to: string
+    orderNo: string
+    totalPaise: number
+  }
+  expect(queued.to).toBe(validValues.email)
+  expect(queued.orderNo).toBe("JR-260703-1001-AB12")
+  expect(queued.totalPaise).toBe(507900)
+})
 
 test("declines gracefully when the RPC returns an error", async () => {
   rpc.mockImplementation(async () => ({
     data: null,
     error: { message: "db down" },
-  }));
+  }))
 
-  const result = await submitCheckout({ values: validValues, items: validItems });
+  const result = await submitCheckout({ values: validValues, items: validItems })
 
-  expect(result.ok).toBe(false);
-  if (!result.ok) expect(result.formError).toContain("couldn't place your order");
+  expect(result.ok).toBe(false)
+  if (!result.ok) expect(result.formError).toContain("couldn't place your order")
   // No order → no confirmation email.
-  expect(queueOrderConfirmationEmail).not.toHaveBeenCalled();
-  expect(queueNewOrderAdminEmail).not.toHaveBeenCalled();
-});
+  expect(queueOrderConfirmationEmail).not.toHaveBeenCalled()
+  expect(queueNewOrderAdminEmail).not.toHaveBeenCalled()
+})
 
 test("maps a COD_DISABLED rejection to the paused-orders message (TASKS 5.3)", async () => {
   rpc.mockImplementation(async () => ({
     data: null,
     error: { message: "COD_DISABLED", code: "check_violation" },
-  }));
+  }))
 
-  const result = await submitCheckout({ values: validValues, items: validItems });
+  const result = await submitCheckout({ values: validValues, items: validItems })
 
-  expect(result.ok).toBe(false);
-  if (!result.ok) expect(result.formError).toContain("paused");
+  expect(result.ok).toBe(false)
+  if (!result.ok) expect(result.formError).toContain("paused")
   // Store paused → no order, so nothing is emailed.
-  expect(queueOrderConfirmationEmail).not.toHaveBeenCalled();
-  expect(queueNewOrderAdminEmail).not.toHaveBeenCalled();
-});
+  expect(queueOrderConfirmationEmail).not.toHaveBeenCalled()
+  expect(queueNewOrderAdminEmail).not.toHaveBeenCalled()
+})
 
 test("flags a failure when the RPC returns an unexpected shape", async () => {
   rpc.mockImplementation(async () => ({
     data: { unexpected: true },
     error: null,
-  }));
+  }))
 
-  const result = await submitCheckout({ values: validValues, items: validItems });
+  const result = await submitCheckout({ values: validValues, items: validItems })
 
-  expect(result.ok).toBe(false);
-  if (!result.ok) expect(result.formError).toContain("may not have gone through");
-});
+  expect(result.ok).toBe(false)
+  if (!result.ok) expect(result.formError).toContain("may not have gone through")
+})

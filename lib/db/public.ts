@@ -1,7 +1,7 @@
-import "server-only";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "./types";
-import { env } from "@/lib/env";
+import "server-only"
+import { createClient } from "@supabase/supabase-js"
+import type { Database } from "./types"
+import { env } from "@/lib/env"
 
 /**
  * Cookie-free anon Supabase client for PUBLIC catalog reads (TASKS 4.18).
@@ -25,4 +25,4 @@ export const publicClient = createClient<Database>(
       detectSessionInUrl: false,
     },
   },
-);
+)

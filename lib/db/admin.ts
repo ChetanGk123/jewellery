@@ -1,7 +1,7 @@
-import "server-only";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "./types";
-import { env } from "@/lib/env";
+import "server-only"
+import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "./types"
+import { env } from "@/lib/env"
 
 /**
  * Service-role Supabase client for the admin console (Phase 3) — SERVER ONLY.
@@ -17,23 +17,23 @@ import { env } from "@/lib/env";
  * it — only code that actually calls `getAdminClient()` does. `import
  * "server-only"` makes the bundler error if a client module ever imports this.
  */
-let cached: SupabaseClient<Database> | null = null;
+let cached: SupabaseClient<Database> | null = null
 
 export function getAdminClient(): SupabaseClient<Database> {
-  if (cached) return cached;
+  if (cached) return cached
 
-  const key = process.env.SUPABASE_SECRET_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY
   if (!key) {
     throw new Error(
       "SUPABASE_SECRET_KEY is not set. The admin console needs the Supabase " +
         "service-role (secret) key — add it to .env.local (server-only, never " +
         "NEXT_PUBLIC_*).",
-    );
+    )
   }
 
   cached = createClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, key, {
     // A machine client: no user session, no token refresh, no cookie storage.
     auth: { persistSession: false, autoRefreshToken: false },
-  });
-  return cached;
+  })
+  return cached
 }

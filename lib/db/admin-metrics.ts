@@ -1,17 +1,17 @@
-import "server-only";
-import { createServerClient } from "./server";
+import "server-only"
+import { createServerClient } from "./server"
 
 /** Sidebar badge counts — work awaiting the operator. */
 export type AdminNavCounts = {
   /** Orders in `Pending` status (not yet processed). */
-  orders: number;
+  orders: number
   /** Reviews awaiting moderation. */
-  reviews: number;
+  reviews: number
   /** Contact tickets in `New` status (not yet started). */
-  messages: number;
-};
+  messages: number
+}
 
-const ZERO_COUNTS: AdminNavCounts = { orders: 0, reviews: 0, messages: 0 };
+const ZERO_COUNTS: AdminNavCounts = { orders: 0, reviews: 0, messages: 0 }
 
 /**
  * Live counts for the sidebar badges. Reads through the admin's own cookie
@@ -23,29 +23,23 @@ const ZERO_COUNTS: AdminNavCounts = { orders: 0, reviews: 0, messages: 0 };
  */
 export async function getAdminNavCounts(): Promise<AdminNavCounts> {
   try {
-    const supabase = await createServerClient();
+    const supabase = await createServerClient()
     const [orders, reviews, messages] = await Promise.all([
-      supabase
-        .from("order")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "Pending"),
-      supabase
-        .from("review")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending"),
+      supabase.from("order").select("*", { count: "exact", head: true }).eq("status", "Pending"),
+      supabase.from("review").select("*", { count: "exact", head: true }).eq("status", "pending"),
       supabase
         .from("contact_message")
         .select("*", { count: "exact", head: true })
         .eq("status", "New"),
-    ]);
+    ])
 
     return {
       orders: orders.count ?? 0,
       reviews: reviews.count ?? 0,
       messages: messages.count ?? 0,
-    };
+    }
   } catch (err) {
-    console.error("[admin-read] nav-counts failed:", err);
-    return ZERO_COUNTS;
+    console.error("[admin-read] nav-counts failed:", err)
+    return ZERO_COUNTS
   }
 }

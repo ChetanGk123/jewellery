@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react"
 
 const FOCUSABLE_SELECTOR = [
   "a[href]",
@@ -9,16 +9,16 @@ const FOCUSABLE_SELECTOR = [
   "select:not([disabled])",
   "textarea:not([disabled])",
   '[tabindex]:not([tabindex="-1"])',
-].join(",");
+].join(",")
 
 type DialogOptions = {
   /** Whether the dialog is currently open. Drives all wiring on/off. */
-  isOpen: boolean;
+  isOpen: boolean
   /** Called on Escape (and reused by callers for overlay clicks). */
-  onDismiss: () => void;
+  onDismiss: () => void
   /** While true, Escape is ignored so a running action can't be interrupted. */
-  isPending?: boolean;
-};
+  isPending?: boolean
+}
 
 /**
  * Accessibility wiring shared by every admin modal/drawer (TASKS 5.7):
@@ -43,67 +43,67 @@ export function useDialog<T extends HTMLElement>({
   onDismiss,
   isPending = false,
 }: DialogOptions): RefObject<T | null> {
-  const ref = useRef<T>(null);
-  const onDismissRef = useRef(onDismiss);
-  onDismissRef.current = onDismiss;
-  const isPendingRef = useRef(isPending);
-  isPendingRef.current = isPending;
+  const ref = useRef<T>(null)
+  const onDismissRef = useRef(onDismiss)
+  onDismissRef.current = onDismiss
+  const isPendingRef = useRef(isPending)
+  isPendingRef.current = isPending
 
   useEffect(() => {
-    if (!isOpen) return;
-    const dialog = ref.current;
-    if (!dialog) return;
+    if (!isOpen) return
+    const dialog = ref.current
+    if (!dialog) return
 
-    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previouslyFocused = document.activeElement as HTMLElement | null
 
     // Scroll lock — restore the prior inline value, not a hardcoded default, so
     // nested/stacked dialogs unwind correctly.
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
 
     const focusable = (): HTMLElement[] =>
-      Array.from(
-        dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+      Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (el) => el.offsetParent !== null || el === document.activeElement,
+      )
 
     // Move focus in (first focusable, else the container).
-    (focusable()[0] ?? dialog).focus();
+    ;(focusable()[0] ?? dialog).focus()
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (!isPendingRef.current) {
-          e.stopPropagation();
-          onDismissRef.current();
+          e.stopPropagation()
+          onDismissRef.current()
         }
-        return;
+        return
       }
-      if (e.key !== "Tab") return;
+      if (e.key !== "Tab") return
 
-      const items = focusable();
+      const items = focusable()
       if (items.length === 0) {
-        e.preventDefault();
-        dialog.focus();
-        return;
+        e.preventDefault()
+        dialog.focus()
+        return
       }
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
+      const first = items[0]
+      const last = items[items.length - 1]
+      const active = document.activeElement
       if (e.shiftKey && (active === first || active === dialog)) {
-        e.preventDefault();
-        last.focus();
+        e.preventDefault()
+        last.focus()
       } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
+        e.preventDefault()
+        first.focus()
       }
-    };
+    }
 
-    dialog.addEventListener("keydown", onKeyDown);
+    dialog.addEventListener("keydown", onKeyDown)
     return () => {
-      dialog.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = prevOverflow;
-      previouslyFocused?.focus?.();
-    };
-  }, [isOpen]);
+      dialog.removeEventListener("keydown", onKeyDown)
+      document.body.style.overflow = prevOverflow
+      previouslyFocused?.focus?.()
+    }
+  }, [isOpen])
 
-  return ref;
+  return ref
 }

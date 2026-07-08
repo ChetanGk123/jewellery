@@ -1,5 +1,5 @@
-import "server-only";
-import { unstable_rethrow } from "next/navigation";
+import "server-only"
+import { unstable_rethrow } from "next/navigation"
 
 /**
  * Result envelope for every admin console read (TASKS 5.1). Carries the loaded
@@ -8,7 +8,7 @@ import { unstable_rethrow } from "next/navigation";
  * audit's C1 finding: a DB outage / RLS regression / expired session must not
  * masquerade as "0 orders today".
  */
-export type AdminRead<T> = { data: T; error: boolean };
+export type AdminRead<T> = { data: T; error: boolean }
 
 /**
  * Run an admin read, logging any failure server-side and degrading to `fallback`
@@ -21,12 +21,12 @@ export async function loadAdmin<T>(
   fallback: T,
 ): Promise<AdminRead<T>> {
   try {
-    return { data: await load(), error: false };
+    return { data: await load(), error: false }
   } catch (err) {
     // Let Next's control-flow signals (DynamicServerError during static-gen
     // probing, redirect, notFound) propagate — only real read failures degrade.
-    unstable_rethrow(err);
-    console.error(`[admin-read] ${label} failed:`, err);
-    return { data: fallback, error: true };
+    unstable_rethrow(err)
+    console.error(`[admin-read] ${label} failed:`, err)
+    return { data: fallback, error: true }
   }
 }

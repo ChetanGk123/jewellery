@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { OrderPrintView } from "@/components/admin/orders/OrderPrintView";
-import { toPrintDoc } from "@/lib/admin/print";
-import { requireAdmin } from "@/lib/admin/auth";
-import { getAdminOrderByNo } from "@/lib/db/admin-orders";
-import { getStoreSettings } from "@/lib/db/settings";
-import { ROUTES } from "@/lib/routes";
+import type { Metadata } from "next"
+import { notFound } from "next/navigation"
+import { OrderPrintView } from "@/components/admin/orders/OrderPrintView"
+import { toPrintDoc } from "@/lib/admin/print"
+import { requireAdmin } from "@/lib/admin/auth"
+import { getAdminOrderByNo } from "@/lib/db/admin-orders"
+import { getStoreSettings } from "@/lib/db/settings"
+import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
   title: "Print order",
   robots: { index: false, follow: false },
-};
+}
 
 /**
  * Order print page (TASKS 5.12) — one document per visit: the invoice by
@@ -24,19 +24,16 @@ export default async function AdminOrderPrintPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ orderNo: string }>;
-  searchParams: Promise<{ doc?: string }>;
+  params: Promise<{ orderNo: string }>
+  searchParams: Promise<{ doc?: string }>
 }) {
-  const [{ orderNo }, sp] = await Promise.all([params, searchParams]);
-  const decoded = decodeURIComponent(orderNo);
-  const doc = toPrintDoc(sp.doc);
-  await requireAdmin(ROUTES.adminOrderPrint(decoded, doc));
+  const [{ orderNo }, sp] = await Promise.all([params, searchParams])
+  const decoded = decodeURIComponent(orderNo)
+  const doc = toPrintDoc(sp.doc)
+  await requireAdmin(ROUTES.adminOrderPrint(decoded, doc))
 
-  const [order, settings] = await Promise.all([
-    getAdminOrderByNo(decoded),
-    getStoreSettings(),
-  ]);
-  if (!order) notFound();
+  const [order, settings] = await Promise.all([getAdminOrderByNo(decoded), getStoreSettings()])
+  if (!order) notFound()
 
-  return <OrderPrintView order={order} settings={settings} doc={doc} />;
+  return <OrderPrintView order={order} settings={settings} doc={doc} />
 }

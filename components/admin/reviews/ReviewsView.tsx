@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import Link from "next/link";
-import { setReviewStatus } from "@/app/(admin)/admin/(console)/reviews/actions";
-import { AdminPager } from "@/components/admin/ui/AdminPager";
+import { useState, useTransition } from "react"
+import Link from "next/link"
+import { setReviewStatus } from "@/app/(admin)/admin/(console)/reviews/actions"
+import { AdminPager } from "@/components/admin/ui/AdminPager"
 import {
   ADMIN_REVIEWS_PAGE_SIZE,
   type AdminReviewRow,
@@ -12,17 +12,17 @@ import {
   reviewDateLabel,
   reviewStars,
   reviewStatusChip,
-} from "@/lib/admin/review";
-import type { AdminReviewsPage } from "@/lib/db/admin-reviews";
-import { ROUTES } from "@/lib/routes";
+} from "@/lib/admin/review"
+import type { AdminReviewsPage } from "@/lib/db/admin-reviews"
+import { ROUTES } from "@/lib/routes"
 
 /** Build a URL for a filter tab / page. Omits the default `Pending` filter + page 1. */
 function hrefFor(filter: ReviewFilter, page: number): string {
-  const params = new URLSearchParams();
-  if (filter !== "Pending") params.set("status", filter);
-  if (page > 1) params.set("page", String(page));
-  const qs = params.toString();
-  return qs ? `${ROUTES.adminReviews}?${qs}` : ROUTES.adminReviews;
+  const params = new URLSearchParams()
+  if (filter !== "Pending") params.set("status", filter)
+  if (page > 1) params.set("page", String(page))
+  const qs = params.toString()
+  return qs ? `${ROUTES.adminReviews}?${qs}` : ROUTES.adminReviews
 }
 
 /**
@@ -34,26 +34,26 @@ function hrefFor(filter: ReviewFilter, page: number): string {
  * storefront shows approved reviews only (already RLS-filtered).
  */
 export function ReviewsView({ page }: { page: AdminReviewsPage }) {
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
+  const [pendingId, setPendingId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
 
   const moderate = (row: AdminReviewRow, status: "approved" | "rejected") => {
-    setError(null);
-    setPendingId(row.id);
+    setError(null)
+    setPendingId(row.id)
     startTransition(async () => {
-      const res = await setReviewStatus(row.id, status);
-      setPendingId(null);
-      if (!res.ok) setError(res.error ?? "Couldn't update the review.");
-    });
-  };
+      const res = await setReviewStatus(row.id, status)
+      setPendingId(null)
+      if (!res.ok) setError(res.error ?? "Couldn't update the review.")
+    })
+  }
 
   return (
     <div className="flex flex-col gap-[18px]">
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         {REVIEW_FILTERS.map((tab) => {
-          const active = page.filter === tab;
+          const active = page.filter === tab
           return (
             <Link
               key={tab}
@@ -67,7 +67,7 @@ export function ReviewsView({ page }: { page: AdminReviewsPage }) {
             >
               {tab} <span className="opacity-70">{page.counts[tab]}</span>
             </Link>
-          );
+          )
         })}
       </div>
 
@@ -86,8 +86,8 @@ export function ReviewsView({ page }: { page: AdminReviewsPage }) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {page.rows.map((r) => {
-            const chip = reviewStatusChip(r.status);
-            const isBusy = pendingId === r.id;
+            const chip = reviewStatusChip(r.status)
+            const isBusy = pendingId === r.id
             return (
               <article
                 key={r.id}
@@ -148,7 +148,7 @@ export function ReviewsView({ page }: { page: AdminReviewsPage }) {
                   </div>
                 )}
               </article>
-            );
+            )
           })}
         </div>
       )}
@@ -161,5 +161,5 @@ export function ReviewsView({ page }: { page: AdminReviewsPage }) {
         hrefForPage={(n) => hrefFor(page.filter, n)}
       />
     </div>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-import { ROUTES } from "@/lib/routes";
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Admin console navigation registry — single source of truth for the sidebar
@@ -8,7 +8,7 @@ import { ROUTES } from "@/lib/routes";
  */
 
 /** Live sidebar count badges (from `getAdminNavCounts`). */
-export type AdminBadgeKey = "orders" | "reviews" | "messages";
+export type AdminBadgeKey = "orders" | "reviews" | "messages"
 
 /** Icon slots — resolved to SVGs in `AdminNavIcons`. */
 export type AdminIconKey =
@@ -22,15 +22,15 @@ export type AdminIconKey =
   | "messages"
   | "subscribers"
   | "settings"
-  | "team";
+  | "team"
 
 export type AdminNavItem = {
-  href: string;
-  label: string;
-  icon: AdminIconKey;
+  href: string
+  label: string
+  icon: AdminIconKey
   /** Which live count (if any) renders as a badge on this item. */
-  badge?: AdminBadgeKey;
-};
+  badge?: AdminBadgeKey
+}
 
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: ROUTES.admin, label: "Dashboard", icon: "dashboard" },
@@ -58,10 +58,10 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: ROUTES.adminSubscribers, label: "Subscribers", icon: "subscribers" },
   { href: ROUTES.adminSettings, label: "Settings", icon: "settings" },
   { href: ROUTES.adminTeam, label: "Team", icon: "team" },
-];
+]
 
 /** Topbar page heading + subtitle, keyed by route path. */
-export type AdminPageMeta = { title: string; subtitle: string };
+export type AdminPageMeta = { title: string; subtitle: string }
 
 export const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
   [ROUTES.admin]: { title: "Dashboard", subtitle: "Today at a glance" },
@@ -105,9 +105,9 @@ export const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
     title: "Team",
     subtitle: "Manage who can access the admin console",
   },
-};
+}
 
 /** Topbar meta for a path, falling back to the Dashboard heading. */
 export function adminPageMeta(pathname: string): AdminPageMeta {
-  return ADMIN_PAGE_META[pathname] ?? ADMIN_PAGE_META[ROUTES.admin];
+  return ADMIN_PAGE_META[pathname] ?? ADMIN_PAGE_META[ROUTES.admin]
 }

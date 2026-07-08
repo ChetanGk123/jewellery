@@ -1,27 +1,21 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { HelpHeader } from "@/components/storefront/help/HelpHeader";
+import type { Metadata } from "next"
+import Link from "next/link"
+import { HelpHeader } from "@/components/storefront/help/HelpHeader"
 import {
   CheckList,
   HelpSection,
   IconCard,
   NumberedSteps,
   RatesTable,
-} from "@/components/storefront/help/HelpBlocks";
-import {
-  RETURN_NO,
-  RETURN_STEPS,
-  RETURN_YES,
-  SHIP_CARDS,
-  SHIP_RATES,
-} from "@/lib/help-content";
-import { ROUTES } from "@/lib/routes";
+} from "@/components/storefront/help/HelpBlocks"
+import { RETURN_NO, RETURN_STEPS, RETURN_YES, SHIP_CARDS, SHIP_RATES } from "@/lib/help-content"
+import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
   title: "Shipping & Returns",
   description:
     "How your RJ Jewellers order reaches you — dispatch times, delivery windows, COD, shipping rates, and our 7-day returns & exchange policy.",
-};
+}
 
 /**
  * Shipping & Returns (TASKS 1.7) — prototype-matched help page: delivery cards,
@@ -51,9 +45,9 @@ export default function ShippingPage() {
         <HelpSection title="Returns & Exchanges">
           <p className="m-0 mb-5 max-w-[680px] text-[15px] font-light leading-[1.7] text-[#5E4A44]">
             Changed your mind? You have{" "}
-            <strong className="font-semibold text-maroon-900">7 days</strong>{" "}
-            from delivery to request a return or exchange on unworn items in
-            their original packaging with tags intact.
+            <strong className="font-semibold text-maroon-900">7 days</strong> from delivery to
+            request a return or exchange on unworn items in their original packaging with tags
+            intact.
           </p>
           <NumberedSteps steps={RETURN_STEPS} />
           <div className="mt-[18px] grid grid-cols-1 gap-[18px] md:grid-cols-2">
@@ -68,8 +62,7 @@ export default function ShippingPage() {
               Need to start a return?
             </div>
             <p className="m-0 text-[13.5px] font-light leading-[1.5] text-[#E8CFC0]">
-              Our team will arrange a pickup — message us on WhatsApp with your
-              order number.
+              Our team will arrange a pickup — message us on WhatsApp with your order number.
             </p>
           </div>
           <Link
@@ -81,5 +74,5 @@ export default function ShippingPage() {
         </div>
       </div>
     </main>
-  );
+  )
 }

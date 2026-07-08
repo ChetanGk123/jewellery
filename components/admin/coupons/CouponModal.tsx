@@ -1,36 +1,33 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import {
-  deleteCoupon,
-  upsertCoupon,
-} from "@/app/(admin)/admin/(console)/coupons/actions";
-import { useDialog } from "@/hooks/useDialog";
-import type { AdminCouponRow } from "@/lib/admin/coupon";
-import type { CouponKind } from "@/lib/coupons";
+import { useState, useTransition } from "react"
+import { deleteCoupon, upsertCoupon } from "@/app/(admin)/admin/(console)/coupons/actions"
+import { useDialog } from "@/hooks/useDialog"
+import type { AdminCouponRow } from "@/lib/admin/coupon"
+import type { CouponKind } from "@/lib/coupons"
 
 type Props = {
   /** Existing coupon to edit, or null/omitted to create a new one. */
-  coupon?: AdminCouponRow | null;
-  onClose: () => void;
-};
+  coupon?: AdminCouponRow | null
+  onClose: () => void
+}
 
 /** Reverse the action's rupees→paise / value encoding back to input strings. */
 function paiseToRupeeString(paise: number | null): string {
-  return paise != null ? String(paise / 100) : "";
+  return paise != null ? String(paise / 100) : ""
 }
 
 function valueStringFor(row: AdminCouponRow): string {
-  if (row.kind === "free_shipping") return "";
-  if (row.kind === "fixed") return String(row.value / 100);
-  return String(row.value); // percent
+  if (row.kind === "free_shipping") return ""
+  if (row.kind === "fixed") return String(row.value / 100)
+  return String(row.value) // percent
 }
 
 const KIND_OPTIONS: { value: CouponKind; label: string }[] = [
   { value: "percent", label: "Percent off" },
   { value: "fixed", label: "Fixed amount" },
   { value: "free_shipping", label: "Free shipping" },
-];
+]
 
 /**
  * Create Coupon modal (TASKS 3.6 + 3.6b, prototype-matched — 460px card: code,
@@ -40,42 +37,42 @@ const KIND_OPTIONS: { value: CouponKind; label: string }[] = [
  * active state afterward. The parent refreshes via revalidatePath.
  */
 export function CouponModal({ coupon, onClose }: Props) {
-  const editing = coupon != null;
-  const [code, setCode] = useState(coupon?.code ?? "");
-  const [kind, setKind] = useState<CouponKind>(coupon?.kind ?? "percent");
-  const [value, setValue] = useState(coupon ? valueStringFor(coupon) : "");
+  const editing = coupon != null
+  const [code, setCode] = useState(coupon?.code ?? "")
+  const [kind, setKind] = useState<CouponKind>(coupon?.kind ?? "percent")
+  const [value, setValue] = useState(coupon ? valueStringFor(coupon) : "")
   const [minOrder, setMinOrder] = useState(
     coupon ? paiseToRupeeString(coupon.minSubtotalPaise) : "",
-  );
+  )
   const [maxDiscount, setMaxDiscount] = useState(
     coupon ? paiseToRupeeString(coupon.maxDiscountPaise) : "",
-  );
+  )
   const [usageLimit, setUsageLimit] = useState(
     coupon?.usageLimit != null ? String(coupon.usageLimit) : "",
-  );
+  )
   // Stored as `${date}T18:29:59Z`, so the leading 10 chars are the chosen date.
-  const [expiresAt, setExpiresAt] = useState(coupon?.expiresAt?.slice(0, 10) ?? "");
-  const [error, setError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [expiresAt, setExpiresAt] = useState(coupon?.expiresAt?.slice(0, 10) ?? "")
+  const [error, setError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const dialogRef = useDialog<HTMLDivElement>({
     isOpen: true,
     onDismiss: onClose,
     isPending,
-  });
+  })
 
-  const showValue = kind !== "free_shipping";
-  const isPercent = kind === "percent";
-  const valuePlaceholder = kind === "fixed" ? "200" : "25";
+  const showValue = kind !== "free_shipping"
+  const isPercent = kind === "percent"
+  const valuePlaceholder = kind === "fixed" ? "200" : "25"
 
   const onSave = () => {
     // Reject an out-of-range percentage here so the admin isn't silently
     // clamped server-side (TASKS 3.6b).
     if (isPercent && Number(value.trim()) > 100) {
-      setError("A percentage discount can't exceed 100%.");
-      return;
+      setError("A percentage discount can't exceed 100%.")
+      return
     }
-    setError(null);
+    setError(null)
     startTransition(async () => {
       const res = await upsertCoupon({
         id: coupon?.id ?? null,
@@ -89,30 +86,30 @@ export function CouponModal({ coupon, onClose }: Props) {
         // Editing preserves the current active state (toggled from the list);
         // a brand-new coupon starts active.
         isActive: coupon?.isActive ?? true,
-      });
-      if (res.ok) onClose();
-      else setError(res.error ?? "Couldn't save the coupon.");
-    });
-  };
+      })
+      if (res.ok) onClose()
+      else setError(res.error ?? "Couldn't save the coupon.")
+    })
+  }
 
   // Two-step delete so a destructive action can't fire on a single misclick
   // (mirrors CategoryModal). Only available when editing an existing coupon.
   const onDelete = () => {
-    if (!coupon) return;
+    if (!coupon) return
     if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
+      setConfirmDelete(true)
+      return
     }
-    setError(null);
+    setError(null)
     startTransition(async () => {
-      const res = await deleteCoupon(coupon.id);
-      if (res.ok) onClose();
+      const res = await deleteCoupon(coupon.id)
+      if (res.ok) onClose()
       else {
-        setConfirmDelete(false);
-        setError(res.error ?? "Couldn't delete the coupon.");
+        setConfirmDelete(false)
+        setError(res.error ?? "Couldn't delete the coupon.")
       }
-    });
-  };
+    })
+  }
 
   return (
     <div
@@ -268,5 +265,5 @@ export function CouponModal({ coupon, onClose }: Props) {
         </div>
       </div>
     </div>
-  );
+  )
 }

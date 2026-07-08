@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
-import { HelpHeader } from "@/components/storefront/help/HelpHeader";
-import { LegalSection, LegalUpdatedNote } from "@/components/storefront/help/LegalBlocks";
-import { TERMS_SECTIONS } from "@/lib/legal-content";
-import { STORE_INFO } from "@/lib/store-info";
+import type { Metadata } from "next"
+import { HelpHeader } from "@/components/storefront/help/HelpHeader"
+import { LegalSection, LegalUpdatedNote } from "@/components/storefront/help/LegalBlocks"
+import { TERMS_SECTIONS } from "@/lib/legal-content"
+import { STORE_INFO } from "@/lib/store-info"
 
 export const metadata: Metadata = {
   title: "Terms of Use",
   description:
     "The terms that govern your use of the RJ Jewellers website and your purchase of products through it.",
-};
+}
 
 /**
  * Terms of Use (Phase 4.2) — no prototype equivalent; authored to close the
@@ -39,5 +39,5 @@ export default function TermsPage() {
         />
       </div>
     </main>
-  );
+  )
 }

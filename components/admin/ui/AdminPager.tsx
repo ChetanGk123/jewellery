@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "next/link"
 
 /**
  * Shared admin list pager (TASKS 5.10). One "Showing X–Y of N" range line plus a
@@ -8,18 +8,18 @@ import Link from "next/link";
  * per-view inline pagers the orders and products lists used to carry.
  */
 type Props = {
-  page: number;
-  pageCount: number;
-  total: number;
-  pageSize: number;
-  hrefForPage: (page: number) => string;
-};
+  page: number
+  pageCount: number
+  total: number
+  pageSize: number
+  hrefForPage: (page: number) => string
+}
 
 export function AdminPager({ page, pageCount, total, pageSize, hrefForPage }: Props) {
-  if (total <= 0) return null;
+  if (total <= 0) return null
 
-  const rangeStart = (page - 1) * pageSize + 1;
-  const rangeEnd = Math.min(page * pageSize, total);
+  const rangeStart = (page - 1) * pageSize + 1
+  const rangeEnd = Math.min(page * pageSize, total)
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -61,7 +61,7 @@ export function AdminPager({ page, pageCount, total, pageSize, hrefForPage }: Pr
         </div>
       )}
     </div>
-  );
+  )
 }
 
 /**
@@ -72,19 +72,19 @@ export function AdminPager({ page, pageCount, total, pageSize, hrefForPage }: Pr
  */
 function pageItems(page: number, pageCount: number): (number | "gap")[] {
   if (pageCount <= 7) {
-    return Array.from({ length: pageCount }, (_, i) => i + 1);
+    return Array.from({ length: pageCount }, (_, i) => i + 1)
   }
-  const items: (number | "gap")[] = [];
-  let last = 0;
+  const items: (number | "gap")[] = []
+  let last = 0
   for (let n = 1; n <= pageCount; n++) {
-    const isShown = n === 1 || n === pageCount || Math.abs(n - page) <= 1;
-    if (!isShown) continue;
-    if (n - last === 2) items.push(n - 1);
-    else if (n - last > 2) items.push("gap");
-    items.push(n);
-    last = n;
+    const isShown = n === 1 || n === pageCount || Math.abs(n - page) <= 1
+    if (!isShown) continue
+    if (n - last === 2) items.push(n - 1)
+    else if (n - last > 2) items.push("gap")
+    items.push(n)
+    last = n
   }
-  return items;
+  return items
 }
 
 /** Prev / Next control — a Link when active, an inert dimmed span at the ends. */
@@ -93,22 +93,22 @@ function PagerArrow({
   disabled,
   children,
 }: {
-  href: string;
-  disabled: boolean;
-  children: React.ReactNode;
+  href: string
+  disabled: boolean
+  children: React.ReactNode
 }) {
   const cls =
-    "rounded-md border border-[#E7E0D4] bg-white px-3.5 py-[7px] text-[12px] font-semibold text-maroon-700";
+    "rounded-md border border-[#E7E0D4] bg-white px-3.5 py-[7px] text-[12px] font-semibold text-maroon-700"
   if (disabled) {
     return (
       <span className={`${cls} cursor-not-allowed opacity-40`} aria-disabled>
         {children}
       </span>
-    );
+    )
   }
   return (
     <Link href={href} className={`${cls} hover:border-[#D8CDB9]`}>
       {children}
     </Link>
-  );
+  )
 }

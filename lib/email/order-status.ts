@@ -5,33 +5,33 @@
  * as `order-confirmation.ts`: inline styles, table layout, system font stack.
  */
 
-import { type EmailMessage, escapeHtml } from "./order-confirmation";
-import { STORE_INFO } from "@/lib/store-info";
-import { formatPaise } from "@/lib/utils/money";
+import { type EmailMessage, escapeHtml } from "./order-confirmation"
+import { STORE_INFO } from "@/lib/store-info"
+import { formatPaise } from "@/lib/utils/money"
 
 /** The three order statuses that notify the customer (audit C2). */
-export type OrderStatusEmailKind = "Shipped" | "Delivered" | "Cancelled";
+export type OrderStatusEmailKind = "Shipped" | "Delivered" | "Cancelled"
 
 export type OrderStatusEmailInput = {
-  kind: OrderStatusEmailKind;
-  orderNo: string;
-  customerName: string;
-  totalPaise: number;
+  kind: OrderStatusEmailKind
+  orderNo: string
+  customerName: string
+  totalPaise: number
   /** Absolute URL of the order page. */
-  orderUrl: string;
-};
+  orderUrl: string
+}
 
-const HEADING_FONT = "Georgia, 'Times New Roman', serif";
-const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif";
+const HEADING_FONT = "Georgia, 'Times New Roman', serif"
+const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 
 type Copy = {
-  subjectWord: string;
-  heading: string;
-  intro: (orderNo: string) => string;
-  totalLabel: string;
-  note: string;
-  accent: string;
-};
+  subjectWord: string
+  heading: string
+  intro: (orderNo: string) => string
+  totalLabel: string
+  note: string
+  accent: string
+}
 
 const COPY: Record<OrderStatusEmailKind, Copy> = {
   Shipped: {
@@ -45,8 +45,7 @@ const COPY: Record<OrderStatusEmailKind, Copy> = {
   Delivered: {
     subjectWord: "delivered",
     heading: "Delivered — thank you!",
-    intro: (o) =>
-      `Order ${o} has been delivered. We hope you love your new piece.`,
+    intro: (o) => `Order ${o} has been delivered. We hope you love your new piece.`,
     totalLabel: "Order total · paid on delivery",
     note: "If anything isn't right, just reply to this email or WhatsApp us — we're happy to help.",
     accent: "#15692F",
@@ -60,21 +59,19 @@ const COPY: Record<OrderStatusEmailKind, Copy> = {
     note: "Changed your mind? Your favourites are waiting — browse the collection anytime.",
     accent: "#C0392F",
   },
-};
+}
 
 /**
  * Build a status-change message. The customer name is HTML-escaped; the total
  * is formatted from integer paise at this UI boundary.
  */
-export function buildOrderStatusEmail(
-  input: OrderStatusEmailInput,
-): EmailMessage {
-  const copy = COPY[input.kind];
-  const total = formatPaise(input.totalPaise);
-  const name = input.customerName.trim() || "there";
-  const intro = copy.intro(input.orderNo);
+export function buildOrderStatusEmail(input: OrderStatusEmailInput): EmailMessage {
+  const copy = COPY[input.kind]
+  const total = formatPaise(input.totalPaise)
+  const name = input.customerName.trim() || "there"
+  const intro = copy.intro(input.orderNo)
 
-  const subject = `Order ${input.orderNo} ${copy.subjectWord} — ${STORE_INFO.name}`;
+  const subject = `Order ${input.orderNo} ${copy.subjectWord} — ${STORE_INFO.name}`
 
   const text = [
     `Namaste ${name},`,
@@ -88,7 +85,7 @@ export function buildOrderStatusEmail(
     "",
     `Questions? WhatsApp us at ${STORE_INFO.phone.display} or reply to this email.`,
     `— ${STORE_INFO.name}`,
-  ].join("\n");
+  ].join("\n")
 
   const html = `
 <div style="margin:0;padding:32px 12px;background:#FBF6EE;">
@@ -120,7 +117,7 @@ export function buildOrderStatusEmail(
       ${escapeHtml(STORE_INFO.address.line)}
     </td></tr>
   </table>
-</div>`;
+</div>`
 
-  return { subject, html, text };
+  return { subject, html, text }
 }

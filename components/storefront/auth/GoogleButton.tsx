@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { ROUTES } from "@/lib/routes";
-import { supabase } from "@/lib/db/client";
-import { AuthError } from "./AuthCard";
+import { useState } from "react"
+import { ROUTES } from "@/lib/routes"
+import { supabase } from "@/lib/db/client"
+import { AuthError } from "./AuthCard"
 
 /**
  * "Continue with Google" — Supabase OAuth (PKCE). Google bounces back to
@@ -12,25 +12,23 @@ import { AuthError } from "./AuthCard";
  * dashboard yet (a manual, dashboard-side setup step).
  */
 export function GoogleButton({ next }: { next: string }) {
-  const [error, setError] = useState<string | null>(null);
-  const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null)
+  const [isBusy, setIsBusy] = useState(false)
 
   const signInWithGoogle = async () => {
-    setError(null);
-    setIsBusy(true);
-    const redirectTo = `${window.location.origin}${ROUTES.authCallback}?next=${encodeURIComponent(next)}`;
+    setError(null)
+    setIsBusy(true)
+    const redirectTo = `${window.location.origin}${ROUTES.authCallback}?next=${encodeURIComponent(next)}`
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
-    });
+    })
     if (oauthError) {
-      setIsBusy(false);
-      setError(
-        "Google sign-in isn't available right now. Please use email instead.",
-      );
+      setIsBusy(false)
+      setError("Google sign-in isn't available right now. Please use email instead.")
     }
     // On success the browser navigates away to Google — no state to reset.
-  };
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -45,7 +43,7 @@ export function GoogleButton({ next }: { next: string }) {
       </button>
       <AuthError message={error} />
     </div>
-  );
+  )
 }
 
 /** Official four-colour Google "G", inline so no external asset is needed. */
@@ -69,5 +67,5 @@ function GoogleMark() {
         d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
       />
     </svg>
-  );
+  )
 }

@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { ROUTES } from "@/lib/routes";
+import Link from "next/link"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Closing editorial section — matched to the prototype: a centred gold divider,
@@ -23,13 +23,12 @@ export function StoryBlock() {
           <path d="M60 6 L64 15 L60 24 L56 15 Z" fill="#C9A24B" stroke="none" />
         </svg>
         <h2 className="m-0 max-w-[760px] text-balance font-heading text-[34px] font-medium italic leading-[1.3] text-maroon-900">
-          “The heirloom look, without the heirloom price — jewellery made to
-          shine on your biggest days.”
+          “The heirloom look, without the heirloom price — jewellery made to shine on your biggest
+          days.”
         </h2>
         <p className="m-0 max-w-[620px] text-[14px] font-normal leading-[1.7] text-[#7A655F]">
-          Every JR piece is finished by hand, plated to last, and kind to
-          sensitive skin. From the mandap to the mehendi, find your full bridal
-          look in one place.
+          Every JR piece is finished by hand, plated to last, and kind to sensitive skin. From the
+          mandap to the mehendi, find your full bridal look in one place.
         </p>
         <Link
           href={ROUTES.shop}
@@ -39,5 +38,5 @@ export function StoryBlock() {
         </Link>
       </div>
     </section>
-  );
+  )
 }

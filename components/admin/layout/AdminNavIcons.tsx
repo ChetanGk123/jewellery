@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import type { AdminIconKey } from "@/lib/admin/nav";
+import type { ReactNode } from "react"
+import type { AdminIconKey } from "@/lib/admin/nav"
 
 /**
  * Sidebar nav icons — line-art SVGs lifted verbatim from the admin prototype so
@@ -40,9 +40,7 @@ const ICON_PATHS: Record<AdminIconKey, ReactNode> = {
   reviews: (
     <path d="M12 4l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8L12 4Z" />
   ),
-  messages: (
-    <path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5Z" />
-  ),
+  messages: <path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5Z" />,
   subscribers: (
     <>
       <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -62,7 +60,7 @@ const ICON_PATHS: Record<AdminIconKey, ReactNode> = {
       <path d="M16 5.2a3.2 3.2 0 0 1 0 5.9M17.5 14.6A5.5 5.5 0 0 1 20.5 20" />
     </>
   ),
-};
+}
 
 export function AdminNavIcon({ icon }: { icon: AdminIconKey }) {
   return (
@@ -77,5 +75,5 @@ export function AdminNavIcon({ icon }: { icon: AdminIconKey }) {
     >
       {ICON_PATHS[icon]}
     </svg>
-  );
+  )
 }

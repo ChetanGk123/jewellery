@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { cancelMyOrder } from "@/app/(storefront)/account/orders/actions";
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
+import { cancelMyOrder } from "@/app/(storefront)/account/orders/actions"
 
 type Props = {
-  orderNo: string;
-};
+  orderNo: string
+}
 
 /**
  * Cancel-while-Pending control on the order detail page (TASKS 4.14). Two-step
@@ -14,22 +14,22 @@ type Props = {
  * project's design-quality bar for deliberate interaction states.
  */
 export function CancelOrderButton({ orderNo }: Props) {
-  const router = useRouter();
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter()
+  const [isConfirming, setIsConfirming] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   function handleConfirm() {
-    setError(null);
+    setError(null)
     startTransition(async () => {
-      const result = await cancelMyOrder(orderNo);
+      const result = await cancelMyOrder(orderNo)
       if (!result.ok) {
-        setError(result.error);
-        setIsConfirming(false);
-        return;
+        setError(result.error)
+        setIsConfirming(false)
+        return
       }
-      router.refresh();
-    });
+      router.refresh()
+    })
   }
 
   if (!isConfirming) {
@@ -44,7 +44,7 @@ export function CancelOrderButton({ orderNo }: Props) {
           Cancel Order
         </button>
       </div>
-    );
+    )
   }
 
   return (
@@ -71,5 +71,5 @@ export function CancelOrderButton({ orderNo }: Props) {
         </button>
       </div>
     </div>
-  );
+  )
 }

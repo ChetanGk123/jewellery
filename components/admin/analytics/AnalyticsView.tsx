@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import Link from "next/link"
+import { useMemo, useState } from "react"
 import {
   type AnalyticsKpi,
   type AnalyticsProduct,
@@ -11,17 +11,17 @@ import {
   sparkBars,
   trendColor,
   trendLabel,
-} from "@/lib/admin/analytics";
-import { productDisplayChip, stockColor } from "@/lib/admin/product-status";
-import { ROUTES } from "@/lib/routes";
-import { formatPaise } from "@/lib/utils/money";
+} from "@/lib/admin/analytics"
+import { productDisplayChip, stockColor } from "@/lib/admin/product-status"
+import { ROUTES } from "@/lib/routes"
+import { formatPaise } from "@/lib/utils/money"
 
 type Props = {
-  kpis: AnalyticsKpi[];
-  products: AnalyticsProduct[];
+  kpis: AnalyticsKpi[]
+  products: AnalyticsProduct[]
   /** Product to open the detail view for on load (products-row `?product=` deep link). */
-  initialProductId?: string | null;
-};
+  initialProductId?: string | null
+}
 
 /**
  * Product Analytics (TASKS 3.10, prototype-matched). A list view — 4 KPI cards
@@ -31,18 +31,14 @@ type Props = {
  * the whole dataset loads once server-side and no route change is needed.
  */
 export function AnalyticsView({ kpis, products, initialProductId = null }: Props) {
-  const [sort, setSort] = useState<AnalyticsSort>("units");
-  const [selectedId, setSelectedId] = useState<string | null>(initialProductId);
+  const [sort, setSort] = useState<AnalyticsSort>("units")
+  const [selectedId, setSelectedId] = useState<string | null>(initialProductId)
 
-  const sorted = useMemo(() => sortAnalytics(products, sort), [products, sort]);
-  const selected = selectedId
-    ? products.find((p) => p.id === selectedId) ?? null
-    : null;
+  const sorted = useMemo(() => sortAnalytics(products, sort), [products, sort])
+  const selected = selectedId ? (products.find((p) => p.id === selectedId) ?? null) : null
 
   if (selected) {
-    return (
-      <ProductDetail product={selected} onBack={() => setSelectedId(null)} />
-    );
+    return <ProductDetail product={selected} onBack={() => setSelectedId(null)} />
   }
 
   return (
@@ -162,20 +158,14 @@ export function AnalyticsView({ kpis, products, initialProductId = null }: Props
         )}
       </div>
     </div>
-  );
+  )
 }
 
 /** The per-product breakdown: header, six stat cards, and a monthly bar chart. */
-function ProductDetail({
-  product,
-  onBack,
-}: {
-  product: AnalyticsProduct;
-  onBack: () => void;
-}) {
-  const chip = productDisplayChip(product.status, product.stock);
-  const thisMonth = product.monthly[product.monthly.length - 1];
-  const peakUnits = Math.max(1, ...product.monthly.map((m) => m.units));
+function ProductDetail({ product, onBack }: { product: AnalyticsProduct; onBack: () => void }) {
+  const chip = productDisplayChip(product.status, product.stock)
+  const thisMonth = product.monthly[product.monthly.length - 1]
+  const peakUnits = Math.max(1, ...product.monthly.map((m) => m.units))
 
   const cards: { label: string; value: string; accent: string }[] = [
     { label: "Units · 6 mo", value: String(product.units6mo), accent: "#71182B" },
@@ -192,7 +182,7 @@ function ProductDetail({
       accent: stockColor(product.status, product.stock),
     },
     { label: "Price", value: formatPaise(product.pricePaise), accent: "#2A1F1A" },
-  ];
+  ]
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -201,7 +191,15 @@ function ProductDetail({
         onClick={onBack}
         className="inline-flex w-fit items-center gap-[7px] font-body text-[13px] font-medium text-[#71182B]"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
           <path d="M15 6l-6 6 6 6" />
         </svg>
         All products
@@ -261,18 +259,13 @@ function ProductDetail({
           <span className="font-body text-[15px] font-semibold text-[#2A1F1A]">
             Sales history — units per month
           </span>
-          <span className="font-body text-[12px] font-medium text-[#8A7E74]">
-            Last 6 months
-          </span>
+          <span className="font-body text-[12px] font-medium text-[#8A7E74]">Last 6 months</span>
         </div>
         <div className="flex h-[180px] items-end gap-4">
           {product.monthly.map((m, i) => {
-            const heightPct = Math.round((m.units / peakUnits) * 100);
+            const heightPct = Math.round((m.units / peakUnits) * 100)
             return (
-              <div
-                key={i}
-                className="flex h-full flex-1 flex-col items-center justify-end gap-2"
-              >
+              <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
                 <span className="font-body text-[12px] font-semibold text-[#2A1F1A]">
                   {m.units}
                 </span>
@@ -284,20 +277,18 @@ function ProductDetail({
                   }}
                   title={`${m.units} units · ${formatPaise(m.revenuePaise)}`}
                 />
-                <span className="font-body text-[11px] font-medium text-[#A99C90]">
-                  {m.label}
-                </span>
+                <span className="font-body text-[11px] font-medium text-[#A99C90]">{m.label}</span>
               </div>
-            );
+            )
           })}
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 /** Soft gold tile shown when a product has no image (matches ProductsView). */
-const PLACEHOLDER_GRADIENT = "linear-gradient(135deg, #F3E3C7, #E6CA7E)";
+const PLACEHOLDER_GRADIENT = "linear-gradient(135deg, #F3E3C7, #E6CA7E)"
 
 /**
  * Product thumbnail — the real image when we have one, else a soft gold tint.
@@ -309,9 +300,9 @@ function Swatch({
   size,
   radius = 8,
 }: {
-  product: AnalyticsProduct;
-  size: number;
-  radius?: number;
+  product: AnalyticsProduct
+  size: number
+  radius?: number
 }) {
   return (
     <span
@@ -321,10 +312,8 @@ function Swatch({
         width: size,
         height: size,
         borderRadius: radius,
-        backgroundImage: product.imageUrl
-          ? `url(${product.imageUrl})`
-          : PLACEHOLDER_GRADIENT,
+        backgroundImage: product.imageUrl ? `url(${product.imageUrl})` : PLACEHOLDER_GRADIENT,
       }}
     />
-  );
+  )
 }

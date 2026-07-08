@@ -1,4 +1,4 @@
-import type { PrintDoc } from "@/lib/admin/print";
+import type { PrintDoc } from "@/lib/admin/print"
 
 /**
  * Central route registry — the single source of truth for storefront URLs.
@@ -37,8 +37,7 @@ export const ROUTES = {
   /** Order confirmation — keyed on the order number (carries a random suffix). */
   order: (orderNo: string) => `/order/${encodeURIComponent(orderNo)}`,
   /** Signed-in order detail (items/address/status + cancel-while-Pending). */
-  accountOrder: (orderNo: string) =>
-    `/account/orders/${encodeURIComponent(orderNo)}`,
+  accountOrder: (orderNo: string) => `/account/orders/${encodeURIComponent(orderNo)}`,
 
   /**
    * Admin console (Phase 3) — the prototype's `sc-if` view switches become real
@@ -53,9 +52,7 @@ export const ROUTES = {
    * (invoice is the default and carries no param).
    */
   adminOrderPrint: (orderNo: string, doc: PrintDoc = "invoice") =>
-    `/admin/orders/${encodeURIComponent(orderNo)}/print${
-      doc === "invoice" ? "" : `?doc=${doc}`
-    }`,
+    `/admin/orders/${encodeURIComponent(orderNo)}/print${doc === "invoice" ? "" : `?doc=${doc}`}`,
   adminProducts: "/admin/products",
   adminAnalytics: "/admin/analytics",
   adminCategories: "/admin/categories",
@@ -69,4 +66,4 @@ export const ROUTES = {
   adminSignIn: "/admin/sign-in",
   adminForgotPassword: "/admin/forgot-password",
   adminResetPassword: "/admin/reset-password",
-} as const;
+} as const

@@ -1,18 +1,18 @@
-import "server-only";
-import { ADMIN_COUPONS_PAGE_SIZE, type AdminCouponRow } from "@/lib/admin/coupon";
-import type { CouponKind } from "@/lib/coupons";
-import { type AdminRead, loadAdmin } from "./admin-read";
-import { createServerClient } from "./server";
+import "server-only"
+import { ADMIN_COUPONS_PAGE_SIZE, type AdminCouponRow } from "@/lib/admin/coupon"
+import type { CouponKind } from "@/lib/coupons"
+import { type AdminRead, loadAdmin } from "./admin-read"
+import { createServerClient } from "./server"
 
 export type AdminCouponsPage = {
-  rows: AdminCouponRow[];
-  page: number;
-  pageCount: number;
-  total: number;
-};
+  rows: AdminCouponRow[]
+  page: number
+  pageCount: number
+  total: number
+}
 
 function emptyPage(page: number): AdminCouponsPage {
-  return { rows: [], page, pageCount: 1, total: 0 };
+  return { rows: [], page, pageCount: 1, total: 0 }
 }
 
 /**
@@ -24,15 +24,15 @@ function emptyPage(page: number): AdminCouponsPage {
  * `admin_delete_coupon` RPCs, never a direct table write.
  */
 export async function listAdminCoupons(opts: {
-  page: number;
+  page: number
 }): Promise<AdminRead<AdminCouponsPage>> {
-  const page = Math.max(1, opts.page);
+  const page = Math.max(1, opts.page)
 
   return loadAdmin(
     "coupons",
     async () => {
-      const supabase = await createServerClient();
-      const from = (page - 1) * ADMIN_COUPONS_PAGE_SIZE;
+      const supabase = await createServerClient()
+      const from = (page - 1) * ADMIN_COUPONS_PAGE_SIZE
 
       const { data, count } = await supabase
         .from("coupon")
@@ -41,7 +41,7 @@ export async function listAdminCoupons(opts: {
           { count: "exact" },
         )
         .order("created_at", { ascending: true })
-        .range(from, from + ADMIN_COUPONS_PAGE_SIZE - 1);
+        .range(from, from + ADMIN_COUPONS_PAGE_SIZE - 1)
 
       const rows: AdminCouponRow[] = (data ?? []).map((c) => ({
         id: c.id,
@@ -54,13 +54,13 @@ export async function listAdminCoupons(opts: {
         usageCount: c.usage_count,
         expiresAt: c.expires_at,
         isActive: c.is_active,
-      }));
+      }))
 
-      const total = count ?? 0;
-      const pageCount = Math.max(1, Math.ceil(total / ADMIN_COUPONS_PAGE_SIZE));
+      const total = count ?? 0
+      const pageCount = Math.max(1, Math.ceil(total / ADMIN_COUPONS_PAGE_SIZE))
 
-      return { rows, page, pageCount, total };
+      return { rows, page, pageCount, total }
     },
     emptyPage(page),
-  );
+  )
 }

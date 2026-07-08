@@ -1,26 +1,21 @@
-import Link from "next/link";
-import { ProductCard } from "@/components/storefront/product/ProductCard";
-import type { ProductListItem } from "@/lib/db/queries";
+import Link from "next/link"
+import { ProductCard } from "@/components/storefront/product/ProductCard"
+import type { ProductListItem } from "@/lib/db/queries"
 
 type ProductSectionProps = {
-  eyebrow: string;
-  title: string;
-  products: ProductListItem[];
-  viewAllHref?: string;
-};
+  eyebrow: string
+  title: string
+  products: ProductListItem[]
+  viewAllHref?: string
+}
 
 /**
  * A titled product grid used for the home "Bestselling Bridal Pieces" and
  * "New Arrivals" sections. Header carries an eyebrow + serif title, with an
  * optional "View all →" link on the right; the grid renders `ProductCard`s.
  */
-export function ProductSection({
-  eyebrow,
-  title,
-  products,
-  viewAllHref,
-}: ProductSectionProps) {
-  if (products.length === 0) return null;
+export function ProductSection({ eyebrow, title, products, viewAllHref }: ProductSectionProps) {
+  if (products.length === 0) return null
 
   return (
     <section className="mx-auto max-w-[1280px] px-6 pb-3 pt-[58px]">
@@ -49,5 +44,5 @@ export function ProductSection({
         ))}
       </div>
     </section>
-  );
+  )
 }

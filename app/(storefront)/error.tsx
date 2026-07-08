@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import Link from "next/link";
-import { ROUTES } from "@/lib/routes";
+import { useEffect } from "react"
+import Link from "next/link"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Branded runtime-error boundary for the storefront (Phase 4.3) — replaces
@@ -13,12 +13,12 @@ export default function StorefrontError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error: Error & { digest?: string }
+  reset: () => void
 }) {
   useEffect(() => {
-    console.error(error);
-  }, [error]);
+    console.error(error)
+  }, [error])
 
   return (
     <main className="mx-auto flex max-w-[560px] flex-1 flex-col items-center justify-center gap-[18px] px-6 py-[90px] text-center">
@@ -34,8 +34,8 @@ export default function StorefrontError({
       </h1>
 
       <p className="m-0 max-w-[420px] text-[15px] font-light leading-[1.6] text-[#5E4A44]">
-        We hit a snag loading this page. Please try again, or head back to the
-        shop — your cart is safe either way.
+        We hit a snag loading this page. Please try again, or head back to the shop — your cart is
+        safe either way.
       </p>
 
       <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
@@ -54,5 +54,5 @@ export default function StorefrontError({
         </Link>
       </div>
     </main>
-  );
+  )
 }

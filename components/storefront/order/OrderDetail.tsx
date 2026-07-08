@@ -1,18 +1,13 @@
-import Link from "next/link";
-import type { MyOrderDetail } from "@/lib/db/orders";
-import {
-  buildStepper,
-  statusChip,
-  type OrderStep,
-  type StepState,
-} from "@/lib/admin/order-status";
-import { ROUTES } from "@/lib/routes";
-import { formatPaise } from "@/lib/utils/money";
-import { CancelOrderButton } from "./CancelOrderButton";
+import Link from "next/link"
+import type { MyOrderDetail } from "@/lib/db/orders"
+import { buildStepper, statusChip, type OrderStep, type StepState } from "@/lib/admin/order-status"
+import { ROUTES } from "@/lib/routes"
+import { formatPaise } from "@/lib/utils/money"
+import { CancelOrderButton } from "./CancelOrderButton"
 
 type Props = {
-  order: MyOrderDetail;
-};
+  order: MyOrderDetail
+}
 
 /**
  * Signed-in order detail (TASKS 4.14): status timeline, items, delivery
@@ -23,13 +18,13 @@ type Props = {
  * console's palette.
  */
 export function OrderDetail({ order }: Props) {
-  const chip = statusChip(order.status);
-  const steps = buildStepper(order.status);
+  const chip = statusChip(order.status)
+  const steps = buildStepper(order.status)
   const placedOn = new Date(order.createdAt).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
-  });
+  })
 
   return (
     <main className="mx-auto w-full max-w-[760px] flex-1 px-6 py-12">
@@ -75,9 +70,7 @@ export function OrderDetail({ order }: Props) {
               >
                 <span className="flex-1 text-[13.5px] font-medium leading-snug text-maroon-900">
                   {item.name}
-                  {item.tone && (
-                    <span className="font-normal text-[#9C8A84]"> · {item.tone}</span>
-                  )}
+                  {item.tone && <span className="font-normal text-[#9C8A84]"> · {item.tone}</span>}
                   <span className="font-normal text-[#9C8A84]"> ×{item.qty}</span>
                 </span>
                 <span className="text-[13.5px] font-semibold text-maroon-900">
@@ -119,7 +112,7 @@ export function OrderDetail({ order }: Props) {
         {order.status === "Pending" && <CancelOrderButton orderNo={order.orderNo} />}
       </div>
     </main>
-  );
+  )
 }
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
@@ -130,7 +123,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
       </span>
       {children}
     </div>
-  );
+  )
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -139,7 +132,7 @@ function Row({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <span>{value}</span>
     </div>
-  );
+  )
 }
 
 const STEP_STYLES: Record<
@@ -149,15 +142,15 @@ const STEP_STYLES: Record<
   done: { dot: "#C9A24B", mark: "✓", markColor: "#FFFFFF", label: "#4A0E1C" },
   active: { dot: "#71182B", mark: "●", markColor: "#F3E3C7", label: "#71182B" },
   upcoming: { dot: "#F3E9E2", mark: "", markColor: "#9C8A84", label: "#9C8A84" },
-};
+}
 
 /** Fulfilment stepper, restyled from `OrderDrawer`'s admin version for storefront chrome. */
 function Stepper({ steps }: { steps: OrderStep[] }) {
   return (
     <div className="mb-7 flex items-center">
       {steps.map((step, i) => {
-        const s = STEP_STYLES[step.state];
-        const isLast = i === steps.length - 1;
+        const s = STEP_STYLES[step.state]
+        const isLast = i === steps.length - 1
         return (
           <div key={step.label} className="flex flex-1 items-center">
             <div className="flex flex-col items-center gap-1.5">
@@ -181,8 +174,8 @@ function Stepper({ steps }: { steps: OrderStep[] }) {
               />
             )}
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }

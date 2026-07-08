@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { addOrderNote } from "@/app/(admin)/admin/(console)/orders/actions";
-import type { AdminOrderRow, OrderEvent } from "@/lib/db/admin-orders";
-import { NOTE_MAX_LEN } from "@/lib/admin/order-notes";
+import { useState, useTransition } from "react"
+import { addOrderNote } from "@/app/(admin)/admin/(console)/orders/actions"
+import type { AdminOrderRow, OrderEvent } from "@/lib/db/admin-orders"
+import { NOTE_MAX_LEN } from "@/lib/admin/order-notes"
 import {
   advanceLabel,
   buildStepper,
@@ -11,23 +11,23 @@ import {
   statusChip,
   type OrderStep,
   type StepState,
-} from "@/lib/admin/order-status";
-import { useDialog } from "@/hooks/useDialog";
-import { ROUTES } from "@/lib/routes";
-import { formatPaise } from "@/lib/utils/money";
-import { codConfirmationMessage, customerWhatsappUrl } from "@/lib/whatsapp";
+} from "@/lib/admin/order-status"
+import { useDialog } from "@/hooks/useDialog"
+import { ROUTES } from "@/lib/routes"
+import { formatPaise } from "@/lib/utils/money"
+import { codConfirmationMessage, customerWhatsappUrl } from "@/lib/whatsapp"
 
 type Props = {
-  order: AdminOrderRow | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onAdvance: () => void;
-  onCancel: () => void;
+  order: AdminOrderRow | null
+  isOpen: boolean
+  onClose: () => void
+  onAdvance: () => void
+  onCancel: () => void
   /** A note was saved — parent appends it to its drawer snapshot (5.16). */
-  onNoteAdded: (event: OrderEvent) => void;
-  isPending: boolean;
-  error: string | null;
-};
+  onNoteAdded: (event: OrderEvent) => void
+  isPending: boolean
+  error: string | null
+}
 
 /**
  * Right-hand fulfilment drawer (prototype-matched). Slides in over a backdrop;
@@ -47,10 +47,10 @@ export function OrderDrawer({
   isPending,
   error,
 }: Props) {
-  const advance = order ? advanceLabel(order.status) : null;
-  const showCancel = order ? canCancel(order.status) : false;
-  const steps = order ? buildStepper(order.status) : null;
-  const dialogRef = useDialog<HTMLElement>({ isOpen, onDismiss: onClose, isPending });
+  const advance = order ? advanceLabel(order.status) : null
+  const showCancel = order ? canCancel(order.status) : false
+  const steps = order ? buildStepper(order.status) : null
+  const dialogRef = useDialog<HTMLElement>({ isOpen, onDismiss: onClose, isPending })
 
   return (
     <>
@@ -108,9 +108,7 @@ export function OrderDrawer({
               )}
 
               <Card label="Customer">
-                <span className="text-[14px] font-medium text-[#2A1F1A]">
-                  {order.customerName}
-                </span>
+                <span className="text-[14px] font-medium text-[#2A1F1A]">{order.customerName}</span>
                 <span className="text-[12px] font-medium text-[#8A7E74]">
                   {order.customerOrderCount <= 1
                     ? "First order from this customer"
@@ -155,23 +153,14 @@ export function OrderDrawer({
                 <div className="flex flex-col gap-2 px-4 py-3">
                   <Row label="Subtotal" value={formatPaise(order.subtotalPaise)} />
                   {order.discountPaise > 0 && (
-                    <Row
-                      label="Discount"
-                      value={`− ${formatPaise(order.discountPaise)}`}
-                    />
+                    <Row label="Discount" value={`− ${formatPaise(order.discountPaise)}`} />
                   )}
                   <Row
                     label="Shipping"
-                    value={
-                      order.shippingPaise === 0
-                        ? "Free"
-                        : formatPaise(order.shippingPaise)
-                    }
+                    value={order.shippingPaise === 0 ? "Free" : formatPaise(order.shippingPaise)}
                   />
                   <div className="flex items-baseline justify-between border-t border-[#F0EADF] pt-2">
-                    <span className="text-[14px] font-semibold text-[#2A1F1A]">
-                      Total
-                    </span>
+                    <span className="text-[14px] font-semibold text-[#2A1F1A]">Total</span>
                     <span className="text-[18px] font-semibold text-maroon-700">
                       {formatPaise(order.totalPaise)}
                     </span>
@@ -197,9 +186,7 @@ export function OrderDrawer({
 
             {(advance || showCancel) && (
               <footer className="flex flex-col gap-2 border-t border-[#E7E0D4] bg-white px-6 py-[18px]">
-                {error && (
-                  <p className="text-[12px] font-medium text-[#C0392F]">{error}</p>
-                )}
+                {error && <p className="text-[12px] font-medium text-[#C0392F]">{error}</p>}
                 <div className="flex gap-2.5">
                   {advance && (
                     <button
@@ -228,11 +215,11 @@ export function OrderDrawer({
         )}
       </aside>
     </>
-  );
+  )
 }
 
 function StatusPill({ status }: { status: string }) {
-  const chip = statusChip(status);
+  const chip = statusChip(status)
   return (
     <span
       className="rounded-full px-3 py-1.5 text-[11px] font-semibold"
@@ -240,7 +227,7 @@ function StatusPill({ status }: { status: string }) {
     >
       {chip.label}
     </span>
-  );
+  )
 }
 
 function Card({ label, children }: { label: string; children: React.ReactNode }) {
@@ -251,7 +238,7 @@ function Card({ label, children }: { label: string; children: React.ReactNode })
       </span>
       {children}
     </div>
-  );
+  )
 }
 
 /**
@@ -268,10 +255,10 @@ function ContactActions({ order }: { order: AdminOrderRow }) {
           orderNo: order.orderNo,
           totalPaise: order.totalPaise,
         })
-      : `Namaste ${order.customerName}, this is regarding your order ${order.orderNo}.`;
-  const waUrl = customerWhatsappUrl(order.phone, message);
+      : `Namaste ${order.customerName}, this is regarding your order ${order.orderNo}.`
+  const waUrl = customerWhatsappUrl(order.phone, message)
   const base =
-    "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11.5px] font-semibold transition-colors";
+    "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11.5px] font-semibold transition-colors"
 
   return (
     <div className="flex flex-wrap gap-2 pt-1">
@@ -279,7 +266,15 @@ function ContactActions({ order }: { order: AdminOrderRow }) {
         href={`tel:${order.phone}`}
         className={`${base} border-[#E7E0D4] bg-white text-[#5E4A40] hover:bg-[#FBF8F2]`}
       >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        >
           <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 2Z" />
         </svg>
         Call
@@ -298,7 +293,7 @@ function ContactActions({ order }: { order: AdminOrderRow }) {
         </a>
       )}
     </div>
-  );
+  )
 }
 
 /** Opens one printable document (invoice or packing slip) in a new tab. */
@@ -310,13 +305,21 @@ function PrintLink({ href, label }: { href: string; label: string }) {
       rel="noopener noreferrer"
       className="flex flex-1 items-center justify-center gap-2 rounded-[10px] border border-[#DAD0C2] bg-white py-3 text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2]"
     >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        aria-hidden="true"
+      >
         <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
         <path d="M6 14h12v7H6z" />
       </svg>
       {label}
     </a>
-  );
+  )
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -325,7 +328,7 @@ function Row({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <span>{value}</span>
     </div>
-  );
+  )
 }
 
 /* -------------------------------- Stepper -------------------------------- */
@@ -355,14 +358,14 @@ const STEP_STYLES: Record<
     markColor: "#A99C90",
     label: "#A99C90",
   },
-};
+}
 
 function Stepper({ steps }: { steps: OrderStep[] }) {
   return (
     <div className="flex items-center">
       {steps.map((step, i) => {
-        const s = STEP_STYLES[step.state];
-        const isLast = i === steps.length - 1;
+        const s = STEP_STYLES[step.state]
+        const isLast = i === steps.length - 1
         return (
           <div key={step.label} className="flex flex-1 items-center">
             <div className="flex flex-col items-center gap-1.5">
@@ -390,10 +393,10 @@ function Stepper({ steps }: { steps: OrderStep[] }) {
               />
             )}
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 /* --------------------------- Timeline + notes ---------------------------- */
@@ -402,7 +405,7 @@ const EVENT_DOTS: Record<OrderEvent["kind"], string> = {
   placed: "#C9A24B",
   status: "#71182B",
   note: "#A87A1E",
-};
+}
 
 /**
  * Who/when history (TASKS 5.16): placement, admin status changes (from the 5.8
@@ -414,8 +417,8 @@ function Timeline({
   order,
   onNoteAdded,
 }: {
-  order: AdminOrderRow;
-  onNoteAdded: (event: OrderEvent) => void;
+  order: AdminOrderRow
+  onNoteAdded: (event: OrderEvent) => void
 }) {
   return (
     <div className="flex flex-col gap-3 rounded-[10px] border border-[#EAE3D7] bg-white p-4">
@@ -430,9 +433,7 @@ function Timeline({
                 className="mt-[5px] h-2 w-2 shrink-0 rounded-full"
                 style={{ background: EVENT_DOTS[event.kind] }}
               />
-              {i < order.events.length - 1 && (
-                <span className="w-px flex-1 bg-[#EDE5D6]" />
-              )}
+              {i < order.events.length - 1 && <span className="w-px flex-1 bg-[#EDE5D6]" />}
             </div>
             <div className="flex flex-col gap-0.5 pb-3">
               {event.kind === "note" ? (
@@ -440,9 +441,7 @@ function Timeline({
                   {event.summary}
                 </span>
               ) : (
-                <span className="text-[12.5px] font-medium text-[#2A1F1A]">
-                  {event.summary}
-                </span>
+                <span className="text-[12.5px] font-medium text-[#2A1F1A]">{event.summary}</span>
               )}
               <span className="text-[11px] text-[#A99C90]">
                 {event.atLabel}
@@ -454,7 +453,7 @@ function Timeline({
       </ol>
       <NoteComposer orderNo={order.orderNo} onNoteAdded={onNoteAdded} />
     </div>
-  );
+  )
 }
 
 /** Free-text internal note form — saves via the addOrderNote server action. */
@@ -462,32 +461,32 @@ function NoteComposer({
   orderNo,
   onNoteAdded,
 }: {
-  orderNo: string;
-  onNoteAdded: (event: OrderEvent) => void;
+  orderNo: string
+  onNoteAdded: (event: OrderEvent) => void
 }) {
-  const [note, setNote] = useState("");
-  const [noteError, setNoteError] = useState<string | null>(null);
-  const [isSaving, startSaving] = useTransition();
+  const [note, setNote] = useState("")
+  const [noteError, setNoteError] = useState<string | null>(null)
+  const [isSaving, startSaving] = useTransition()
 
   const submit = () => {
-    if (!note.trim() || isSaving) return;
+    if (!note.trim() || isSaving) return
     startSaving(async () => {
-      const res = await addOrderNote(orderNo, note);
+      const res = await addOrderNote(orderNo, note)
       if (res.ok && res.event) {
-        setNote("");
-        setNoteError(null);
-        onNoteAdded(res.event);
+        setNote("")
+        setNoteError(null)
+        onNoteAdded(res.event)
       } else {
-        setNoteError(res.error ?? "Couldn't save the note.");
+        setNoteError(res.error ?? "Couldn't save the note.")
       }
-    });
-  };
+    })
+  }
 
   return (
     <form
       onSubmit={(e) => {
-        e.preventDefault();
-        submit();
+        e.preventDefault()
+        submit()
       }}
       className="flex flex-col gap-2 border-t border-[#F0EADF] pt-3"
     >
@@ -500,9 +499,7 @@ function NoteComposer({
         aria-label="Internal note"
         className="resize-none rounded-md border border-[#E7E0D4] bg-[#FFFDF8] px-2.5 py-2 text-[12.5px] text-[#2A1F1A] outline-none placeholder:text-[#B7AB9E] focus:border-[#C9A24B]"
       />
-      {noteError && (
-        <p className="text-[12px] font-medium text-[#C0392F]">{noteError}</p>
-      )}
+      {noteError && <p className="text-[12px] font-medium text-[#C0392F]">{noteError}</p>}
       <button
         type="submit"
         disabled={isSaving || !note.trim()}
@@ -511,7 +508,7 @@ function NoteComposer({
         {isSaving ? "Saving…" : "Add note"}
       </button>
     </form>
-  );
+  )
 }
 
 /* --------------------------- Shiprocket (stub) --------------------------- */
@@ -544,5 +541,5 @@ function AwbStub({ awb }: { awb: string | null }) {
         {awb ? "Print Label" : "Generate AWB"}
       </button>
     </div>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-import { ROUTES } from "@/lib/routes";
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Sanitize a post-auth `next` redirect target. Auth entry points carry the
@@ -16,10 +16,10 @@ export function safeNext(
   next: string | null | undefined,
   fallback: string = ROUTES.account,
 ): string {
-  if (!next) return fallback;
+  if (!next) return fallback
   // Must be an absolute path on our origin: exactly one leading slash, and no
   // backslashes anywhere (browsers normalise them into slashes).
-  if (!next.startsWith("/")) return fallback;
-  if (next.startsWith("//") || next.includes("\\")) return fallback;
-  return next;
+  if (!next.startsWith("/")) return fallback
+  if (next.startsWith("//") || next.includes("\\")) return fallback
+  return next
 }

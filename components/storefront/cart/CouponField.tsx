@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { type Coupon, couponLabel, validateCoupon } from "@/lib/coupons";
-import { useCartStore } from "@/stores/cart";
+import { useState } from "react"
+import { type Coupon, couponLabel, validateCoupon } from "@/lib/coupons"
+import { useCartStore } from "@/stores/cart"
 
 /**
  * Coupon entry for the order summary. Applies/clears the code on the persisted
@@ -15,34 +15,32 @@ export function CouponField({
   subtotalPaise,
   coupons,
 }: {
-  subtotalPaise: number;
-  coupons: Coupon[];
+  subtotalPaise: number
+  coupons: Coupon[]
 }) {
-  const couponCode = useCartStore((state) => state.couponCode);
-  const applyCoupon = useCartStore((state) => state.applyCoupon);
-  const clearCoupon = useCartStore((state) => state.clearCoupon);
-  const [input, setInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const couponCode = useCartStore((state) => state.couponCode)
+  const applyCoupon = useCartStore((state) => state.applyCoupon)
+  const clearCoupon = useCartStore((state) => state.clearCoupon)
+  const [input, setInput] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
-  const applied = couponCode
-    ? validateCoupon(couponCode, subtotalPaise, coupons)
-    : null;
+  const applied = couponCode ? validateCoupon(couponCode, subtotalPaise, coupons) : null
 
   const handleApply = () => {
-    const result = validateCoupon(input, subtotalPaise, coupons);
+    const result = validateCoupon(input, subtotalPaise, coupons)
     if (result.ok) {
-      applyCoupon(result.coupon.code);
-      setInput("");
-      setError(null);
+      applyCoupon(result.coupon.code)
+      setInput("")
+      setError(null)
     } else {
-      setError(result.message);
+      setError(result.message)
     }
-  };
+  }
 
   const handleRemove = () => {
-    clearCoupon();
-    setError(null);
-  };
+    clearCoupon()
+    setError(null)
+  }
 
   if (applied?.ok) {
     return (
@@ -58,11 +56,11 @@ export function CouponField({
           Remove
         </button>
       </div>
-    );
+    )
   }
 
   // A stored code that no longer validates (e.g. now below its minimum).
-  const staleMessage = couponCode && applied && !applied.ok ? applied.message : null;
+  const staleMessage = couponCode && applied && !applied.ok ? applied.message : null
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -74,13 +72,13 @@ export function CouponField({
           id="coupon"
           value={input}
           onChange={(event) => {
-            setInput(event.target.value);
-            if (error) setError(null);
+            setInput(event.target.value)
+            if (error) setError(null)
           }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
-              event.preventDefault();
-              handleApply();
+              event.preventDefault()
+              handleApply()
             }
           }}
           placeholder="Coupon code (try BRIDE20)"
@@ -98,16 +96,12 @@ export function CouponField({
         <p className="m-0 flex items-center justify-between gap-2 text-[12px] leading-snug text-[#B23A48]">
           <span>{error ?? staleMessage}</span>
           {staleMessage && !error && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="whitespace-nowrap underline"
-            >
+            <button type="button" onClick={handleRemove} className="whitespace-nowrap underline">
               Remove
             </button>
           )}
         </p>
       )}
     </div>
-  );
+  )
 }

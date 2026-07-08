@@ -7,10 +7,7 @@
  */
 export function ProductDetailSkeleton() {
   return (
-    <main
-      className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]"
-      aria-hidden="true"
-    >
+    <main className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]" aria-hidden="true">
       <div className="mb-[26px] h-3 w-56 animate-pulse rounded bg-[#EFE3D0]" />
 
       <div className="flex flex-col gap-10 md:flex-row md:flex-wrap md:gap-12">
@@ -19,10 +16,7 @@ export function ProductDetailSkeleton() {
           <div className="aspect-square w-full animate-pulse rounded-[4px] border border-[#EFE3D0] bg-[#F3E9DA]" />
           <div className="grid grid-cols-4 gap-3">
             {Array.from({ length: 4 }, (_, i) => (
-              <div
-                key={i}
-                className="aspect-square animate-pulse rounded-[3px] bg-[#F3E9DA]"
-              />
+              <div key={i} className="aspect-square animate-pulse rounded-[3px] bg-[#F3E9DA]" />
             ))}
           </div>
         </div>
@@ -38,15 +32,12 @@ export function ProductDetailSkeleton() {
           <div className="h-16 w-full animate-pulse rounded bg-[#EFE3D0]" />
           <div className="flex gap-2.5">
             {Array.from({ length: 3 }, (_, i) => (
-              <div
-                key={i}
-                className="h-10 w-24 animate-pulse rounded-sm bg-[#EFE3D0]"
-              />
+              <div key={i} className="h-10 w-24 animate-pulse rounded-sm bg-[#EFE3D0]" />
             ))}
           </div>
           <div className="h-12 w-full animate-pulse rounded-sm bg-[#EFE3D0]" />
         </div>
       </div>
     </main>
-  );
+  )
 }

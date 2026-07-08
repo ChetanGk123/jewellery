@@ -1,22 +1,22 @@
-import "server-only";
+import "server-only"
 import {
   ADMIN_REVIEWS_PAGE_SIZE,
   type AdminReviewRow,
   type ReviewCounts,
   type ReviewFilter,
   type ReviewStatus,
-} from "@/lib/admin/review";
-import { type AdminRead, loadAdmin } from "./admin-read";
-import { createServerClient } from "./server";
+} from "@/lib/admin/review"
+import { type AdminRead, loadAdmin } from "./admin-read"
+import { createServerClient } from "./server"
 
 export type AdminReviewsPage = {
-  rows: AdminReviewRow[];
-  counts: ReviewCounts;
-  filter: ReviewFilter;
-  page: number;
-  pageCount: number;
-  total: number;
-};
+  rows: AdminReviewRow[]
+  counts: ReviewCounts
+  filter: ReviewFilter
+  page: number
+  pageCount: number
+  total: number
+}
 
 function emptyPage(filter: ReviewFilter, page: number): AdminReviewsPage {
   return {
@@ -26,14 +26,14 @@ function emptyPage(filter: ReviewFilter, page: number): AdminReviewsPage {
     page,
     pageCount: 1,
     total: 0,
-  };
+  }
 }
 
 /** The `review.status` a filter tab maps to, or null for "All" (every status). */
 function statusFor(filter: ReviewFilter): ReviewStatus | null {
-  if (filter === "Pending") return "pending";
-  if (filter === "Approved") return "approved";
-  return null;
+  if (filter === "Pending") return "pending"
+  if (filter === "Approved") return "approved"
+  return null
 }
 
 /**
@@ -46,57 +46,49 @@ function statusFor(filter: ReviewFilter): ReviewStatus | null {
  * whole table). Writes go through the `admin_set_review_status` RPC (0014).
  */
 export async function listAdminReviews(opts: {
-  filter: ReviewFilter;
-  page: number;
+  filter: ReviewFilter
+  page: number
 }): Promise<AdminRead<AdminReviewsPage>> {
-  const filter = opts.filter;
-  const page = Math.max(1, opts.page);
-  const status = statusFor(filter);
+  const filter = opts.filter
+  const page = Math.max(1, opts.page)
+  const status = statusFor(filter)
 
   return loadAdmin(
     "reviews",
     async () => {
-      const supabase = await createServerClient();
-      const from = (page - 1) * ADMIN_REVIEWS_PAGE_SIZE;
+      const supabase = await createServerClient()
+      const from = (page - 1) * ADMIN_REVIEWS_PAGE_SIZE
 
       let rowsQuery = supabase
         .from("review")
         .select("id, product_id, name, rating, title, body, status, created_at")
         .order("created_at", { ascending: false })
-        .range(from, from + ADMIN_REVIEWS_PAGE_SIZE - 1);
-      if (status) rowsQuery = rowsQuery.eq("status", status);
+        .range(from, from + ADMIN_REVIEWS_PAGE_SIZE - 1)
+      if (status) rowsQuery = rowsQuery.eq("status", status)
 
       const headCount = (s: ReviewStatus) =>
-        supabase
-          .from("review")
-          .select("*", { count: "exact", head: true })
-          .eq("status", s);
-      const allCount = supabase
-        .from("review")
-        .select("*", { count: "exact", head: true });
+        supabase.from("review").select("*", { count: "exact", head: true }).eq("status", s)
+      const allCount = supabase.from("review").select("*", { count: "exact", head: true })
 
       const [rowsRes, pendingRes, approvedRes, allRes] = await Promise.all([
         rowsQuery,
         headCount("pending"),
         headCount("approved"),
         allCount,
-      ]);
+      ])
 
       const counts: ReviewCounts = {
         Pending: pendingRes.count ?? 0,
         Approved: approvedRes.count ?? 0,
         All: allRes.count ?? 0,
-      };
+      }
 
-      const reviews = rowsRes.data ?? [];
-      const productIds = [...new Set(reviews.map((r) => r.product_id))];
+      const reviews = rowsRes.data ?? []
+      const productIds = [...new Set(reviews.map((r) => r.product_id))]
       const { data: products } = productIds.length
-        ? await supabase
-            .from("product")
-            .select("id, name")
-            .in("id", productIds)
-        : { data: [] };
-      const nameById = new Map((products ?? []).map((p) => [p.id, p.name]));
+        ? await supabase.from("product").select("id, name").in("id", productIds)
+        : { data: [] }
+      const nameById = new Map((products ?? []).map((p) => [p.id, p.name]))
 
       const rows: AdminReviewRow[] = reviews.map((r) => ({
         id: r.id,
@@ -107,16 +99,13 @@ export async function listAdminReviews(opts: {
         body: r.body,
         status: r.status as ReviewStatus,
         createdAt: r.created_at,
-      }));
+      }))
 
-      const total = counts[filter];
-      const pageCount = Math.max(
-        1,
-        Math.ceil(total / ADMIN_REVIEWS_PAGE_SIZE),
-      );
+      const total = counts[filter]
+      const pageCount = Math.max(1, Math.ceil(total / ADMIN_REVIEWS_PAGE_SIZE))
 
-      return { rows, counts, filter, page, pageCount, total };
+      return { rows, counts, filter, page, pageCount, total }
     },
     emptyPage(filter, page),
-  );
+  )
 }

@@ -1,5 +1,5 @@
-import type { LegalSectionData } from "@/lib/legal-content";
-import { LEGAL_LAST_UPDATED } from "@/lib/legal-content";
+import type { LegalSectionData } from "@/lib/legal-content"
+import { LEGAL_LAST_UPDATED } from "@/lib/legal-content"
 
 /**
  * Presentational primitives for the legal pages (Privacy, Terms, Refund
@@ -14,7 +14,7 @@ export function LegalUpdatedNote() {
     <p className="m-0 text-[12.5px] font-light leading-none text-[#9C8A84]">
       Last updated: {LEGAL_LAST_UPDATED}
     </p>
-  );
+  )
 }
 
 /** One numbered-clause section: compact heading, paragraphs, optional list. */
@@ -25,10 +25,7 @@ export function LegalSection({ heading, paragraphs, list }: LegalSectionData) {
         {heading}
       </h2>
       {paragraphs.map((paragraph) => (
-        <p
-          key={paragraph}
-          className="m-0 text-[14.5px] font-light leading-[1.75] text-[#5E4A44]"
-        >
+        <p key={paragraph} className="m-0 text-[14.5px] font-light leading-[1.75] text-[#5E4A44]">
           {paragraph}
         </p>
       ))}
@@ -47,5 +44,5 @@ export function LegalSection({ heading, paragraphs, list }: LegalSectionData) {
           </ul>
         ))}
     </section>
-  );
+  )
 }

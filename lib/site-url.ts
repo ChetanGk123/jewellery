@@ -9,17 +9,17 @@
  * would happily hand to `new URL("")` and crash SSR for the whole app. So we
  * treat empty/whitespace/unparseable values as "not configured" and fall back.
  */
-const FALLBACK_SITE_URL = "http://localhost:3000";
+const FALLBACK_SITE_URL = "http://localhost:3000"
 
 function resolveSiteUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (!raw) return FALLBACK_SITE_URL;
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+  if (!raw) return FALLBACK_SITE_URL
   try {
     // Normalise (drops any trailing slash, validates the origin is parseable).
-    return new URL(raw).origin;
+    return new URL(raw).origin
   } catch {
-    return FALLBACK_SITE_URL;
+    return FALLBACK_SITE_URL
   }
 }
 
-export const SITE_URL = resolveSiteUrl();
+export const SITE_URL = resolveSiteUrl()

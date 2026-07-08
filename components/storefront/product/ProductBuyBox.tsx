@@ -1,27 +1,27 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import type { ProductOption } from "@/lib/db/queries";
-import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
-import { productEnquiryUrl } from "@/lib/whatsapp";
-import { useCartStore } from "@/stores/cart";
+import { useState } from "react"
+import type { ProductOption } from "@/lib/db/queries"
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon"
+import { productEnquiryUrl } from "@/lib/whatsapp"
+import { useCartStore } from "@/stores/cart"
 
-const MIN_QTY = 1;
-const MAX_QTY = 10;
-const ADDED_FEEDBACK_MS = 1400;
+const MIN_QTY = 1
+const MAX_QTY = 10
+const ADDED_FEEDBACK_MS = 1400
 
 /** Identity + price snapshot the buy box needs to build a cart line. */
 type BuyBoxProduct = {
-  id: string;
-  slug: string;
-  name: string;
-  categoryName: string;
-  pricePaise: number;
-  mrpPaise: number | null;
-  imageUrl: string | null;
-  imageBg: string | null;
-  stock: number;
-};
+  id: string
+  slug: string
+  name: string
+  categoryName: string
+  pricePaise: number
+  mrpPaise: number | null
+  imageUrl: string | null
+  imageBg: string | null
+  stock: number
+}
 
 /**
  * Purchase controls for the product detail page: plating-tone selector, a
@@ -34,24 +34,24 @@ export function ProductBuyBox({
   options,
   productUrl,
 }: {
-  product: BuyBoxProduct;
-  options: ProductOption[];
+  product: BuyBoxProduct
+  options: ProductOption[]
   /** Absolute URL of this product page, appended to the WhatsApp enquiry. */
-  productUrl?: string;
+  productUrl?: string
 }) {
-  const addItem = useCartStore((state) => state.addItem);
-  const [tone, setTone] = useState(options[0]?.value ?? "");
-  const [qty, setQty] = useState(MIN_QTY);
-  const [isAdded, setIsAdded] = useState(false);
+  const addItem = useCartStore((state) => state.addItem)
+  const [tone, setTone] = useState(options[0]?.value ?? "")
+  const [qty, setQty] = useState(MIN_QTY)
+  const [isAdded, setIsAdded] = useState(false)
 
-  const isOutOfStock = product.stock <= 0;
-  const maxQty = Math.max(MIN_QTY, Math.min(MAX_QTY, product.stock));
+  const isOutOfStock = product.stock <= 0
+  const maxQty = Math.max(MIN_QTY, Math.min(MAX_QTY, product.stock))
 
-  const decrease = () => setQty((q) => Math.max(MIN_QTY, q - 1));
-  const increase = () => setQty((q) => Math.min(maxQty, q + 1));
+  const decrease = () => setQty((q) => Math.max(MIN_QTY, q - 1))
+  const increase = () => setQty((q) => Math.min(maxQty, q + 1))
 
   const handleAddToCart = () => {
-    const selected = options.find((option) => option.value === tone);
+    const selected = options.find((option) => option.value === tone)
     addItem(
       {
         productId: product.id,
@@ -66,17 +66,17 @@ export function ProductBuyBox({
         optionValue: selected?.label ?? null,
       },
       qty,
-    );
-    setIsAdded(true);
-    window.setTimeout(() => setIsAdded(false), ADDED_FEEDBACK_MS);
-  };
+    )
+    setIsAdded(true)
+    window.setTimeout(() => setIsAdded(false), ADDED_FEEDBACK_MS)
+  }
 
-  const selectedLabel = options.find((option) => option.value === tone)?.label;
+  const selectedLabel = options.find((option) => option.value === tone)?.label
   const enquiryHref = productEnquiryUrl({
     name: product.name,
     tone: selectedLabel,
     url: productUrl,
-  });
+  })
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -87,7 +87,7 @@ export function ProductBuyBox({
           </legend>
           <div className="flex flex-wrap gap-2.5">
             {options.map((option) => {
-              const isSelected = option.value === tone;
+              const isSelected = option.value === tone
               return (
                 <button
                   key={option.id}
@@ -102,7 +102,7 @@ export function ProductBuyBox({
                 >
                   {option.label}
                 </button>
-              );
+              )
             })}
           </div>
         </fieldset>
@@ -139,9 +139,7 @@ export function ProductBuyBox({
         <button
           type="button"
           aria-label={
-            isOutOfStock
-              ? `${product.name} is out of stock`
-              : `Add ${product.name} to cart`
+            isOutOfStock ? `${product.name} is out of stock` : `Add ${product.name} to cart`
           }
           onClick={handleAddToCart}
           disabled={isOutOfStock}
@@ -162,5 +160,5 @@ export function ProductBuyBox({
         Enquire on WhatsApp
       </a>
     </div>
-  );
+  )
 }

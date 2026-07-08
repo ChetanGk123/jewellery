@@ -9,15 +9,11 @@
  * paise at the boundary (the DB stores paise; see CLAUDE.md §2).
  */
 
-import { z } from "zod";
-import type {
-  BannerSetting,
-  PromoSetting,
-  StoreSettings,
-} from "@/lib/db/settings";
-import type { Json } from "@/lib/db/types";
+import { z } from "zod"
+import type { BannerSetting, PromoSetting, StoreSettings } from "@/lib/db/settings"
+import type { Json } from "@/lib/db/types"
 
-const optionalText = (max: number) => z.string().trim().max(max);
+const optionalText = (max: number) => z.string().trim().max(max)
 
 export const settingsFormSchema = z.object({
   storeName: z.string().trim().min(1, "Store name is required.").max(120),
@@ -32,11 +28,7 @@ export const settingsFormSchema = z.object({
     .int("Whole rupees only.")
     .min(0, "Can't be negative.")
     .max(10_000_000),
-  flatRateRupees: z
-    .number()
-    .int("Whole rupees only.")
-    .min(0, "Can't be negative.")
-    .max(1_000_000),
+  flatRateRupees: z.number().int("Whole rupees only.").min(0, "Can't be negative.").max(1_000_000),
   codEnabled: z.boolean(),
   banner: z.object({
     enabled: z.boolean(),
@@ -54,11 +46,11 @@ export const settingsFormSchema = z.object({
     code: optionalText(40),
     note: optionalText(200),
   }),
-});
+})
 
-export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
+export type SettingsFormValues = z.infer<typeof settingsFormSchema>
 
-const RUPEE = 100;
+const RUPEE = 100
 
 /** Seed the form from the loaded store settings (paise → rupees). */
 export function settingsToFormValues(s: StoreSettings): SettingsFormValues {
@@ -72,7 +64,7 @@ export function settingsToFormValues(s: StoreSettings): SettingsFormValues {
     codEnabled: s.codEnabled,
     banner: bannerValues(s.banner),
     promo: promoValues(s.promo),
-  };
+  }
 }
 
 function bannerValues(b: BannerSetting): SettingsFormValues["banner"] {
@@ -83,7 +75,7 @@ function bannerValues(b: BannerSetting): SettingsFormValues["banner"] {
     offerLabel: b.offerLabel,
     offerText: b.offerText,
     code: b.code,
-  };
+  }
 }
 
 function promoValues(p: PromoSetting): SettingsFormValues["promo"] {
@@ -94,7 +86,7 @@ function promoValues(p: PromoSetting): SettingsFormValues["promo"] {
     button: p.button,
     code: p.code,
     note: p.note,
-  };
+  }
 }
 
 /** Build the `admin_update_settings` RPC payload (rupees → paise, banner/promo JSON). */
@@ -123,5 +115,5 @@ export function formValuesToPayload(v: SettingsFormValues): Json {
       code: v.promo.code.trim(),
       note: v.promo.note.trim(),
     },
-  };
+  }
 }

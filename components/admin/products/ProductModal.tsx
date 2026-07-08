@@ -1,62 +1,62 @@
-"use client";
+"use client"
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react"
 import {
   uploadProductImage,
   upsertProduct,
   type ProductInput,
-} from "@/app/(admin)/admin/(console)/products/actions";
+} from "@/app/(admin)/admin/(console)/products/actions"
 import {
   BADGE_OPTIONS,
   MAX_PRODUCT_IMAGES,
   PLATING_OPTIONS,
   type ProductImage,
-} from "@/lib/admin/product-status";
-import type { AdminCategory, AdminProductRow } from "@/lib/db/admin-products";
-import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
-import { useDialog } from "@/hooks/useDialog";
+} from "@/lib/admin/product-status"
+import type { AdminCategory, AdminProductRow } from "@/lib/db/admin-products"
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
+import { useDialog } from "@/hooks/useDialog"
 
 type Props = {
-  product: AdminProductRow | null;
-  categories: AdminCategory[];
-  onClose: () => void;
-};
+  product: AdminProductRow | null
+  categories: AdminCategory[]
+  onClose: () => void
+}
 
 type FormState = {
-  name: string;
-  sku: string;
-  categoryId: string;
-  price: string;
-  sale: string;
-  stock: string;
-  material: string;
-  badge: string;
-  blurb: string;
-  descLong: string;
-  detailsPlating: string;
-  detailsStones: string;
-  detailsCare: string;
-  shippingNote: string;
-  images: ProductImage[];
-  plating: string[];
-};
+  name: string
+  sku: string
+  categoryId: string
+  price: string
+  sale: string
+  stock: string
+  material: string
+  badge: string
+  blurb: string
+  descLong: string
+  detailsPlating: string
+  detailsStones: string
+  detailsCare: string
+  shippingNote: string
+  images: ProductImage[]
+  plating: string[]
+}
 
 const rupees = (paise: number) =>
-  Number.isInteger(paise / 100) ? String(paise / 100) : (paise / 100).toFixed(2);
+  Number.isInteger(paise / 100) ? String(paise / 100) : (paise / 100).toFixed(2)
 
 /** Rebuild the Designs & images grid from the stored gallery / primary url. */
 function initialImages(p: AdminProductRow | null): ProductImage[] {
-  if (!p) return [{ url: "", name: "", primary: true }];
-  if (p.gallery.length > 0) return p.gallery;
-  if (p.imageUrl) return [{ url: p.imageUrl, name: "", primary: true }];
-  return [{ url: "", name: "", primary: true }];
+  if (!p) return [{ url: "", name: "", primary: true }]
+  if (p.gallery.length > 0) return p.gallery
+  if (p.imageUrl) return [{ url: p.imageUrl, name: "", primary: true }]
+  return [{ url: "", name: "", primary: true }]
 }
 
 function initialState(p: AdminProductRow | null, categories: AdminCategory[]): FormState {
   // Reverse of the action's price mapping: a stored MRP means the price_paise is
   // the sale, so the "Price" field shows the MRP and "Sale" the charged amount.
-  const price = p ? (p.mrpPaise != null ? rupees(p.mrpPaise) : rupees(p.pricePaise)) : "";
-  const sale = p && p.mrpPaise != null ? rupees(p.pricePaise) : "";
+  const price = p ? (p.mrpPaise != null ? rupees(p.mrpPaise) : rupees(p.pricePaise)) : ""
+  const sale = p && p.mrpPaise != null ? rupees(p.pricePaise) : ""
   return {
     name: p?.name ?? "",
     sku: p?.sku ?? "",
@@ -74,60 +74,55 @@ function initialState(p: AdminProductRow | null, categories: AdminCategory[]): F
     shippingNote: p?.shippingNote ?? "",
     images: initialImages(p),
     plating: p?.platingOptions ?? [],
-  };
+  }
 }
 
 export function ProductModal({ product, categories, onClose }: Props) {
-  const [form, setForm] = useState<FormState>(() => initialState(product, categories));
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [form, setForm] = useState<FormState>(() => initialState(product, categories))
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
   const dialogRef = useDialog<HTMLDivElement>({
     isOpen: true,
     onDismiss: onClose,
     isPending,
-  });
+  })
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
-    setForm((f) => ({ ...f, [key]: value }));
+    setForm((f) => ({ ...f, [key]: value }))
 
   // --- Designs & images helpers -------------------------------------------
   const setImage = (i: number, patch: Partial<ProductImage>) =>
     set(
       "images",
       form.images.map((im, idx) => (idx === i ? { ...im, ...patch } : im)),
-    );
+    )
 
   const addImage = () => {
-    if (form.images.length >= MAX_PRODUCT_IMAGES) return;
-    set("images", [
-      ...form.images,
-      { url: "", name: "", primary: form.images.length === 0 },
-    ]);
-  };
+    if (form.images.length >= MAX_PRODUCT_IMAGES) return
+    set("images", [...form.images, { url: "", name: "", primary: form.images.length === 0 }])
+  }
 
   const removeImage = (i: number) => {
-    const kept = form.images.filter((_, idx) => idx !== i);
-    const hasPrimary = kept.some((im) => im.primary);
+    const kept = form.images.filter((_, idx) => idx !== i)
+    const hasPrimary = kept.some((im) => im.primary)
     // If we removed the primary, promote the first remaining image.
     set(
       "images",
       kept.map((im, idx) => ({ ...im, primary: hasPrimary ? im.primary : idx === 0 })),
-    );
-  };
+    )
+  }
 
   const makePrimary = (i: number) =>
     set(
       "images",
       form.images.map((im, idx) => ({ ...im, primary: idx === i })),
-    );
+    )
 
   const togglePlating = (opt: string) =>
     set(
       "plating",
-      form.plating.includes(opt)
-        ? form.plating.filter((p) => p !== opt)
-        : [...form.plating, opt],
-    );
+      form.plating.includes(opt) ? form.plating.filter((p) => p !== opt) : [...form.plating, opt],
+    )
 
   const submit = () => {
     const input: ProductInput = {
@@ -153,13 +148,13 @@ export function ProductModal({ product, categories, onClose }: Props) {
       shippingNote: form.shippingNote,
       isFeatured: product?.isFeatured ?? false,
       isFresh: product?.isFresh ?? false,
-    };
+    }
     startTransition(async () => {
-      const res = await upsertProduct(input);
-      if (res.ok) onClose();
-      else setError(res.error ?? "Couldn't save the product.");
-    });
-  };
+      const res = await upsertProduct(input)
+      if (res.ok) onClose()
+      else setError(res.error ?? "Couldn't save the product.")
+    })
+  }
 
   return (
     <div
@@ -193,7 +188,10 @@ export function ProductModal({ product, categories, onClose }: Props) {
         {/* Body */}
         <div className="flex flex-col gap-4 px-[26px] py-6">
           <Field label="Product name">
-            <input {...text(form.name, (v) => set("name", v))} placeholder="e.g. Kundan Rani Haar" />
+            <input
+              {...text(form.name, (v) => set("name", v))}
+              placeholder="e.g. Kundan Rani Haar"
+            />
           </Field>
           <Field label="SKU">
             <input {...text(form.sku, (v) => set("sku", v))} placeholder="JR-NK-001" />
@@ -213,7 +211,7 @@ export function ProductModal({ product, categories, onClose }: Props) {
               Add multiple photos or design variants. The primary image shows first on the
               storefront.
             </p>
-            <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(132px,1fr))]">
+            <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(122px,1fr))]">
               {form.images.map((im, i) => (
                 <ImageCard
                   key={i}
@@ -229,9 +227,17 @@ export function ProductModal({ product, categories, onClose }: Props) {
                 <button
                   type="button"
                   onClick={addImage}
-                  className="flex min-h-[132px] flex-col items-center justify-center gap-2 rounded-[9px] border-[1.5px] border-dashed border-[#C9B68F] bg-[#FCF9F3] text-[#A87A1E] transition-colors hover:border-[#A87A1E] hover:bg-[#F6EDDC]"
+                  className="flex min-h-33 flex-col items-center justify-center gap-2 rounded-[9px] border-[1.5px] border-dashed border-[#C9B68F] bg-[#FCF9F3] text-[#A87A1E] transition-colors hover:border-[#A87A1E] hover:bg-[#F6EDDC]"
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    aria-hidden="true"
+                  >
                     <path d="M12 5v14M5 12h14" />
                   </svg>
                   <span className="text-[11px] font-medium">Add design</span>
@@ -242,7 +248,7 @@ export function ProductModal({ product, categories, onClose }: Props) {
 
           {/* Category / Material / Badge */}
           <div className="flex flex-wrap gap-3">
-            <Field label="Category" className="min-w-[140px] flex-1">
+            <Field label="Category" className="min-w-35 flex-1">
               <select
                 value={form.categoryId}
                 onChange={(e) => set("categoryId", e.target.value)}
@@ -255,11 +261,15 @@ export function ProductModal({ product, categories, onClose }: Props) {
                 ))}
               </select>
             </Field>
-            <Field label="Material" className="min-w-[140px] flex-1">
+            <Field label="Material" className="min-w-35 flex-1">
               <input {...text(form.material, (v) => set("material", v))} placeholder="Kundan" />
             </Field>
-            <Field label="Badge" className="min-w-[140px] flex-1">
-              <select value={form.badge} onChange={(e) => set("badge", e.target.value)} className={SELECT_CLS}>
+            <Field label="Badge" className="min-w-35 flex-1">
+              <select
+                value={form.badge}
+                onChange={(e) => set("badge", e.target.value)}
+                className={SELECT_CLS}
+              >
                 {BADGE_OPTIONS.map((b) => (
                   <option key={b} value={b}>
                     {b}
@@ -272,13 +282,25 @@ export function ProductModal({ product, categories, onClose }: Props) {
           {/* Price / Sale / Stock */}
           <div className="flex gap-3">
             <Field label="Price (₹)" className="flex-1">
-              <input {...text(form.price, (v) => set("price", v))} inputMode="decimal" placeholder="1899" />
+              <input
+                {...text(form.price, (v) => set("price", v))}
+                inputMode="decimal"
+                placeholder="1899"
+              />
             </Field>
             <Field label="Sale price (₹)" className="flex-1">
-              <input {...text(form.sale, (v) => set("sale", v))} inputMode="decimal" placeholder="optional" />
+              <input
+                {...text(form.sale, (v) => set("sale", v))}
+                inputMode="decimal"
+                placeholder="optional"
+              />
             </Field>
             <Field label="Stock" className="flex-1">
-              <input {...text(form.stock, (v) => set("stock", v))} inputMode="numeric" placeholder="24" />
+              <input
+                {...text(form.stock, (v) => set("stock", v))}
+                inputMode="numeric"
+                placeholder="24"
+              />
             </Field>
           </div>
 
@@ -292,7 +314,7 @@ export function ProductModal({ product, categories, onClose }: Props) {
             </p>
             <div className="flex flex-wrap gap-2.5">
               {PLATING_OPTIONS.map((opt) => {
-                const on = form.plating.includes(opt);
+                const on = form.plating.includes(opt)
                 return (
                   <button
                     key={opt}
@@ -307,7 +329,7 @@ export function ProductModal({ product, categories, onClose }: Props) {
                     {on ? "✓ " : ""}
                     {opt}
                   </button>
-                );
+                )
               })}
             </div>
           </section>
@@ -329,19 +351,31 @@ export function ProductModal({ product, categories, onClose }: Props) {
             </span>
             <div className="flex flex-wrap gap-3">
               <Field label="Plating finish" className="min-w-[160px] flex-1">
-                <input {...text(form.detailsPlating, (v) => set("detailsPlating", v))} placeholder="22K gold-tone, anti-tarnish" />
+                <input
+                  {...text(form.detailsPlating, (v) => set("detailsPlating", v))}
+                  placeholder="22K gold-tone, anti-tarnish"
+                />
               </Field>
               <Field label="Stones" className="min-w-[160px] flex-1">
-                <input {...text(form.detailsStones, (v) => set("detailsStones", v))} placeholder="Kundan, pearls, cubic zirconia" />
+                <input
+                  {...text(form.detailsStones, (v) => set("detailsStones", v))}
+                  placeholder="Kundan, pearls, cubic zirconia"
+                />
               </Field>
             </div>
             <Field label="Care instructions">
-              <input {...text(form.detailsCare, (v) => set("detailsCare", v))} placeholder="Keep dry; store in a soft pouch" />
+              <input
+                {...text(form.detailsCare, (v) => set("detailsCare", v))}
+                placeholder="Keep dry; store in a soft pouch"
+              />
             </Field>
           </section>
 
           <Field label="Short tagline">
-            <input {...text(form.blurb, (v) => set("blurb", v))} placeholder="Shown under the name on the storefront" />
+            <input
+              {...text(form.blurb, (v) => set("blurb", v))}
+              placeholder="Shown under the name on the storefront"
+            />
           </Field>
 
           <Field label="Shipping information">
@@ -379,12 +413,12 @@ export function ProductModal({ product, categories, onClose }: Props) {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 const FIELD_INPUT =
-  "mt-1.5 block w-full rounded-lg border border-[#E7E0D4] bg-white px-3 py-2.5 text-[14px] text-[#2A1F1A] outline-none focus:border-[#C9A24B]";
-const SELECT_CLS = `${FIELD_INPUT} cursor-pointer`;
+  "mt-1.5 block w-full rounded-lg border border-[#E7E0D4] bg-white px-3 py-2.5 text-[14px] text-[#2A1F1A] outline-none focus:border-[#C9A24B]"
+const SELECT_CLS = `${FIELD_INPUT} cursor-pointer`
 
 /** Spread onto <input> for a controlled text field with the shared style. */
 function text(value: string, onChange: (v: string) => void) {
@@ -393,7 +427,7 @@ function text(value: string, onChange: (v: string) => void) {
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
     className: FIELD_INPUT,
     type: "text" as const,
-  };
+  }
 }
 
 function Field({
@@ -401,16 +435,16 @@ function Field({
   children,
   className,
 }: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
+  label: string
+  children: React.ReactNode
+  className?: string
 }) {
   return (
     <label className={`block text-[12px] font-medium text-[#8A7E74] ${className ?? ""}`}>
       {label}
       {children}
     </label>
-  );
+  )
 }
 
 /**
@@ -427,34 +461,34 @@ function ImageCard({
   onPrimary,
   onRemove,
 }: {
-  image: ProductImage;
-  index: number;
-  onUrl: (v: string) => void;
-  onName: (v: string) => void;
-  onPrimary: () => void;
-  onRemove: () => void;
+  image: ProductImage
+  index: number
+  onUrl: (v: string) => void
+  onName: (v: string) => void
+  onPrimary: () => void
+  onRemove: () => void
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
 
   const handleFile = async (file: File | undefined) => {
-    if (!file) return;
-    setErr(null);
-    setUploading(true);
+    if (!file) return
+    setErr(null)
+    setUploading(true)
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await uploadProductImage(fd);
-      if (res.ok && res.url) onUrl(res.url);
-      else setErr(res.error ?? "Upload failed.");
+      const fd = new FormData()
+      fd.append("file", file)
+      const res = await uploadProductImage(fd)
+      if (res.ok && res.url) onUrl(res.url)
+      else setErr(res.error ?? "Upload failed.")
     } catch {
-      setErr("Upload failed.");
+      setErr("Upload failed.")
     } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ""
     }
-  };
+  }
 
   return (
     <div className="overflow-hidden rounded-[9px] border border-[#E7E0D4] bg-[#FBF8F2]">
@@ -480,7 +514,16 @@ function ImageCard({
           </span>
         ) : (
           !image.url && (
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#A88A55" strokeWidth={1.4} className="opacity-60 transition-opacity group-hover:opacity-90" aria-hidden="true">
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#A88A55"
+              strokeWidth={1.4}
+              className="opacity-60 transition-opacity group-hover:opacity-90"
+              aria-hidden="true"
+            >
               <rect x="3" y="5" width="18" height="14" rx="2" />
               <circle cx="9" cy="10" r="1.6" />
               <path d="m4 17 5-4 4 3 3-2 4 3" />
@@ -491,8 +534,8 @@ function ImageCard({
           role="button"
           tabIndex={-1}
           onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
+            e.stopPropagation()
+            onRemove()
           }}
           title="Remove"
           className="absolute bottom-1.5 right-1.5 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-white/90 text-[14px] text-[#C0392F] shadow-[0_1px_4px_rgba(0,0,0,0.18)]"
@@ -529,5 +572,5 @@ function ImageCard({
         </button>
       </div>
     </div>
-  );
+  )
 }

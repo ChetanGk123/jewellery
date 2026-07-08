@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { HelpHeader } from "@/components/storefront/help/HelpHeader";
-import { FAQ_ITEMS } from "@/lib/help-content";
-import { ROUTES } from "@/lib/routes";
+import type { Metadata } from "next"
+import Link from "next/link"
+import { HelpHeader } from "@/components/storefront/help/HelpHeader"
+import { FAQ_ITEMS } from "@/lib/help-content"
+import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
     "Answers to common questions about RJ Jewellers — materials, delivery, Cash on Delivery, returns, plating care, and custom bridal sets.",
-};
+}
 
 /**
  * FAQ (TASKS 1.7) — no prototype equivalent, authored to the brand voice using
@@ -40,9 +40,7 @@ export default function FaqPage() {
                 +
               </span>
             </summary>
-            <p className="m-0 mt-3 text-[14px] font-light leading-[1.7] text-[#5E4A44]">
-              {item.a}
-            </p>
+            <p className="m-0 mt-3 text-[14px] font-light leading-[1.7] text-[#5E4A44]">{item.a}</p>
           </details>
         ))}
 
@@ -64,5 +62,5 @@ export default function FaqPage() {
         </div>
       </div>
     </main>
-  );
+  )
 }

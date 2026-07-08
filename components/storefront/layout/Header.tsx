@@ -1,11 +1,11 @@
-import Link from "next/link";
-import type { BannerSetting } from "@/lib/db/settings";
-import { getCurrentUser } from "@/lib/db/server";
-import { ROUTES } from "@/lib/routes";
-import { PRIMARY_NAV } from "@/lib/navigation";
-import { STORE_INFO } from "@/lib/store-info";
-import { CartBadge } from "./CartBadge";
-import { MobileNavDrawer } from "./MobileNavDrawer";
+import Link from "next/link"
+import type { BannerSetting } from "@/lib/db/settings"
+import { getCurrentUser } from "@/lib/db/server"
+import { ROUTES } from "@/lib/routes"
+import { PRIMARY_NAV } from "@/lib/navigation"
+import { STORE_INFO } from "@/lib/store-info"
+import { CartBadge } from "./CartBadge"
+import { MobileNavDrawer } from "./MobileNavDrawer"
 
 /**
  * Storefront header, matched to `refereces/JR Jewellers Storefront.html`:
@@ -17,10 +17,10 @@ import { MobileNavDrawer } from "./MobileNavDrawer";
  * per-request (strict CSP nonce), so reading the session here costs nothing.
  */
 export async function Header({ banner }: { banner: BannerSetting }) {
-  const showBanner = banner.enabled && Boolean(banner.msg1);
-  const user = await getCurrentUser();
-  const accountHref = user ? ROUTES.account : ROUTES.signIn;
-  const accountLabel = user ? "Account" : "Sign In";
+  const showBanner = banner.enabled && Boolean(banner.msg1)
+  const user = await getCurrentUser()
+  const accountHref = user ? ROUTES.account : ROUTES.signIn
+  const accountLabel = user ? "Account" : "Sign In"
 
   return (
     <header>
@@ -43,16 +43,11 @@ export async function Header({ banner }: { banner: BannerSetting }) {
               </span>
               <span>
                 {banner.offerLabel}{" "}
-                <span className="font-semibold text-gold-300">
-                  {banner.offerText}
-                </span>
+                <span className="font-semibold text-gold-300">{banner.offerText}</span>
                 {banner.code && (
                   <>
                     {" "}
-                    with code{" "}
-                    <span className="font-semibold text-gold-300">
-                      {banner.code}
-                    </span>
+                    with code <span className="font-semibold text-gold-300">{banner.code}</span>
                   </>
                 )}
               </span>
@@ -133,5 +128,5 @@ export async function Header({ banner }: { banner: BannerSetting }) {
         </nav>
       </div>
     </header>
-  );
+  )
 }

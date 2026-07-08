@@ -6,20 +6,20 @@
  */
 
 /** Categories shown per page in the admin card grid (TASKS 5.10). */
-export const ADMIN_CATEGORIES_PAGE_SIZE = 12;
+export const ADMIN_CATEGORIES_PAGE_SIZE = 12
 
 export type AdminCategoryRow = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  heroBg: string | null;
-  sortOrder: number;
-  productCount: number;
-};
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  heroBg: string | null
+  sortOrder: number
+  productCount: number
+}
 
 /** "12 products" / "1 product" / "No products yet" for the card subtitle. */
 export function categoryCountLabel(count: number): string {
-  if (count <= 0) return "No products yet";
-  return `${count} product${count === 1 ? "" : "s"}`;
+  if (count <= 0) return "No products yet"
+  return `${count} product${count === 1 ? "" : "s"}`
 }

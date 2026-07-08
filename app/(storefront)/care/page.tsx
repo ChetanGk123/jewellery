@@ -1,23 +1,18 @@
-import type { Metadata } from "next";
-import { HelpHeader } from "@/components/storefront/help/HelpHeader";
+import type { Metadata } from "next"
+import { HelpHeader } from "@/components/storefront/help/HelpHeader"
 import {
   CheckList,
   HelpSection,
   IconCard,
   NumberCard,
-} from "@/components/storefront/help/HelpBlocks";
-import {
-  CARE_DO,
-  CARE_DONT,
-  CARE_HOW,
-  CARE_RULES,
-} from "@/lib/help-content";
+} from "@/components/storefront/help/HelpBlocks"
+import { CARE_DO, CARE_DONT, CARE_HOW, CARE_RULES } from "@/lib/help-content"
 
 export const metadata: Metadata = {
   title: "Jewellery Care Guide",
   description:
     "Keep your RJ Jewellers pieces bright and sparkling — the four golden rules, do's and don'ts, plus cleaning and storage tips for anti-tarnish artificial jewellery.",
-};
+}
 
 /**
  * Care Guide (TASKS 1.7) — prototype-matched: the four golden rules, a do/don't
@@ -68,11 +63,11 @@ export default function CarePage() {
             <path d="M60 6 L64 15 L60 24 L56 15 Z" fill="#C9A24B" stroke="none" />
           </svg>
           <p className="m-0 max-w-[560px] text-[15px] font-normal italic leading-[1.7] text-[#5E4A44]">
-            Every JR piece carries an anti-tarnish plating. Treated with care,
-            your jewellery will stay radiant through every celebration.
+            Every JR piece carries an anti-tarnish plating. Treated with care, your jewellery will
+            stay radiant through every celebration.
           </p>
         </div>
       </div>
     </main>
-  );
+  )
 }

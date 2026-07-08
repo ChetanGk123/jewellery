@@ -1,21 +1,21 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
-import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
-import { amountToFreeShipPaise, qualifiesForFreeShipping } from "@/lib/shipping";
-import { formatPaise } from "@/lib/utils/money";
+import Link from "next/link"
+import type { ReactNode } from "react"
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon"
+import { amountToFreeShipPaise, qualifiesForFreeShipping } from "@/lib/shipping"
+import { formatPaise } from "@/lib/utils/money"
 
 type Props = {
-  subtotalPaise: number;
-  savingsPaise: number;
-  discountPaise: number;
-  shippingPaise: number;
-  totalPaise: number;
-  freeShipThresholdPaise: number;
-  checkoutHref: string;
+  subtotalPaise: number
+  savingsPaise: number
+  discountPaise: number
+  shippingPaise: number
+  totalPaise: number
+  freeShipThresholdPaise: number
+  checkoutHref: string
   /** Prefilled WhatsApp enquiry link built from the cart's lines. */
-  whatsappHref: string;
-  couponSlot: ReactNode;
-};
+  whatsappHref: string
+  couponSlot: ReactNode
+}
 
 /**
  * Cart order-summary panel, matched to the prototype: coupon entry, a
@@ -33,12 +33,9 @@ export function CartSummary({
   whatsappHref,
   couponSlot,
 }: Props) {
-  const toFreePaise = amountToFreeShipPaise(subtotalPaise, freeShipThresholdPaise);
-  const qualifies = qualifiesForFreeShipping(subtotalPaise, freeShipThresholdPaise);
-  const progress = Math.min(
-    100,
-    Math.round((subtotalPaise / freeShipThresholdPaise) * 100),
-  );
+  const toFreePaise = amountToFreeShipPaise(subtotalPaise, freeShipThresholdPaise)
+  const qualifies = qualifiesForFreeShipping(subtotalPaise, freeShipThresholdPaise)
+  const progress = Math.min(100, Math.round((subtotalPaise / freeShipThresholdPaise) * 100))
 
   return (
     <aside
@@ -58,10 +55,7 @@ export function CartSummary({
       ) : (
         <div className="flex flex-col gap-2">
           <p className="m-0 text-[12.5px] leading-snug text-[#5E4A44]">
-            Add{" "}
-            <span className="font-semibold text-maroon-700">
-              {formatPaise(toFreePaise)}
-            </span>{" "}
+            Add <span className="font-semibold text-maroon-700">{formatPaise(toFreePaise)}</span>{" "}
             more for free shipping.
           </p>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EFE3D0]">
@@ -77,18 +71,10 @@ export function CartSummary({
 
       <SummaryRow label="Subtotal" value={formatPaise(subtotalPaise)} />
       {savingsPaise > 0 && (
-        <SummaryRow
-          label="You save"
-          value={`− ${formatPaise(savingsPaise)}`}
-          tone="save"
-        />
+        <SummaryRow label="You save" value={`− ${formatPaise(savingsPaise)}`} tone="save" />
       )}
       {discountPaise > 0 && (
-        <SummaryRow
-          label="Discount"
-          value={`− ${formatPaise(discountPaise)}`}
-          tone="save"
-        />
+        <SummaryRow label="Discount" value={`− ${formatPaise(discountPaise)}`} tone="save" />
       )}
       <SummaryRow
         label="Shipping"
@@ -98,9 +84,7 @@ export function CartSummary({
       <div className="h-px bg-[#EFE3D0]" />
 
       <div className="flex items-baseline justify-between">
-        <span className="text-[16px] font-semibold leading-none text-maroon-900">
-          Total
-        </span>
+        <span className="text-[16px] font-semibold leading-none text-maroon-900">Total</span>
         <span className="text-[24px] font-semibold leading-none text-maroon-700">
           {formatPaise(totalPaise)}
         </span>
@@ -128,7 +112,7 @@ export function CartSummary({
         Cash on Delivery available across India · secure checkout
       </p>
     </aside>
-  );
+  )
 }
 
 function SummaryRow({
@@ -136,15 +120,15 @@ function SummaryRow({
   value,
   tone = "default",
 }: {
-  label: string;
-  value: string;
-  tone?: "default" | "save";
+  label: string
+  value: string
+  tone?: "default" | "save"
 }) {
-  const valueColor = tone === "save" ? "text-[#1E7A38]" : "text-[#2A1115]";
+  const valueColor = tone === "save" ? "text-[#1E7A38]" : "text-[#2A1115]"
   return (
     <div className="flex items-center justify-between text-[14px] leading-none">
       <span className="text-[#5E4A44]">{label}</span>
       <span className={valueColor}>{value}</span>
     </div>
-  );
+  )
 }

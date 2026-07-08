@@ -6,10 +6,7 @@
  */
 export function ListingSkeleton() {
   return (
-    <main
-      className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]"
-      aria-hidden="true"
-    >
+    <main className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]" aria-hidden="true">
       <div className="mb-[22px] h-3 w-40 animate-pulse rounded bg-[#EFE3D0]" />
 
       <header className="mb-7 flex flex-wrap items-end justify-between gap-3.5 border-b border-[#E7D9C2] pb-[22px]">
@@ -46,5 +43,5 @@ export function ListingSkeleton() {
         </div>
       </div>
     </main>
-  );
+  )
 }

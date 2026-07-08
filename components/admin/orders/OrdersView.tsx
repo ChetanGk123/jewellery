@@ -1,82 +1,69 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  exportOrders,
-  setOrderStatus,
-} from "@/app/(admin)/admin/(console)/orders/actions";
-import { pendingAge } from "@/lib/admin/order-aging";
-import {
-  nextStatus,
-  statusChip,
-  ORDER_STATUSES,
-  ORDERS_PAGE_SIZE,
-} from "@/lib/admin/order-status";
-import { csvRow } from "@/lib/utils/csv";
-import type {
-  AdminOrderRow,
-  AdminOrdersPage,
-  OrderEvent,
-  OrderFilter,
-} from "@/lib/db/admin-orders";
-import { ROUTES } from "@/lib/routes";
-import { formatPaise } from "@/lib/utils/money";
-import { AdminPager } from "@/components/admin/ui/AdminPager";
-import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog";
-import { OrderDrawer } from "./OrderDrawer";
+import { useState, useTransition } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { exportOrders, setOrderStatus } from "@/app/(admin)/admin/(console)/orders/actions"
+import { pendingAge } from "@/lib/admin/order-aging"
+import { nextStatus, statusChip, ORDER_STATUSES, ORDERS_PAGE_SIZE } from "@/lib/admin/order-status"
+import { csvRow } from "@/lib/utils/csv"
+import type { AdminOrderRow, AdminOrdersPage, OrderEvent, OrderFilter } from "@/lib/db/admin-orders"
+import { ROUTES } from "@/lib/routes"
+import { formatPaise } from "@/lib/utils/money"
+import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog"
+import { OrderDrawer } from "./OrderDrawer"
 
-const TABS: OrderFilter[] = ["All", ...ORDER_STATUSES];
+const TABS: OrderFilter[] = ["All", ...ORDER_STATUSES]
 
 function hrefFor(filter: OrderFilter, page: number, search: string): string {
-  const params = new URLSearchParams();
-  if (filter !== "All") params.set("status", filter);
-  if (page > 1) params.set("page", String(page));
-  if (search) params.set("q", search);
-  const qs = params.toString();
-  return qs ? `${ROUTES.adminOrders}?${qs}` : ROUTES.adminOrders;
+  const params = new URLSearchParams()
+  if (filter !== "All") params.set("status", filter)
+  if (page > 1) params.set("page", String(page))
+  if (search) params.set("q", search)
+  const qs = params.toString()
+  return qs ? `${ROUTES.adminOrders}?${qs}` : ROUTES.adminOrders
 }
 
 export function OrdersView({ page }: { page: AdminOrdersPage }) {
-  const router = useRouter();
+  const router = useRouter()
   // Search box is URL-driven (`?q=`) like the status/page params, so a search
   // is shareable and survives refresh. Seed the input from the served value.
-  const [query, setQuery] = useState(page.search);
+  const [query, setQuery] = useState(page.search)
 
   const submitSearch = (raw: string) => {
-    const next = raw.trim();
+    const next = raw.trim()
     // Preserve the active status tab; drop the page so results start at 1.
-    router.push(hrefFor(page.filter, 1, next));
-  };
+    router.push(hrefFor(page.filter, 1, next))
+  }
 
   // A snapshot of the open order — held locally (not derived from page.rows) so
   // the drawer survives revalidation and stays open even when a status change
   // moves the order out of the active filter. Only the backdrop / × close it.
-  const [selected, setSelected] = useState<AdminOrderRow | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<AdminOrderRow | null>(null)
+  const [error, setError] = useState<string | null>(null)
   // Cancel is terminal (restores stock, can't be undone) — gate it behind a
   // confirm dialog so it can't fire on a single misclick (TASKS 5.4).
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const openOrder = (order: AdminOrderRow) => {
-    setError(null);
-    setSelected(order);
-  };
+    setError(null)
+    setSelected(order)
+  }
   const closeOrder = () => {
-    setSelected(null);
-    setError(null);
-    setConfirmingCancel(false);
-  };
+    setSelected(null)
+    setError(null)
+    setConfirmingCancel(false)
+  }
 
   const runChange = (next: string) => {
-    if (!selected) return;
+    if (!selected) return
     startTransition(async () => {
-      const res = await setOrderStatus(selected.id, next);
+      const res = await setOrderStatus(selected.id, next)
       if (res.ok) {
-        setError(null);
-        setConfirmingCancel(false);
+        setError(null)
+        setConfirmingCancel(false)
         // Keep the drawer open; reflect the confirmed new status in place,
         // including a timeline entry mirroring what the audit trigger just
         // wrote (the served rows carry the real one after revalidation).
@@ -98,68 +85,88 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
                 ],
               }
             : prev,
-        );
+        )
       } else {
-        setError(res.error ?? "Couldn't update the order.");
+        setError(res.error ?? "Couldn't update the order.")
       }
-    });
-  };
+    })
+  }
 
   // A saved note comes back as its real audit row — append it to the open
   // drawer's snapshot so the timeline updates without a refetch.
   const onNoteAdded = (event: OrderEvent) => {
-    setSelected((prev) =>
-      prev ? { ...prev, events: [...prev.events, event] } : prev,
-    );
-  };
+    setSelected((prev) => (prev ? { ...prev, events: [...prev.events, event] } : prev))
+  }
 
   const onAdvance = () => {
-    if (!selected) return;
-    const next = nextStatus(selected.status);
-    if (next) runChange(next);
-  };
+    if (!selected) return
+    const next = nextStatus(selected.status)
+    if (next) runChange(next)
+  }
 
   // CSV for the accountant (5.18): the whole order book (capped server-side),
   // money in rupees with paise as decimals. Built client-side like the
   // subscribers export.
-  const [isExporting, setIsExporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false)
   const exportCsv = async () => {
-    setError(null);
-    setIsExporting(true);
+    setError(null)
+    setIsExporting(true)
     try {
-      const all = await exportOrders();
-      const inr = (paise: number) => (paise / 100).toFixed(2);
+      const all = await exportOrders()
+      const inr = (paise: number) => (paise / 100).toFixed(2)
       const lines = [
         csvRow([
-          "order_no", "date", "status", "payment", "customer", "phone",
-          "email", "city", "state", "pincode", "coupon", "subtotal_inr",
-          "discount_inr", "shipping_inr", "total_inr",
+          "order_no",
+          "date",
+          "status",
+          "payment",
+          "customer",
+          "phone",
+          "email",
+          "city",
+          "state",
+          "pincode",
+          "coupon",
+          "subtotal_inr",
+          "discount_inr",
+          "shipping_inr",
+          "total_inr",
         ]),
         ...all.map((o) =>
           csvRow([
-            o.orderNo, o.date, o.status, o.payment, o.customer, o.phone,
-            o.email, o.city, o.state, o.pincode, o.couponCode,
-            inr(o.subtotalPaise), inr(o.discountPaise), inr(o.shippingPaise),
+            o.orderNo,
+            o.date,
+            o.status,
+            o.payment,
+            o.customer,
+            o.phone,
+            o.email,
+            o.city,
+            o.state,
+            o.pincode,
+            o.couponCode,
+            inr(o.subtotalPaise),
+            inr(o.discountPaise),
+            inr(o.shippingPaise),
             inr(o.totalPaise),
           ]),
         ),
-      ];
+      ]
       const blob = new Blob([lines.join("\n")], {
         type: "text/csv;charset=utf-8",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "orders.csv";
-      link.click();
-      URL.revokeObjectURL(url);
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = "orders.csv"
+      link.click()
+      URL.revokeObjectURL(url)
     } catch {
-      setError("Couldn't export the orders.");
+      setError("Couldn't export the orders.")
     } finally {
-      setIsExporting(false);
+      setIsExporting(false)
     }
-  };
-
+  }
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -167,8 +174,8 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
       <form
         role="search"
         onSubmit={(e) => {
-          e.preventDefault();
-          submitSearch(query);
+          e.preventDefault()
+          submitSearch(query)
         }}
         className="flex flex-wrap items-center gap-2"
       >
@@ -205,8 +212,8 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
           <button
             type="button"
             onClick={() => {
-              setQuery("");
-              submitSearch("");
+              setQuery("")
+              submitSearch("")
             }}
             className="rounded-lg border border-[#E7E0D4] bg-white px-[18px] py-[10px] text-[12px] font-semibold text-[#5E4A40] transition-colors hover:border-[#D8CDB9]"
           >
@@ -234,7 +241,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         {TABS.map((tab) => {
-          const active = page.filter === tab;
+          const active = page.filter === tab
           return (
             <Link
               key={tab}
@@ -248,7 +255,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
             >
               {tab} <span className="opacity-70">{page.counts[tab]}</span>
             </Link>
-          );
+          )
         })}
       </div>
 
@@ -272,12 +279,9 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
               </p>
             ) : (
               page.rows.map((o) => {
-                const chip = statusChip(o.status);
+                const chip = statusChip(o.status)
                 // Ageing nudge (5.18): only Pending orders go stale.
-                const age =
-                  o.status === "Pending"
-                    ? pendingAge(o.createdAt, Date.now())
-                    : null;
+                const age = o.status === "Pending" ? pendingAge(o.createdAt, Date.now()) : null
                 return (
                   <button
                     type="button"
@@ -296,9 +300,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
                         {o.city}, {o.state}
                       </span>
                     </span>
-                    <span className="w-[120px] text-[12px] text-[#8A7E74]">
-                      {o.dateLabel}
-                    </span>
+                    <span className="w-[120px] text-[12px] text-[#8A7E74]">{o.dateLabel}</span>
                     <span className="w-[60px] text-center text-[13px] text-[#5E4A40]">
                       {o.itemCount}
                     </span>
@@ -330,7 +332,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
                       )}
                     </span>
                   </button>
-                );
+                )
               })
             )}
           </div>
@@ -351,8 +353,8 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         onClose={closeOrder}
         onAdvance={onAdvance}
         onCancel={() => {
-          setError(null);
-          setConfirmingCancel(true);
+          setError(null)
+          setConfirmingCancel(true)
         }}
         onNoteAdded={onNoteAdded}
         isPending={isPending}
@@ -364,11 +366,8 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
           title="Cancel this order?"
           body={
             <>
-              <span className="font-semibold text-maroon-700">
-                {selected.orderNo}
-              </span>{" "}
-              will be marked Cancelled and its stock returned. This can&rsquo;t
-              be undone.
+              <span className="font-semibold text-maroon-700">{selected.orderNo}</span> will be
+              marked Cancelled and its stock returned. This can&rsquo;t be undone.
             </>
           }
           confirmLabel="Cancel order"
@@ -378,10 +377,10 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
           error={error}
           onConfirm={() => runChange("Cancelled")}
           onClose={() => {
-            if (!isPending) setConfirmingCancel(false);
+            if (!isPending) setConfirmingCancel(false)
           }}
         />
       )}
     </div>
-  );
+  )
 }

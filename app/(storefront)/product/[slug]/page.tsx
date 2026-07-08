@@ -1,51 +1,43 @@
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ProductCard } from "@/components/storefront/product/ProductCard";
-import { ProductBuyBox } from "@/components/storefront/product/ProductBuyBox";
-import { ProductGallery } from "@/components/storefront/product/ProductGallery";
-import { ProductReviews } from "@/components/storefront/product/ProductReviews";
-import { ProductTabs } from "@/components/storefront/product/ProductTabs";
-import { StarRating } from "@/components/storefront/product/StarRating";
-import {
-  getApprovedReviews,
-  getProductBySlug,
-  getRelatedProducts,
-} from "@/lib/db/queries";
-import { hasDeliveredPurchase } from "@/lib/db/orders";
-import { getCustomerProfile } from "@/lib/db/profile";
-import { getCurrentUser } from "@/lib/db/server";
-import { getStoreSettings } from "@/lib/db/settings";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { getNonce } from "@/lib/csp-nonce";
-import { ROUTES } from "@/lib/routes";
-import { buildProductJsonLd } from "@/lib/seo";
-import { SITE_URL } from "@/lib/site-url";
-import { discountPercent, formatPaise } from "@/lib/utils/money";
+import type { Metadata } from "next"
+import { headers } from "next/headers"
+import Link from "next/link"
+import { notFound } from "next/navigation"
+import { ProductCard } from "@/components/storefront/product/ProductCard"
+import { ProductBuyBox } from "@/components/storefront/product/ProductBuyBox"
+import { ProductGallery } from "@/components/storefront/product/ProductGallery"
+import { ProductReviews } from "@/components/storefront/product/ProductReviews"
+import { ProductTabs } from "@/components/storefront/product/ProductTabs"
+import { StarRating } from "@/components/storefront/product/StarRating"
+import { getApprovedReviews, getProductBySlug, getRelatedProducts } from "@/lib/db/queries"
+import { hasDeliveredPurchase } from "@/lib/db/orders"
+import { getCustomerProfile } from "@/lib/db/profile"
+import { getCurrentUser } from "@/lib/db/server"
+import { getStoreSettings } from "@/lib/db/settings"
+import { JsonLd } from "@/components/seo/JsonLd"
+import { getNonce } from "@/lib/csp-nonce"
+import { ROUTES } from "@/lib/routes"
+import { buildProductJsonLd } from "@/lib/seo"
+import { SITE_URL } from "@/lib/site-url"
+import { discountPercent, formatPaise } from "@/lib/utils/money"
 
 type ProductPageProps = {
-  params: Promise<{ slug: string }>;
-};
+  params: Promise<{ slug: string }>
+}
 
-export async function generateMetadata({
-  params,
-}: ProductPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product) return { title: "Product not found" };
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params
+  const product = await getProductBySlug(slug)
+  if (!product) return { title: "Product not found" }
   const description =
-    product.blurb ??
-    `${product.name} — handcrafted artificial bridal jewellery from RJ Jewellers.`;
+    product.blurb ?? `${product.name} — handcrafted artificial bridal jewellery from RJ Jewellers.`
   const productImages = product.images
     .map((image) => image.url)
-    .filter((url): url is string => Boolean(url));
+    .filter((url): url is string => Boolean(url))
   // Next.js replaces the parent's openGraph object wholesale per segment (no
   // deep-merge), so this must always be set with an explicit image — falling
   // back to the site default (app/opengraph-image.tsx) for products that
   // still show the seed gradient (TASKS 1.1) rather than silently losing it.
-  const ogImages =
-    productImages.length > 0 ? productImages : [`${SITE_URL}/opengraph-image`];
+  const ogImages = productImages.length > 0 ? productImages : [`${SITE_URL}/opengraph-image`]
 
   return {
     title: product.name,
@@ -56,7 +48,7 @@ export async function generateMetadata({
       type: "website",
       images: ogImages,
     },
-  };
+  }
 }
 
 /**
@@ -65,40 +57,35 @@ export async function generateMetadata({
  * rail. Add to Cart / WhatsApp remain stubs until Phase 2.
  */
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product) notFound();
+  const { slug } = await params
+  const product = await getProductBySlug(slug)
+  if (!product) notFound()
 
   const [reviews, related, settings, user] = await Promise.all([
     getApprovedReviews(product.id),
     getRelatedProducts(product.category.slug, product.slug),
     getStoreSettings(),
     getCurrentUser(),
-  ]);
+  ])
   // Both depend only on the signed-in user — run them together, not in series.
   const [profile, hasPurchased] = user
-    ? await Promise.all([
-        getCustomerProfile(user.id),
-        hasDeliveredPurchase(product.id),
-      ])
-    : [null, false];
+    ? await Promise.all([getCustomerProfile(user.id), hasDeliveredPurchase(product.id)])
+    : [null, false]
 
-  const off = discountPercent(product.price_paise, product.mrp_paise);
-  const hasSale = off > 0;
-  const reviewCount = product.review_count;
-  const freeShip = formatPaise(settings.freeShipThresholdPaise);
+  const off = discountPercent(product.price_paise, product.mrp_paise)
+  const hasSale = off > 0
+  const reviewCount = product.review_count
+  const freeShip = formatPaise(settings.freeShipThresholdPaise)
 
   // Absolute URL for the WhatsApp enquiry link (derived from the request host).
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
+  const headerList = await headers()
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host")
   const proto =
     headerList.get("x-forwarded-proto") ??
-    (host && /^(localhost|127\.)/.test(host) ? "http" : "https");
-  const productUrl = host
-    ? `${proto}://${host}${ROUTES.product(product.slug)}`
-    : undefined;
+    (host && /^(localhost|127\.)/.test(host) ? "http" : "https")
+  const productUrl = host ? `${proto}://${host}${ROUTES.product(product.slug)}` : undefined
 
-  const nonce = await getNonce();
+  const nonce = await getNonce()
 
   return (
     <main className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]">
@@ -176,11 +163,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
               pricePaise: product.price_paise,
               mrpPaise: product.mrp_paise,
               imageUrl:
-                (product.images.find((img) => img.is_primary) ??
-                  product.images[0])?.url ?? null,
+                (product.images.find((img) => img.is_primary) ?? product.images[0])?.url ?? null,
               imageBg:
-                (product.images.find((img) => img.is_primary) ??
-                  product.images[0])?.bg ?? null,
+                (product.images.find((img) => img.is_primary) ?? product.images[0])?.bg ?? null,
               stock: product.stock,
             }}
             options={product.options}
@@ -229,5 +214,5 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </section>
       )}
     </main>
-  );
+  )
 }

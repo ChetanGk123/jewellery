@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { SignOutButton } from "@/components/storefront/auth/SignOutButton";
-import { ProfileForm } from "@/components/storefront/account/ProfileForm";
-import { getCustomerProfile } from "@/lib/db/profile";
-import { getCurrentUser } from "@/lib/db/server";
-import { ROUTES } from "@/lib/routes";
+import type { Metadata } from "next"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import { SignOutButton } from "@/components/storefront/auth/SignOutButton"
+import { ProfileForm } from "@/components/storefront/account/ProfileForm"
+import { getCustomerProfile } from "@/lib/db/profile"
+import { getCurrentUser } from "@/lib/db/server"
+import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
   title: "My Account",
   robots: { index: false },
-};
+}
 
 /**
  * Account home: saved contact + default address (prefills checkout), a link to
@@ -18,16 +18,14 @@ export const metadata: Metadata = {
  * come straight back.
  */
 export default async function AccountPage() {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser()
   if (!user) {
-    redirect(`${ROUTES.signIn}?next=${encodeURIComponent(ROUTES.account)}`);
+    redirect(`${ROUTES.signIn}?next=${encodeURIComponent(ROUTES.account)}`)
   }
 
-  const profile = await getCustomerProfile(user.id);
+  const profile = await getCustomerProfile(user.id)
   const seededName =
-    typeof user.user_metadata?.full_name === "string"
-      ? user.user_metadata.full_name
-      : "";
+    typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : ""
   const defaults = profile ?? {
     fullName: seededName,
     phone: "",
@@ -35,7 +33,7 @@ export default async function AccountPage() {
     city: "",
     state: "",
     pincode: "",
-  };
+  }
 
   return (
     <main className="mx-auto w-full max-w-[860px] flex-1 px-6 py-12">
@@ -45,8 +43,7 @@ export default async function AccountPage() {
             My Account
           </h1>
           <p className="m-0 text-[13.5px] font-light text-[#5E4A44]">
-            Signed in as{" "}
-            <span className="font-medium text-maroon-900">{user.email}</span>
+            Signed in as <span className="font-medium text-maroon-900">{user.email}</span>
           </p>
         </div>
         <Link
@@ -79,5 +76,5 @@ export default async function AccountPage() {
         <SignOutButton />
       </div>
     </main>
-  );
+  )
 }

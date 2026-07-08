@@ -5,10 +5,7 @@
  */
 export default function CheckoutLoading() {
   return (
-    <main
-      aria-hidden="true"
-      className="mx-auto w-full max-w-[1180px] flex-1 px-6 pb-20 pt-[30px]"
-    >
+    <main aria-hidden="true" className="mx-auto w-full max-w-[1180px] flex-1 px-6 pb-20 pt-[30px]">
       <div className="mb-[18px] h-3 w-32 animate-pulse rounded bg-[#EFE3D0]" />
       <div className="mb-7 h-11 w-64 animate-pulse rounded bg-[#EFE3D0]" />
 
@@ -25,5 +22,5 @@ export default function CheckoutLoading() {
         <div className="h-[420px] w-full animate-pulse rounded border border-[#E7D9C2] bg-[#F3E9DA] md:w-[360px] md:flex-none" />
       </div>
     </main>
-  );
+  )
 }

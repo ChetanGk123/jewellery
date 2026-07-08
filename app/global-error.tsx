@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import "./globals.css";
+import { useEffect } from "react"
+import "./globals.css"
 
 /**
  * Last-resort error boundary (Phase 4.3) — only fires if the ROOT layout
@@ -14,12 +14,12 @@ export default function GlobalError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error: Error & { digest?: string }
+  reset: () => void
 }) {
   useEffect(() => {
-    console.error(error);
-  }, [error]);
+    console.error(error)
+  }, [error])
 
   return (
     <html lang="en">
@@ -45,5 +45,5 @@ export default function GlobalError({
         </button>
       </body>
     </html>
-  );
+  )
 }

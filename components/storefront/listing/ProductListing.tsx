@@ -1,28 +1,28 @@
-import Link from "next/link";
-import { ProductCard } from "@/components/storefront/product/ProductCard";
-import type { ProductListItem } from "@/lib/db/queries";
-import { buildListingHref, type ListingParams } from "@/lib/listing";
-import { ROUTES } from "@/lib/routes";
-import { FilterSidebar, type CategoryFacet } from "./FilterSidebar";
-import { SortSelect } from "./SortSelect";
+import Link from "next/link"
+import { ProductCard } from "@/components/storefront/product/ProductCard"
+import type { ProductListItem } from "@/lib/db/queries"
+import { buildListingHref, type ListingParams } from "@/lib/listing"
+import { ROUTES } from "@/lib/routes"
+import { FilterSidebar, type CategoryFacet } from "./FilterSidebar"
+import { SortSelect } from "./SortSelect"
 
 type ProductListingProps = {
-  title: string;
+  title: string
   /** Small line under the title (e.g. result count or search context). */
-  subtitle: string;
-  products: ProductListItem[];
-  categories: CategoryFacet[];
-  materials: string[];
-  activeCategorySlug?: string;
-  params: ListingParams;
+  subtitle: string
+  products: ProductListItem[]
+  categories: CategoryFacet[]
+  materials: string[]
+  activeCategorySlug?: string
+  params: ListingParams
   /** True when any facet/sort is applied — drives "Clear all" + reset UI. */
-  hasActiveFilters: boolean;
+  hasActiveFilters: boolean
   /** Where "Clear filters" in the empty state points (bare page path); also
    * the base path pagination links are built from (TASKS 4.17). */
-  resetHref: string;
+  resetHref: string
   /** Total pages at `PRODUCTS_PAGE_SIZE` — 1 hides the pager entirely. */
-  pageCount: number;
-};
+  pageCount: number
+}
 
 /**
  * Shared listing surface for `/shop` and `/{category}`, matched to the
@@ -62,9 +62,7 @@ export function ProductListing({
           <h1 className="m-0 font-heading text-[42px] font-semibold leading-none text-maroon-900">
             {title}
           </h1>
-          <span className="text-[13px] leading-none text-[#7A655F]">
-            {subtitle}
-          </span>
+          <span className="text-[13px] leading-none text-[#7A655F]">{subtitle}</span>
         </div>
         <SortSelect value={params.sort} />
       </header>
@@ -113,7 +111,7 @@ export function ProductListing({
         </div>
       </div>
     </main>
-  );
+  )
 }
 
 /** Prev/numbered/Next pager (TASKS 4.17), storefront-styled mirror of the admin console's. */
@@ -122,11 +120,11 @@ function Pager({
   params,
   pageCount,
 }: {
-  resetHref: string;
-  params: ListingParams;
-  pageCount: number;
+  resetHref: string
+  params: ListingParams
+  pageCount: number
 }) {
-  const current = params.page;
+  const current = params.page
   return (
     <nav
       aria-label="Pagination"
@@ -158,7 +156,7 @@ function Pager({
         Next ›
       </PagerLink>
     </nav>
-  );
+  )
 }
 
 function PagerLink({
@@ -168,20 +166,20 @@ function PagerLink({
   disabled,
   children,
 }: {
-  resetHref: string;
-  params: ListingParams;
-  page: number;
-  disabled: boolean;
-  children: React.ReactNode;
+  resetHref: string
+  params: ListingParams
+  page: number
+  disabled: boolean
+  children: React.ReactNode
 }) {
   const className =
-    "rounded-sm border border-[#E7D9C2] bg-white px-3.5 py-2 text-[12.5px] font-medium leading-none text-maroon-700 transition-colors hover:border-gold-400";
+    "rounded-sm border border-[#E7D9C2] bg-white px-3.5 py-2 text-[12.5px] font-medium leading-none text-maroon-700 transition-colors hover:border-gold-400"
   if (disabled) {
-    return <span className={`${className} cursor-not-allowed opacity-40`}>{children}</span>;
+    return <span className={`${className} cursor-not-allowed opacity-40`}>{children}</span>
   }
   return (
     <Link href={buildListingHref(resetHref, params, page)} className={className}>
       {children}
     </Link>
-  );
+  )
 }

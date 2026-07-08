@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { STORE_INFO } from "@/lib/store-info";
+import type { ReactNode } from "react"
+import { STORE_INFO } from "@/lib/store-info"
 
 /**
  * Chrome for the admin auth screens (sign in / forgot / reset). Centered card in
@@ -12,10 +12,10 @@ export function AdminAuthShell({
   children,
   footer,
 }: {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
-  footer?: ReactNode;
+  title: string
+  subtitle?: string
+  children: ReactNode
+  footer?: ReactNode
 }) {
   return (
     <main className="flex flex-1 items-center justify-center bg-cream-100 px-6 py-16">
@@ -41,10 +41,8 @@ export function AdminAuthShell({
           </header>
           {children}
         </div>
-        {footer && (
-          <p className="mt-4 text-center text-[13px] text-[#5E4A44]">{footer}</p>
-        )}
+        {footer && <p className="mt-4 text-center text-[13px] text-[#5E4A44]">{footer}</p>}
       </div>
     </main>
-  );
+  )
 }

@@ -20,5 +20,5 @@ export function JsonLd({ data, nonce }: { data: object; nonce?: string }) {
       suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
-  );
+  )
 }

@@ -15,17 +15,17 @@
  */
 
 /** Full phone in E.164 digits (country code + number, no spaces or symbols). */
-const PHONE_E164 = "919972777455";
-const PHONE_DISPLAY = "+91 99727 77455";
-const EMAIL = "care@rjjewellers.in";
+const PHONE_E164 = "919972777455"
+const PHONE_DISPLAY = "+91 99727 77455"
+const EMAIL = "care@rjjewellers.in"
 
 export type SocialLink = {
-  label: string;
+  label: string
   /** Short glyph shown in the footer badge. */
-  glyph: string;
+  glyph: string
   /** Public profile URL, or null until the real handle is available. */
-  href: string | null;
-};
+  href: string | null
+}
 
 export const STORE_INFO = {
   /** Legal / display name, e.g. in the copyright line. */
@@ -73,4 +73,4 @@ export const STORE_INFO = {
     { label: "Instagram", glyph: "♢", href: null },
     { label: "WhatsApp", glyph: "💬", href: `https://wa.me/${PHONE_E164}` },
   ] as SocialLink[],
-} as const;
+} as const

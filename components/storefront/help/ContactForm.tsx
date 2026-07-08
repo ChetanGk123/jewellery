@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { useState, useTransition, type FormEvent } from "react";
-import { submitContactMessage } from "@/app/(storefront)/contact/actions";
-import { Honeypot } from "@/components/ui/Honeypot";
+import { useState, useTransition, type FormEvent } from "react"
+import { submitContactMessage } from "@/app/(storefront)/contact/actions"
+import { Honeypot } from "@/components/ui/Honeypot"
 
 const inputClass =
-  "w-full rounded-sm border border-[#E7D9C2] bg-cream-50 px-3.5 py-3 text-[14px] text-maroon-900 outline-none transition-colors focus-visible:border-gold-400 placeholder:text-[#B79B7E]";
+  "w-full rounded-sm border border-[#E7D9C2] bg-cream-50 px-3.5 py-3 text-[14px] text-maroon-900 outline-none transition-colors focus-visible:border-gold-400 placeholder:text-[#B79B7E]"
 
-type ContactField = "name" | "email" | "phone" | "subject" | "message";
+type ContactField = "name" | "email" | "phone" | "subject" | "message"
 
 /**
  * Contact form (TASKS 3.8) — submits through the `submitContactMessage` server
@@ -24,39 +24,37 @@ export function ContactForm() {
     phone: "",
     subject: "",
     message: "",
-  });
-  const [honeypot, setHoneypot] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<ContactField, string>>
-  >({});
-  const [formError, setFormError] = useState<string | null>(null);
-  const [ticketNo, setTicketNo] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  })
+  const [honeypot, setHoneypot] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<ContactField, string>>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [ticketNo, setTicketNo] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   const setField = (field: ContactField, value: string) =>
-    setValues((prev) => ({ ...prev, [field]: value }));
+    setValues((prev) => ({ ...prev, [field]: value }))
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFormError(null);
-    setFieldErrors({});
+    event.preventDefault()
+    setFormError(null)
+    setFieldErrors({})
     startTransition(async () => {
-      const res = await submitContactMessage({ values, honeypot });
+      const res = await submitContactMessage({ values, honeypot })
       if (res.ok) {
-        setTicketNo(res.ticketNo);
+        setTicketNo(res.ticketNo)
       } else {
-        setFieldErrors(res.fieldErrors);
-        setFormError(res.formError ?? "Something went wrong. Please try again.");
+        setFieldErrors(res.fieldErrors)
+        setFormError(res.formError ?? "Something went wrong. Please try again.")
       }
-    });
+    })
   }
 
   function reset() {
-    setValues({ name: "", email: "", phone: "", subject: "", message: "" });
-    setHoneypot("");
-    setFieldErrors({});
-    setFormError(null);
-    setTicketNo(null);
+    setValues({ name: "", email: "", phone: "", subject: "", message: "" })
+    setHoneypot("")
+    setFieldErrors({})
+    setFormError(null)
+    setTicketNo(null)
   }
 
   if (ticketNo) {
@@ -73,8 +71,8 @@ export function ContactForm() {
         </h3>
         <p className="m-0 max-w-[360px] text-[14px] font-light leading-[1.6] text-[#5E4A44]">
           Thanks for reaching out. Your reference is{" "}
-          <span className="font-semibold text-maroon-700">{ticketNo}</span> — our
-          team will reply to you shortly.
+          <span className="font-semibold text-maroon-700">{ticketNo}</span> — our team will reply to
+          you shortly.
         </p>
         <button
           type="button"
@@ -84,7 +82,7 @@ export function ContactForm() {
           Send another
         </button>
       </div>
-    );
+    )
   }
 
   return (
@@ -191,13 +189,9 @@ export function ContactForm() {
         </button>
       </form>
     </div>
-  );
+  )
 }
 
 function FieldError({ children }: { children: string }) {
-  return (
-    <span className="mt-1 text-[12px] leading-snug text-[#B23A2C]">
-      {children}
-    </span>
-  );
+  return <span className="mt-1 text-[12px] leading-snug text-[#B23A2C]">{children}</span>
 }

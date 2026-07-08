@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import Link from "next/link";
-import type { NavLink } from "@/lib/navigation";
-import { STORE_INFO } from "@/lib/store-info";
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
+import Link from "next/link"
+import type { NavLink } from "@/lib/navigation"
+import { STORE_INFO } from "@/lib/store-info"
 
 type Props = {
-  links: NavLink[];
-  accountHref: string;
-  accountLabel: string;
-};
+  links: NavLink[]
+  accountHref: string
+  accountLabel: string
+}
 
 /**
  * Mobile-only hamburger + off-canvas drawer (≤`md`), mirroring the admin
@@ -19,21 +19,21 @@ type Props = {
  * rows and pushed the hero below the fold (TASKS 4.7).
  */
 export function MobileNavDrawer({ links, accountHref, accountLabel }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isOpen]);
+      if (event.key === "Escape") setIsOpen(false)
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [isOpen])
 
   return (
     <div className="flex-none md:hidden">
@@ -106,5 +106,5 @@ export function MobileNavDrawer({ links, accountHref, accountLabel }: Props) {
           document.body,
         )}
     </div>
-  );
+  )
 }

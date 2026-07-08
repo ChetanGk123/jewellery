@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { defineConfig, devices } from "@playwright/test";
+import { readFileSync } from "node:fs"
+import { defineConfig, devices } from "@playwright/test"
 
 /**
  * Load `.env.local` into the test process (the seeded E2E account credentials
@@ -9,9 +9,9 @@ import { defineConfig, devices } from "@playwright/test";
  */
 try {
   for (const line of readFileSync(".env.local", "utf8").split("\n")) {
-    const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
+    const match = line.match(/^([A-Z0-9_]+)=(.*)$/)
     if (match && process.env[match[1]] === undefined) {
-      process.env[match[1]] = match[2];
+      process.env[match[1]] = match[2]
     }
   }
 } catch {
@@ -19,7 +19,7 @@ try {
 }
 
 /** Port for the E2E production server — off 3000 so a dev server can coexist. */
-const E2E_PORT = 3200;
+const E2E_PORT = 3200
 
 /**
  * Playwright E2E config (TASKS — Testing). Tests run against a real
@@ -70,4 +70,4 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },
-});
+})

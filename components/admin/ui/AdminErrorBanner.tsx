@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 
 /**
  * Visible failure state for admin reads (TASKS 5.1). Rendered by a console page
@@ -12,10 +12,10 @@ import { useTransition } from "react";
 export function AdminErrorBanner({
   message = "We couldn't load this data. It may be a temporary connection issue.",
 }: {
-  message?: string;
+  message?: string
 }) {
-  const router = useRouter();
-  const [isRetrying, startTransition] = useTransition();
+  const router = useRouter()
+  const [isRetrying, startTransition] = useTransition()
 
   return (
     <div
@@ -40,5 +40,5 @@ export function AdminErrorBanner({
         {isRetrying ? "Retrying…" : "Retry"}
       </button>
     </div>
-  );
+  )
 }

@@ -1,6 +1,6 @@
-import Link from "next/link";
-import type { PromoSetting } from "@/lib/db/settings";
-import { ROUTES } from "@/lib/routes";
+import Link from "next/link"
+import type { PromoSetting } from "@/lib/db/settings"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Home offer banner, driven by `setting.homepage_promo`. Renders nothing when
@@ -9,7 +9,7 @@ import { ROUTES } from "@/lib/routes";
  * highlighted code) and a gold CTA that routes to the shop.
  */
 export function PromoBanner({ promo }: { promo: PromoSetting }) {
-  if (!promo.enabled || !promo.title) return null;
+  if (!promo.enabled || !promo.title) return null
 
   return (
     <section className="mx-auto mt-[62px] max-w-[1280px] px-6">
@@ -51,5 +51,5 @@ export function PromoBanner({ promo }: { promo: PromoSetting }) {
         </Link>
       </div>
     </section>
-  );
+  )
 }

@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
 
 type Props = {
-  value: number;
-  onChange: (value: number) => void;
-};
+  value: number
+  onChange: (value: number) => void
+}
 
 /**
  * Clickable 1–5 star picker for the review form (TASKS 4.15) — a write
@@ -13,8 +13,8 @@ type Props = {
  * value; click commits it.
  */
 export function StarRatingInput({ value, onChange }: Props) {
-  const [hovered, setHovered] = useState<number | null>(null);
-  const shown = hovered ?? value;
+  const [hovered, setHovered] = useState<number | null>(null)
+  const shown = hovered ?? value
 
   return (
     <div
@@ -40,5 +40,5 @@ export function StarRatingInput({ value, onChange }: Props) {
         </button>
       ))}
     </div>
-  );
+  )
 }

@@ -1,23 +1,23 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { cartSavingsPaise, cartSubtotalPaise } from "@/lib/cart";
-import { type Coupon, validateCoupon } from "@/lib/coupons";
-import { shippingPaise } from "@/lib/shipping";
-import { ROUTES } from "@/lib/routes";
-import { cartEnquiryUrl } from "@/lib/whatsapp";
-import { useCartHydrated, useCartStore } from "@/stores/cart";
-import { CartLineRow } from "./CartLineRow";
-import { CartSummary } from "./CartSummary";
-import { CouponField } from "./CouponField";
+import Link from "next/link"
+import { cartSavingsPaise, cartSubtotalPaise } from "@/lib/cart"
+import { type Coupon, validateCoupon } from "@/lib/coupons"
+import { shippingPaise } from "@/lib/shipping"
+import { ROUTES } from "@/lib/routes"
+import { cartEnquiryUrl } from "@/lib/whatsapp"
+import { useCartHydrated, useCartStore } from "@/stores/cart"
+import { CartLineRow } from "./CartLineRow"
+import { CartSummary } from "./CartSummary"
+import { CouponField } from "./CouponField"
 
 type Props = {
-  freeShipThresholdPaise: number;
+  freeShipThresholdPaise: number
   /** Store's flat delivery fee (Settings 3.11), used below the free-ship threshold. */
-  flatRatePaise: number;
+  flatRatePaise: number
   /** Currently-usable coupons, loaded server-side (display-only preview). */
-  coupons: Coupon[];
-};
+  coupons: Coupon[]
+}
 
 /**
  * Client container for the cart page. Owns the store subscription and renders
@@ -27,38 +27,33 @@ type Props = {
  * `lib/cart` / `lib/shipping` at render time.
  */
 export function CartView({ freeShipThresholdPaise, flatRatePaise, coupons }: Props) {
-  const hasHydrated = useCartHydrated();
-  const lines = useCartStore((state) => state.lines);
-  const couponCode = useCartStore((state) => state.couponCode);
-  const setItemQuantity = useCartStore((state) => state.setItemQuantity);
-  const removeItem = useCartStore((state) => state.removeItem);
+  const hasHydrated = useCartHydrated()
+  const lines = useCartStore((state) => state.lines)
+  const couponCode = useCartStore((state) => state.couponCode)
+  const setItemQuantity = useCartStore((state) => state.setItemQuantity)
+  const removeItem = useCartStore((state) => state.removeItem)
 
   if (!hasHydrated) {
     return (
-      <div
-        aria-busy="true"
-        className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]"
-      >
+      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]">
         Loading your cart…
       </div>
-    );
+    )
   }
 
   if (lines.length === 0) {
-    return <EmptyCart />;
+    return <EmptyCart />
   }
 
-  const subtotalPaise = cartSubtotalPaise(lines);
-  const savingsPaise = cartSavingsPaise(lines);
-  const couponResult = couponCode
-    ? validateCoupon(couponCode, subtotalPaise, coupons)
-    : null;
-  const discountPaise = couponResult?.ok ? couponResult.discountPaise : 0;
-  const freeShipping = couponResult?.ok ? couponResult.freeShipping : false;
+  const subtotalPaise = cartSubtotalPaise(lines)
+  const savingsPaise = cartSavingsPaise(lines)
+  const couponResult = couponCode ? validateCoupon(couponCode, subtotalPaise, coupons) : null
+  const discountPaise = couponResult?.ok ? couponResult.discountPaise : 0
+  const freeShipping = couponResult?.ok ? couponResult.freeShipping : false
   const shipPaise = freeShipping
     ? 0
-    : shippingPaise(subtotalPaise, freeShipThresholdPaise, flatRatePaise);
-  const totalPaise = subtotalPaise - discountPaise + shipPaise;
+    : shippingPaise(subtotalPaise, freeShipThresholdPaise, flatRatePaise)
+  const totalPaise = subtotalPaise - discountPaise + shipPaise
 
   return (
     <div className="flex flex-wrap items-start gap-10">
@@ -91,12 +86,10 @@ export function CartView({ freeShipThresholdPaise, flatRatePaise, coupons }: Pro
         freeShipThresholdPaise={freeShipThresholdPaise}
         checkoutHref={ROUTES.checkout}
         whatsappHref={cartEnquiryUrl(lines)}
-        couponSlot={
-          <CouponField subtotalPaise={subtotalPaise} coupons={coupons} />
-        }
+        couponSlot={<CouponField subtotalPaise={subtotalPaise} coupons={coupons} />}
       />
     </div>
-  );
+  )
 }
 
 /** Empty-cart prompt, matched to the prototype's dashed panel. */
@@ -119,5 +112,5 @@ function EmptyCart() {
         Start shopping
       </Link>
     </div>
-  );
+  )
 }

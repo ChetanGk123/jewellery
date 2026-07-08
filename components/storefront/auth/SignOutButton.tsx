@@ -1,21 +1,21 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { supabase } from "@/lib/db/client";
-import { ROUTES } from "@/lib/routes";
+import { useState } from "react"
+import { supabase } from "@/lib/db/client"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Sign out and return to the home page (full navigation so the server layout
  * re-renders with the cleared session — header flips back to "Sign In").
  */
 export function SignOutButton() {
-  const [isBusy, setIsBusy] = useState(false);
+  const [isBusy, setIsBusy] = useState(false)
 
   const signOut = async () => {
-    setIsBusy(true);
-    await supabase.auth.signOut();
-    window.location.assign(ROUTES.home);
-  };
+    setIsBusy(true)
+    await supabase.auth.signOut()
+    window.location.assign(ROUTES.home)
+  }
 
   return (
     <button
@@ -26,5 +26,5 @@ export function SignOutButton() {
     >
       {isBusy ? "Signing out…" : "Sign Out"}
     </button>
-  );
+  )
 }

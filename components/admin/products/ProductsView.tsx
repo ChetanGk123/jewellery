@@ -1,52 +1,52 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ADMIN_PRODUCTS_PAGE_SIZE,
   PRODUCT_STATUS_FILTERS,
   productDisplayChip,
   stockColor,
-} from "@/lib/admin/product-status";
-import type { AdminProductRow, AdminProductsPage } from "@/lib/db/admin-products";
-import { ROUTES } from "@/lib/routes";
-import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
-import { formatPaise } from "@/lib/utils/money";
-import { AdminPager } from "@/components/admin/ui/AdminPager";
-import { ProductModal } from "./ProductModal";
+} from "@/lib/admin/product-status"
+import type { AdminProductRow, AdminProductsPage } from "@/lib/db/admin-products"
+import { ROUTES } from "@/lib/routes"
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
+import { formatPaise } from "@/lib/utils/money"
+import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { ProductModal } from "./ProductModal"
 
-type ModalState = { open: boolean; product: AdminProductRow | null };
+type ModalState = { open: boolean; product: AdminProductRow | null }
 
 export function ProductsView({
   page,
   initialEdit = null,
 }: {
-  page: AdminProductsPage;
+  page: AdminProductsPage
   /** Product to open the edit modal for on load (e.g. Analytics "Edit product" deep link). */
-  initialEdit?: AdminProductRow | null;
+  initialEdit?: AdminProductRow | null
 }) {
-  const router = useRouter();
-  const [search, setSearch] = useState(page.search);
+  const router = useRouter()
+  const [search, setSearch] = useState(page.search)
   const [modal, setModal] = useState<ModalState>(
     initialEdit ? { open: true, product: initialEdit } : { open: false, product: null },
-  );
+  )
 
   const hrefFor = (over: Partial<Record<"search" | "category" | "status" | "page", string>>) => {
-    const params = new URLSearchParams();
-    const s = over.search ?? page.search;
-    const cat = over.category ?? page.categoryId;
-    const st = over.status ?? page.status;
-    const pg = over.page ?? "1";
-    if (s.trim()) params.set("search", s.trim());
-    if (cat !== "All") params.set("category", cat);
-    if (st !== "All") params.set("status", st);
-    if (pg !== "1") params.set("page", pg);
-    const qs = params.toString();
-    return qs ? `${ROUTES.adminProducts}?${qs}` : ROUTES.adminProducts;
-  };
+    const params = new URLSearchParams()
+    const s = over.search ?? page.search
+    const cat = over.category ?? page.categoryId
+    const st = over.status ?? page.status
+    const pg = over.page ?? "1"
+    if (s.trim()) params.set("search", s.trim())
+    if (cat !== "All") params.set("category", cat)
+    if (st !== "All") params.set("status", st)
+    if (pg !== "1") params.set("page", pg)
+    const qs = params.toString()
+    return qs ? `${ROUTES.adminProducts}?${qs}` : ROUTES.adminProducts
+  }
 
-  const go = (over: Parameters<typeof hrefFor>[0]) => router.push(hrefFor(over));
+  const go = (over: Parameters<typeof hrefFor>[0]) => router.push(hrefFor(over))
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -54,12 +54,20 @@ export function ProductsView({
       <div className="flex flex-wrap items-center gap-3">
         <form
           onSubmit={(e) => {
-            e.preventDefault();
-            go({ search, page: "1" });
+            e.preventDefault()
+            go({ search, page: "1" })
           }}
           className="flex min-w-[200px] max-w-[320px] flex-1 items-center rounded-lg border border-[#E7E0D4] bg-white px-3"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C8A7E" strokeWidth={2} aria-hidden="true">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9C8A7E"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3-3" />
           </svg>
@@ -102,7 +110,15 @@ export function ProductsView({
             onClick={() => setModal({ open: true, product: null })}
             className="inline-flex items-center gap-2 rounded-lg bg-maroon-700 px-[18px] py-[11px] text-[12px] font-semibold tracking-[0.04em] text-cream-200 transition-opacity hover:opacity-90"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
               <path d="M12 5v14M5 12h14" />
             </svg>
             Add Product
@@ -130,7 +146,7 @@ export function ProductsView({
               </p>
             ) : (
               page.rows.map((p) => {
-                const chip = productDisplayChip(p.status, p.stock);
+                const chip = productDisplayChip(p.status, p.stock)
                 return (
                   <div
                     key={p.id}
@@ -139,9 +155,7 @@ export function ProductsView({
                     <div
                       className="h-[46px] w-[46px] flex-none rounded-lg border border-[#EFE3D0] bg-cover bg-center"
                       style={{
-                        backgroundImage: p.imageUrl
-                          ? `url(${p.imageUrl})`
-                          : PLACEHOLDER_GRADIENT,
+                        backgroundImage: p.imageUrl ? `url(${p.imageUrl})` : PLACEHOLDER_GRADIENT,
                       }}
                     />
                     <div className="min-w-0 flex-1">
@@ -186,7 +200,15 @@ export function ProductsView({
                           title="View on storefront"
                           className="inline-flex text-[#8A7E74] transition-colors hover:text-maroon-700"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={1.8}
+                            aria-hidden="true"
+                          >
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                             <path d="M15 3h6v6M10 14 21 3" />
                           </svg>
@@ -197,7 +219,15 @@ export function ProductsView({
                         title="View analytics"
                         className="inline-flex text-[#8A7E74] transition-colors hover:text-maroon-700"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        >
                           <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
                         </svg>
                       </Link>
@@ -207,14 +237,22 @@ export function ProductsView({
                         title="Edit product"
                         className="inline-flex text-[#8A7E74] transition-colors hover:text-maroon-700"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        >
                           <path d="M4 20h4L18 10l-4-4L4 16v4Z" />
                           <path d="M14 6l4 4" />
                         </svg>
                       </button>
                     </span>
                   </div>
-                );
+                )
               })
             )}
           </div>
@@ -238,5 +276,5 @@ export function ProductsView({
         />
       )}
     </div>
-  );
+  )
 }

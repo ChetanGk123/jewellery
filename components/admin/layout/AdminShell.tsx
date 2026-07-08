@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState, type ReactNode } from "react";
-import { AdminSidebar } from "./AdminSidebar";
-import { AdminTopbar } from "./AdminTopbar";
-import type { AdminNavCounts } from "@/lib/db/admin-metrics";
+import { useState, type ReactNode } from "react"
+import { AdminSidebar } from "./AdminSidebar"
+import { AdminTopbar } from "./AdminTopbar"
+import type { AdminNavCounts } from "@/lib/db/admin-metrics"
 
 /**
  * Admin console frame: sidebar + topbar around the routed view. Owns the mobile
@@ -16,12 +16,12 @@ export function AdminShell({
   adminEmail,
   children,
 }: {
-  counts: AdminNavCounts;
-  adminName: string;
-  adminEmail: string;
-  children: ReactNode;
+  counts: AdminNavCounts
+  adminName: string
+  adminEmail: string
+  children: ReactNode
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
     <div className="flex min-h-screen bg-[#F5F1EA] font-sans text-[#2A1F1A]">
@@ -37,5 +37,5 @@ export function AdminShell({
         <main className="flex-1 px-5 py-7 pb-16 sm:px-8">{children}</main>
       </div>
     </div>
-  );
+  )
 }

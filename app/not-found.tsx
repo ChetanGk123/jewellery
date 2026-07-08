@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { ROUTES } from "@/lib/routes";
-import { STORE_INFO } from "@/lib/store-info";
+import Link from "next/link"
+import { ROUTES } from "@/lib/routes"
+import { STORE_INFO } from "@/lib/store-info"
 
 /**
  * Root-level 404 (Phase 4.3) — catches genuinely unmatched top-level paths
@@ -24,8 +24,7 @@ export default function RootNotFound() {
         Page not found
       </h1>
       <p className="m-0 max-w-[420px] text-[15px] font-light leading-[1.6] text-[#5E4A44]">
-        The page you&apos;re looking for doesn&apos;t exist. Let&apos;s get you back on
-        track.
+        The page you&apos;re looking for doesn&apos;t exist. Let&apos;s get you back on track.
       </p>
       <Link
         href={ROUTES.home}
@@ -34,5 +33,5 @@ export default function RootNotFound() {
         Back to Home
       </Link>
     </main>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 /**
  * The one interactive piece of the print surface (5.12) — kept to a tiny client
@@ -13,5 +13,5 @@ export function PrintButton() {
     >
       Print
     </button>
-  );
+  )
 }

@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { REVIEW_BODY_MIN } from "@/lib/review/schema";
-import { submitReview } from "@/app/(storefront)/product/[slug]/actions";
-import { StarRatingInput } from "./StarRatingInput";
+import { useState, useTransition } from "react"
+import { REVIEW_BODY_MIN } from "@/lib/review/schema"
+import { submitReview } from "@/app/(storefront)/product/[slug]/actions"
+import { StarRatingInput } from "./StarRatingInput"
 
 type Props = {
-  productId: string;
+  productId: string
   /** Verified-purchase gate (implies signed-in) — false renders nothing. */
-  hasPurchased: boolean;
-  prefillName: string;
-};
+  hasPurchased: boolean
+  prefillName: string
+}
 
 /**
  * "Write a review" form on the product detail page (TASKS 4.15). Only ever
@@ -21,17 +21,17 @@ type Props = {
  * `pending`), so success is a static confirmation, not a list update.
  */
 export function ReviewForm({ productId, hasPurchased, prefillName }: Props) {
-  const [name, setName] = useState(prefillName);
-  const [rating, setRating] = useState(0);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [name, setName] = useState(prefillName)
+  const [rating, setRating] = useState(0)
+  const [title, setTitle] = useState("")
+  const [body, setBody] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   if (!hasPurchased) {
-    return null;
+    return null
   }
 
   if (isSubmitted) {
@@ -41,22 +41,22 @@ export function ReviewForm({ productId, hasPurchased, prefillName }: Props) {
           Thanks for your review! It'll appear here once it's approved.
         </p>
       </div>
-    );
+    )
   }
 
   function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setFieldErrors({});
-    setFormError(null);
+    event.preventDefault()
+    setFieldErrors({})
+    setFormError(null)
     startTransition(async () => {
-      const result = await submitReview(productId, { name, rating, title, body });
+      const result = await submitReview(productId, { name, rating, title, body })
       if (!result.ok) {
-        setFieldErrors(result.fieldErrors);
-        setFormError(result.formError ?? null);
-        return;
+        setFieldErrors(result.fieldErrors)
+        setFormError(result.formError ?? null)
+        return
       }
-      setIsSubmitted(true);
-    });
+      setIsSubmitted(true)
+    })
   }
 
   return (
@@ -90,9 +90,7 @@ export function ReviewForm({ productId, hasPurchased, prefillName }: Props) {
           onChange={(e) => setName(e.target.value)}
           className="rounded-sm border border-[#E7D9C2] bg-white px-3.5 py-2.5 text-[13.5px] text-maroon-900 outline-none focus:border-gold-400"
         />
-        {fieldErrors.name && (
-          <span className="text-[12px] text-[#B23A48]">{fieldErrors.name}</span>
-        )}
+        {fieldErrors.name && <span className="text-[12px] text-[#B23A48]">{fieldErrors.name}</span>}
       </label>
 
       <label className="flex flex-col gap-1.5">
@@ -121,9 +119,7 @@ export function ReviewForm({ productId, hasPurchased, prefillName }: Props) {
           placeholder={`At least ${REVIEW_BODY_MIN} characters`}
           className="resize-none rounded-sm border border-[#E7D9C2] bg-white px-3.5 py-2.5 text-[13.5px] text-maroon-900 outline-none focus:border-gold-400"
         />
-        {fieldErrors.body && (
-          <span className="text-[12px] text-[#B23A48]">{fieldErrors.body}</span>
-        )}
+        {fieldErrors.body && <span className="text-[12px] text-[#B23A48]">{fieldErrors.body}</span>}
       </label>
 
       <button
@@ -134,5 +130,5 @@ export function ReviewForm({ productId, hasPurchased, prefillName }: Props) {
         {isPending ? "Submitting…" : "Submit Review"}
       </button>
     </form>
-  );
+  )
 }

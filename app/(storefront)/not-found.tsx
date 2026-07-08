@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { ROUTES } from "@/lib/routes";
+import Link from "next/link"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Branded 404 for the storefront (Phase 4.3) — replaces Next's unstyled
@@ -22,8 +22,8 @@ export default function StorefrontNotFound() {
       </h1>
 
       <p className="m-0 max-w-[420px] text-[15px] font-light leading-[1.6] text-[#5E4A44]">
-        The page you&apos;re looking for may have moved, or the link isn&apos;t quite
-        right. Let&apos;s get you back to the collection.
+        The page you&apos;re looking for may have moved, or the link isn&apos;t quite right.
+        Let&apos;s get you back to the collection.
       </p>
 
       <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
@@ -41,5 +41,5 @@ export default function StorefrontNotFound() {
         </Link>
       </div>
     </main>
-  );
+  )
 }

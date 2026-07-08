@@ -6,10 +6,7 @@
  */
 export default function CartLoading() {
   return (
-    <main
-      aria-hidden="true"
-      className="mx-auto w-full max-w-[1180px] flex-1 px-6 pb-20 pt-[30px]"
-    >
+    <main aria-hidden="true" className="mx-auto w-full max-w-[1180px] flex-1 px-6 pb-20 pt-[30px]">
       <div className="mb-7 h-11 w-56 animate-pulse rounded bg-[#EFE3D0]" />
 
       <div className="flex flex-wrap items-start gap-10">
@@ -24,5 +21,5 @@ export default function CartLoading() {
         <div className="h-[360px] w-full animate-pulse rounded border border-[#E7D9C2] bg-[#F3E9DA] md:w-[360px] md:flex-none" />
       </div>
     </main>
-  );
+  )
 }

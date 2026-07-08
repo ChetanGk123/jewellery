@@ -1,7 +1,7 @@
-import Link from "next/link";
-import type { CategoryTile } from "@/lib/db/queries";
-import { ROUTES } from "@/lib/routes";
-import { PLACEHOLDER_GRADIENT } from "@/lib/theme";
+import Link from "next/link"
+import type { CategoryTile } from "@/lib/db/queries"
+import { ROUTES } from "@/lib/routes"
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
 
 /**
  * "Shop by Category" tile grid — matched to the prototype: each category is a
@@ -53,5 +53,5 @@ export function CategoryTiles({ categories }: { categories: CategoryTile[] }) {
         ))}
       </div>
     </section>
-  );
+  )
 }

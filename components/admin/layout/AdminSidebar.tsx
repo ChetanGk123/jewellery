@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ADMIN_NAV, type AdminBadgeKey } from "@/lib/admin/nav";
-import { ROUTES } from "@/lib/routes";
-import { STORE_INFO } from "@/lib/store-info";
-import { AdminNavIcon } from "./AdminNavIcons";
-import { AdminSignOutButton } from "@/components/admin/auth/AdminSignOutButton";
-import type { AdminNavCounts } from "@/lib/db/admin-metrics";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { ADMIN_NAV, type AdminBadgeKey } from "@/lib/admin/nav"
+import { ROUTES } from "@/lib/routes"
+import { STORE_INFO } from "@/lib/store-info"
+import { AdminNavIcon } from "./AdminNavIcons"
+import { AdminSignOutButton } from "@/components/admin/auth/AdminSignOutButton"
+import type { AdminNavCounts } from "@/lib/db/admin-metrics"
 
 type Props = {
-  counts: AdminNavCounts;
+  counts: AdminNavCounts
   /** Signed-in admin's display name (or email) — drives the footer avatar initials. */
-  adminName: string;
+  adminName: string
   /** Signed-in admin's email, shown in the footer card. */
-  adminEmail: string;
+  adminEmail: string
   /** Mobile drawer open state (ignored at `lg` where the sidebar is static). */
-  isOpen: boolean;
-  onClose: () => void;
-};
+  isOpen: boolean
+  onClose: () => void
+}
 
 /**
  * Dark-maroon admin sidebar (prototype-matched): wordmark + "Admin Console",
@@ -26,21 +26,13 @@ type Props = {
  * and a Store Admin footer card. Static column at `lg`; an off-canvas drawer
  * with a backdrop below it.
  */
-export function AdminSidebar({
-  counts,
-  adminName,
-  adminEmail,
-  isOpen,
-  onClose,
-}: Props) {
-  const pathname = usePathname();
+export function AdminSidebar({ counts, adminName, adminEmail, isOpen, onClose }: Props) {
+  const pathname = usePathname()
 
   const isActive = (href: string) =>
-    href === ROUTES.admin
-      ? pathname === href
-      : pathname === href || pathname.startsWith(`${href}/`);
+    href === ROUTES.admin ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
 
-  const badgeCount = (key?: AdminBadgeKey) => (key ? counts[key] : 0);
+  const badgeCount = (key?: AdminBadgeKey) => (key ? counts[key] : 0)
 
   return (
     <>
@@ -69,8 +61,8 @@ export function AdminSidebar({
 
         <nav aria-label="Admin" className="flex flex-col gap-1.5">
           {ADMIN_NAV.map((item) => {
-            const active = isActive(item.href);
-            const count = badgeCount(item.badge);
+            const active = isActive(item.href)
+            const count = badgeCount(item.badge)
             return (
               <Link
                 key={item.href}
@@ -96,7 +88,7 @@ export function AdminSidebar({
                   </span>
                 )}
               </Link>
-            );
+            )
           })}
         </nav>
 
@@ -105,13 +97,8 @@ export function AdminSidebar({
             {initials(adminName)}
           </span>
           <div className="flex min-w-0 flex-col leading-tight">
-            <span className="text-[13px] font-medium text-[#F0DDC9]">
-              Store Admin
-            </span>
-            <span
-              className="truncate text-[11px] text-[#9C7A6E]"
-              title={adminEmail}
-            >
+            <span className="text-[13px] font-medium text-[#F0DDC9]">Store Admin</span>
+            <span className="truncate text-[11px] text-[#9C7A6E]" title={adminEmail}>
               {adminEmail}
             </span>
           </div>
@@ -119,7 +106,7 @@ export function AdminSidebar({
         </div>
       </aside>
     </>
-  );
+  )
 }
 
 /**
@@ -128,11 +115,8 @@ export function AdminSidebar({
  * else the first two characters. "Chetan GK" → "CG"; "asha.k@x.com" → "AK".
  */
 function initials(value: string): string {
-  const base = value.includes("@") ? value.slice(0, value.indexOf("@")) : value;
-  const parts = base.split(/[\s._+-]+/).filter(Boolean);
-  const letters =
-    parts.length >= 2
-      ? parts[0][0] + parts[1][0]
-      : (parts[0] ?? base).slice(0, 2);
-  return letters.toUpperCase();
+  const base = value.includes("@") ? value.slice(0, value.indexOf("@")) : value
+  const parts = base.split(/[\s._+-]+/).filter(Boolean)
+  const letters = parts.length >= 2 ? parts[0][0] + parts[1][0] : (parts[0] ?? base).slice(0, 2)
+  return letters.toUpperCase()
 }

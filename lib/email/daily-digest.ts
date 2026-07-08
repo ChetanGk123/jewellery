@@ -5,31 +5,31 @@
  * constraints as the other builders; all product-derived fields escaped.
  */
 
-import { type EmailMessage, escapeHtml } from "./order-confirmation";
-import { STORE_INFO } from "@/lib/store-info";
-import { formatPaise } from "@/lib/utils/money";
+import { type EmailMessage, escapeHtml } from "./order-confirmation"
+import { STORE_INFO } from "@/lib/store-info"
+import { formatPaise } from "@/lib/utils/money"
 
-export type DigestLowStockRow = { name: string; sku: string; stock: number };
+export type DigestLowStockRow = { name: string; sku: string; stock: number }
 
 export type DailyDigestEmailInput = {
   /** The IST calendar day the digest covers, e.g. "2026-07-06". */
-  dateIso: string;
+  dateIso: string
   /** Orders placed that day, all statuses. */
-  orders: number;
+  orders: number
   /** How many of those are cancelled (excluded from revenue). */
-  cancelled: number;
-  revenuePaise: number;
+  cancelled: number
+  revenuePaise: number
   /** Current pending queue — the "needs action tomorrow" number. */
-  pendingOrders: number;
-  lowStockCount: number;
+  pendingOrders: number
+  lowStockCount: number
   /** Worst offenders (lowest stock first, capped by the RPC). */
-  lowStock: DigestLowStockRow[];
+  lowStock: DigestLowStockRow[]
   /** Absolute URL of the admin dashboard. */
-  adminUrl: string;
-};
+  adminUrl: string
+}
 
-const HEADING_FONT = "Georgia, 'Times New Roman', serif";
-const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif";
+const HEADING_FONT = "Georgia, 'Times New Roman', serif"
+const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 
 /** "2026-07-06" → "06 Jul 2026" (plain calendar date, no timezone math). */
 function dateLabel(iso: string): string {
@@ -38,25 +38,22 @@ function dateLabel(iso: string): string {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  });
+  })
 }
 
 /** Build the close-of-day digest. */
-export function buildDailyDigestEmail(
-  input: DailyDigestEmailInput,
-): EmailMessage {
-  const day = dateLabel(input.dateIso);
-  const revenue = formatPaise(input.revenuePaise);
-  const orders = `${input.orders} order${input.orders === 1 ? "" : "s"}`;
-  const cancelledNote =
-    input.cancelled > 0 ? ` (${input.cancelled} cancelled)` : "";
+export function buildDailyDigestEmail(input: DailyDigestEmailInput): EmailMessage {
+  const day = dateLabel(input.dateIso)
+  const revenue = formatPaise(input.revenuePaise)
+  const orders = `${input.orders} order${input.orders === 1 ? "" : "s"}`
+  const cancelledNote = input.cancelled > 0 ? ` (${input.cancelled} cancelled)` : ""
 
-  const subject = `Daily digest — ${day}: ${orders}, ${revenue}`;
+  const subject = `Daily digest — ${day}: ${orders}, ${revenue}`
 
   const stockLines =
     input.lowStock.length > 0
       ? input.lowStock.map((p) => `• ${p.name} (${p.sku}) — ${p.stock} left`)
-      : ["No low-stock products."];
+      : ["No low-stock products."]
 
   const text = [
     `${STORE_INFO.name} — daily digest for ${day}`,
@@ -68,14 +65,14 @@ export function buildDailyDigestEmail(
     ...stockLines,
     "",
     `Open the dashboard: ${input.adminUrl}`,
-  ].join("\n");
+  ].join("\n")
 
   const kpiRows: Array<[string, string]> = [
     ["Orders", `${orders}${cancelledNote}`],
     ["Revenue", revenue],
     ["Pending queue", String(input.pendingOrders)],
     ["Low stock", String(input.lowStockCount)],
-  ];
+  ]
 
   const kpiHtml = kpiRows
     .map(
@@ -85,14 +82,14 @@ export function buildDailyDigestEmail(
           <td style="font-family:${BODY_FONT};font-size:14px;color:#2A0A12;padding:8px 0;">${escapeHtml(value)}</td>
         </tr>`,
     )
-    .join("");
+    .join("")
 
   const stockHtml = stockLines
     .map(
       (line) =>
         `<div style="font-family:${BODY_FONT};font-size:13px;color:#5E4A40;padding:3px 0;">${escapeHtml(line)}</div>`,
     )
-    .join("");
+    .join("")
 
   const html = `
 <div style="margin:0;padding:32px 12px;background:#F5F1EA;">
@@ -112,7 +109,7 @@ export function buildDailyDigestEmail(
       </table>
     </td></tr>
   </table>
-</div>`;
+</div>`
 
-  return { subject, html, text };
+  return { subject, html, text }
 }

@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { adminPageMeta } from "@/lib/admin/nav";
-import type { AdminNavCounts } from "@/lib/db/admin-metrics";
-import { ROUTES } from "@/lib/routes";
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react"
+import { adminPageMeta } from "@/lib/admin/nav"
+import type { AdminNavCounts } from "@/lib/db/admin-metrics"
+import { ROUTES } from "@/lib/routes"
 
 /**
  * Admin topbar (prototype-matched): mobile menu button, per-view page title +
@@ -19,19 +19,19 @@ export function AdminTopbar({
   counts,
   onMenuClick,
 }: {
-  counts: AdminNavCounts;
-  onMenuClick: () => void;
+  counts: AdminNavCounts
+  onMenuClick: () => void
 }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const { title, subtitle } = adminPageMeta(pathname);
+  const pathname = usePathname()
+  const router = useRouter()
+  const [query, setQuery] = useState("")
+  const { title, subtitle } = adminPageMeta(pathname)
 
   const onSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = query.trim();
-    router.push(q ? `${ROUTES.adminOrders}?q=${encodeURIComponent(q)}` : ROUTES.adminOrders);
-  };
+    e.preventDefault()
+    const q = query.trim()
+    router.push(q ? `${ROUTES.adminOrders}?q=${encodeURIComponent(q)}` : ROUTES.adminOrders)
+  }
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-[#E7E0D4] bg-[#F5F1EA]/90 px-5 py-[18px] backdrop-blur-md sm:gap-5 sm:px-8">
@@ -58,9 +58,7 @@ export function AdminTopbar({
         <h1 className="truncate font-heading text-[26px] font-semibold leading-none text-[#2A1F1A]">
           {title}
         </h1>
-        <span className="truncate text-[12.5px] leading-none text-[#8A7E74]">
-          {subtitle}
-        </span>
+        <span className="truncate text-[12.5px] leading-none text-[#8A7E74]">{subtitle}</span>
       </div>
 
       <form
@@ -94,7 +92,7 @@ export function AdminTopbar({
 
       <NotificationBell counts={counts} />
     </header>
-  );
+  )
 }
 
 /**
@@ -103,8 +101,8 @@ export function AdminTopbar({
  * badges — server-fetched per request, so it refreshes on navigation.
  */
 function NotificationBell({ counts }: { counts: AdminNavCounts }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const total = counts.orders + counts.reviews + counts.messages;
+  const [isOpen, setIsOpen] = useState(false)
+  const total = counts.orders + counts.reviews + counts.messages
 
   const items = [
     {
@@ -115,15 +113,13 @@ function NotificationBell({ counts }: { counts: AdminNavCounts }) {
     },
     { label: "Reviews to moderate", count: counts.reviews, href: ROUTES.adminReviews },
     { label: "New messages", count: counts.messages, href: ROUTES.adminMessages },
-  ];
+  ]
 
   return (
     <div className="relative ml-auto flex-none md:ml-0">
       <button
         type="button"
-        aria-label={
-          total > 0 ? `Notifications — ${total} pending` : "Notifications"
-        }
+        aria-label={total > 0 ? `Notifications — ${total} pending` : "Notifications"}
         aria-haspopup="true"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((v) => !v)}
@@ -185,5 +181,5 @@ function NotificationBell({ counts }: { counts: AdminNavCounts }) {
         </>
       )}
     </div>
-  );
+  )
 }

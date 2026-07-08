@@ -1,21 +1,21 @@
-"use client";
+"use client"
 
-import { useState, type ReactNode } from "react";
-import type { CartLineInput } from "@/lib/cart";
-import { useCartStore } from "@/stores/cart";
+import { useState, type ReactNode } from "react"
+import type { CartLineInput } from "@/lib/cart"
+import { useCartStore } from "@/stores/cart"
 
 /** How long the "Added" confirmation stays before reverting to the label. */
-const ADDED_FEEDBACK_MS = 1400;
+const ADDED_FEEDBACK_MS = 1400
 
 type Props = {
-  input: CartLineInput;
-  quantity?: number;
-  ariaLabel: string;
-  className?: string;
-  children: ReactNode;
-  addedLabel?: ReactNode;
-  disabled?: boolean;
-};
+  input: CartLineInput
+  quantity?: number
+  ariaLabel: string
+  className?: string
+  children: ReactNode
+  addedLabel?: ReactNode
+  disabled?: boolean
+}
 
 /**
  * Reusable "add to cart" button that pushes a line into `useCartStore` and shows
@@ -31,14 +31,14 @@ export function AddToCartButton({
   addedLabel = "Added ✓",
   disabled = false,
 }: Props) {
-  const addItem = useCartStore((state) => state.addItem);
-  const [isAdded, setIsAdded] = useState(false);
+  const addItem = useCartStore((state) => state.addItem)
+  const [isAdded, setIsAdded] = useState(false)
 
   const handleClick = () => {
-    addItem(input, quantity);
-    setIsAdded(true);
-    window.setTimeout(() => setIsAdded(false), ADDED_FEEDBACK_MS);
-  };
+    addItem(input, quantity)
+    setIsAdded(true)
+    window.setTimeout(() => setIsAdded(false), ADDED_FEEDBACK_MS)
+  }
 
   return (
     <button
@@ -50,5 +50,5 @@ export function AddToCartButton({
     >
       {isAdded ? addedLabel : children}
     </button>
-  );
+  )
 }
