@@ -3,7 +3,11 @@
 import { revalidatePath, updateTag } from "next/cache"
 import { requireAdmin } from "@/lib/admin/auth"
 import { CACHE_TAGS } from "@/lib/db/cache"
-import { PLATING_OPTIONS, type ProductImage } from "@/lib/admin/product-status"
+import {
+  MAX_PLATING_OPTION_LEN,
+  MAX_PLATING_OPTIONS,
+  type ProductImage,
+} from "@/lib/admin/product-status"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
 
@@ -147,8 +151,13 @@ export async function upsertProduct(input: ProductInput): Promise<ProductActionR
   }
 
   const { gallery, primaryUrl } = normalizeImages(input.images)
-  // Only persist recognised finishes, preserving the chip order.
-  const platingOptions = PLATING_OPTIONS.filter((opt) => (input.platingOptions ?? []).includes(opt))
+  // Plating labels are free-form since 6.3 (defaults + operator-defined):
+  // trim, drop empties, dedupe, and bound length/count instead of whitelisting.
+  const platingOptions = [
+    ...new Set((input.platingOptions ?? []).map((opt) => opt.trim()).filter(Boolean)),
+  ]
+    .filter((opt) => opt.length <= MAX_PLATING_OPTION_LEN)
+    .slice(0, MAX_PLATING_OPTIONS)
 
   const payload = {
     name,

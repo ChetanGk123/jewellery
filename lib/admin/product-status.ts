@@ -24,8 +24,13 @@ export const PRODUCT_STATUS_OPTIONS = ["Active", "Draft"] as const
 /** Badge choices in the modal ("None" stores the literal string, no badge). */
 export const BADGE_OPTIONS = ["None", "Bestseller", "New", "Bridal Edit"] as const
 
-/** Plating finishes a customer can pick on the storefront (chip toggles). */
+/** Default plating finishes offered as one-click chips in the modal. */
 export const PLATING_OPTIONS = ["Gold tone", "Silver tone", "Rose gold"] as const
+
+// Custom plating options (6.3) are free-form labels; bounds shared by the
+// product modal and the upsert action so they can't drift.
+export const MAX_PLATING_OPTIONS = 8
+export const MAX_PLATING_OPTION_LEN = 40
 
 /** Max design/image variants per product (matches the prototype's "1 of 6"). */
 export const MAX_PRODUCT_IMAGES = 6

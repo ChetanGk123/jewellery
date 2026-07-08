@@ -429,9 +429,7 @@ export const getProductBySlug = cache(
     async (slug: string): Promise<ProductDetail | null> => {
       const { data, error } = await publicClient
         .from("product")
-        .select(
-          "*, category:category(name, slug), images:product_image(*), options:product_option(*)",
-        )
+        .select("*, category:category(name, slug), images:product_image(*)")
         .eq("slug", slug)
         .in("status", STOREFRONT_VISIBLE_STATUSES)
         .maybeSingle()
@@ -442,10 +440,20 @@ export const getProductBySlug = cache(
       if (!data) return null
 
       const record = data as unknown as ProductDetail
+      // The tone selector reads the admin-managed `plating_options` column
+      // (6.3) — the old `product_option` rows were seed data with no console
+      // edit path, so admin changes never reached the storefront.
+      const plating = Array.isArray(record.plating_options) ? record.plating_options : []
       return {
         ...record,
         images: [...(record.images ?? [])].sort((a, b) => a.sort_order - b.sort_order),
-        options: [...(record.options ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+        options: plating.map((label, i) => ({
+          id: `${record.id}-plating-${i}`,
+          product_id: record.id,
+          label,
+          value: label,
+          sort_order: i,
+        })),
       }
     },
     ["getProductBySlug"],

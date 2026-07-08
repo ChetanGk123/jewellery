@@ -8,6 +8,8 @@ import {
 } from "@/app/(admin)/admin/(console)/products/actions"
 import {
   BADGE_OPTIONS,
+  MAX_PLATING_OPTION_LEN,
+  MAX_PLATING_OPTIONS,
   MAX_PRODUCT_IMAGES,
   PLATING_OPTIONS,
   type ProductImage,
@@ -123,6 +125,21 @@ export function ProductModal({ product, categories, onClose }: Props) {
       "plating",
       form.plating.includes(opt) ? form.plating.filter((p) => p !== opt) : [...form.plating, opt],
     )
+
+  // Custom finishes beyond the default chips (6.3).
+  const [customOption, setCustomOption] = useState("")
+  const customPlating = form.plating.filter(
+    (p) => !(PLATING_OPTIONS as readonly string[]).includes(p),
+  )
+  const addCustomOption = () => {
+    const opt = customOption.trim()
+    if (!opt) return
+    const exists = form.plating.some((p) => p.toLowerCase() === opt.toLowerCase())
+    if (!exists && form.plating.length < MAX_PLATING_OPTIONS) {
+      set("plating", [...form.plating, opt])
+    }
+    setCustomOption("")
+  }
 
   const submit = () => {
     const input: ProductInput = {
@@ -310,7 +327,7 @@ export function ProductModal({ product, categories, onClose }: Props) {
               Plating options
             </span>
             <p className="text-[11.5px] leading-[1.4] text-[#8A7E74]">
-              Select the finishes a customer can choose on the storefront.
+              Select the finishes a customer can choose on the storefront, or add your own.
             </p>
             <div className="flex flex-wrap gap-2.5">
               {PLATING_OPTIONS.map((opt) => {
@@ -331,7 +348,49 @@ export function ProductModal({ product, categories, onClose }: Props) {
                   </button>
                 )
               })}
+              {customPlating.map((opt) => (
+                <span
+                  key={opt}
+                  className="inline-flex items-center gap-2 rounded-[7px] border border-maroon-700 bg-maroon-700 px-4 py-2.5 text-[12.5px] font-medium text-cream-200"
+                >
+                  {opt}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${opt}`}
+                    onClick={() => togglePlating(opt)}
+                    className="text-[15px] leading-none opacity-75 transition-opacity hover:opacity-100"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
             </div>
+            {form.plating.length < MAX_PLATING_OPTIONS && (
+              <div className="flex gap-2">
+                <input
+                  value={customOption}
+                  onChange={(e) => setCustomOption(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      addCustomOption()
+                    }
+                  }}
+                  maxLength={MAX_PLATING_OPTION_LEN}
+                  placeholder='Add a custom finish — e.g. "Antique gold"'
+                  aria-label="Add a custom plating option"
+                  className={FIELD_INPUT}
+                />
+                <button
+                  type="button"
+                  onClick={addCustomOption}
+                  disabled={!customOption.trim()}
+                  className="rounded-[7px] border border-[#DAD0C2] bg-white px-4 text-[12.5px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-50"
+                >
+                  Add
+                </button>
+              </div>
+            )}
           </section>
 
           <Field label="Description">
