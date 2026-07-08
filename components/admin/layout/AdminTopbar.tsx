@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { adminPageMeta } from "@/lib/admin/nav"
 import type { AdminNavCounts } from "@/lib/db/admin-metrics"
 import { ROUTES } from "@/lib/routes"
@@ -102,7 +102,29 @@ export function AdminTopbar({
  */
 function NotificationBell({ counts }: { counts: AdminNavCounts }) {
   const [isOpen, setIsOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
   const total = counts.orders + counts.reviews + counts.messages
+
+  // Dismiss on outside click / Escape (6.1). A backdrop element can't do this
+  // reliably from inside the topbar's stacking context — higher-z siblings
+  // swallow the click — so listen at the document level instead.
+  useEffect(() => {
+    if (!isOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false)
+    }
+    document.addEventListener("pointerdown", onPointerDown)
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown)
+      document.removeEventListener("keydown", onKeyDown)
+    }
+  }, [isOpen])
 
   const items = [
     {
@@ -116,7 +138,7 @@ function NotificationBell({ counts }: { counts: AdminNavCounts }) {
   ]
 
   return (
-    <div className="relative ml-auto flex-none md:ml-0">
+    <div ref={wrapRef} className="relative ml-auto flex-none md:ml-0">
       <button
         type="button"
         aria-label={total > 0 ? `Notifications — ${total} pending` : "Notifications"}
@@ -145,40 +167,32 @@ function NotificationBell({ counts }: { counts: AdminNavCounts }) {
       </button>
 
       {isOpen && (
-        <>
-          <button
-            type="button"
-            aria-label="Close notifications"
-            onClick={() => setIsOpen(false)}
-            className="fixed inset-0 z-30 cursor-default"
-          />
-          <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-[250px] overflow-hidden rounded-xl border border-[#EAE3D7] bg-white shadow-[0_14px_36px_rgba(42,10,18,0.14)]">
-            <div className="border-b border-[#F0EADF] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#A99C90]">
-              Needs attention
-            </div>
-            {total === 0 ? (
-              <p className="px-4 py-4 text-[12.5px] text-[#A99C90]">
-                All caught up — nothing pending.
-              </p>
-            ) : (
-              items
-                .filter((item) => item.count > 0)
-                .map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-between gap-3 border-b border-[#F5F0E7] px-4 py-3 text-[13px] font-medium text-[#2A1F1A] transition-colors last:border-b-0 hover:bg-[#FBF8F2]"
-                  >
-                    {item.label}
-                    <span className="rounded-[9px] bg-maroon-700 px-[7px] py-[3px] text-[11px] font-semibold leading-none text-cream-200">
-                      {item.count}
-                    </span>
-                  </Link>
-                ))
-            )}
+        <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-[250px] overflow-hidden rounded-xl border border-[#EAE3D7] bg-white shadow-[0_14px_36px_rgba(42,10,18,0.14)]">
+          <div className="border-b border-[#F0EADF] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#A99C90]">
+            Needs attention
           </div>
-        </>
+          {total === 0 ? (
+            <p className="px-4 py-4 text-[12.5px] text-[#A99C90]">
+              All caught up — nothing pending.
+            </p>
+          ) : (
+            items
+              .filter((item) => item.count > 0)
+              .map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-between gap-3 border-b border-[#F5F0E7] px-4 py-3 text-[13px] font-medium text-[#2A1F1A] transition-colors last:border-b-0 hover:bg-[#FBF8F2]"
+                >
+                  {item.label}
+                  <span className="rounded-[9px] bg-maroon-700 px-[7px] py-[3px] text-[11px] font-semibold leading-none text-cream-200">
+                    {item.count}
+                  </span>
+                </Link>
+              ))
+          )}
+        </div>
       )}
     </div>
   )
