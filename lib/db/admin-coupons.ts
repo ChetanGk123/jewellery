@@ -9,10 +9,11 @@ export type AdminCouponsPage = {
   page: number
   pageCount: number
   total: number
+  search: string
 }
 
-function emptyPage(page: number): AdminCouponsPage {
-  return { rows: [], page, pageCount: 1, total: 0 }
+function emptyPage(page: number, search: string): AdminCouponsPage {
+  return { rows: [], page, pageCount: 1, total: 0, search }
 }
 
 /**
@@ -25,8 +26,11 @@ function emptyPage(page: number): AdminCouponsPage {
  */
 export async function listAdminCoupons(opts: {
   page: number
+  search?: string
 }): Promise<AdminRead<AdminCouponsPage>> {
   const page = Math.max(1, opts.page)
+  // Codes are plain alphanumerics; strip ilike wildcards / filter grammar (6.2).
+  const search = (opts.search ?? "").replace(/[%,()]/g, " ").trim()
 
   return loadAdmin(
     "coupons",
@@ -34,7 +38,7 @@ export async function listAdminCoupons(opts: {
       const supabase = await createServerClient()
       const from = (page - 1) * ADMIN_COUPONS_PAGE_SIZE
 
-      const { data, count } = await supabase
+      let query = supabase
         .from("coupon")
         .select(
           "id, code, kind, value, min_subtotal_paise, max_discount_paise, usage_limit, usage_count, expires_at, is_active",
@@ -42,6 +46,8 @@ export async function listAdminCoupons(opts: {
         )
         .order("created_at", { ascending: true })
         .range(from, from + ADMIN_COUPONS_PAGE_SIZE - 1)
+      if (search) query = query.ilike("code", `%${search}%`)
+      const { data, count } = await query
 
       const rows: AdminCouponRow[] = (data ?? []).map((c) => ({
         id: c.id,
@@ -59,8 +65,8 @@ export async function listAdminCoupons(opts: {
       const total = count ?? 0
       const pageCount = Math.max(1, Math.ceil(total / ADMIN_COUPONS_PAGE_SIZE))
 
-      return { rows, page, pageCount, total }
+      return { rows, page, pageCount, total, search }
     },
-    emptyPage(page),
+    emptyPage(page, search),
   )
 }

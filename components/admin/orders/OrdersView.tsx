@@ -11,6 +11,7 @@ import type { AdminOrderRow, AdminOrdersPage, OrderEvent, OrderFilter } from "@/
 import { ROUTES } from "@/lib/routes"
 import { formatPaise } from "@/lib/utils/money"
 import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { AdminSearchBox } from "@/components/admin/ui/AdminSearchBox"
 import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog"
 import { OrderDrawer } from "./OrderDrawer"
 
@@ -28,13 +29,10 @@ function hrefFor(filter: OrderFilter, page: number, search: string): string {
 export function OrdersView({ page }: { page: AdminOrdersPage }) {
   const router = useRouter()
   // Search box is URL-driven (`?q=`) like the status/page params, so a search
-  // is shareable and survives refresh. Seed the input from the served value.
-  const [query, setQuery] = useState(page.search)
-
-  const submitSearch = (raw: string) => {
-    const next = raw.trim()
+  // is shareable and survives refresh; debounced as-you-type (AdminSearchBox).
+  const onSearch = (term: string) => {
     // Preserve the active status tab; drop the page so results start at 1.
-    router.push(hrefFor(page.filter, 1, next))
+    router.replace(hrefFor(page.filter, 1, term))
   }
 
   // A snapshot of the open order — held locally (not derived from page.rows) so
@@ -170,56 +168,15 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
 
   return (
     <div className="flex flex-col gap-[18px]">
-      {/* Search — order no / customer / phone / email */}
-      <form
-        role="search"
-        onSubmit={(e) => {
-          e.preventDefault()
-          submitSearch(query)
-        }}
-        className="flex flex-wrap items-center gap-2"
-      >
-        <div className="flex min-w-[220px] flex-1 items-center rounded-lg border border-[#E7E0D4] bg-white px-3">
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#9C8A7E"
-            strokeWidth={2}
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3-3" />
-          </svg>
-          <input
-            type="search"
-            name="q"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search orders by number, customer, phone or email"
-            placeholder="Search order no, customer, phone, email…"
-            className="w-full flex-1 border-none bg-transparent px-2 py-[9px] text-[13px] text-[#2A1F1A] outline-none placeholder:text-[#9C8A7E]"
-          />
-        </div>
-        <button
-          type="submit"
-          className="rounded-lg bg-maroon-700 px-[18px] py-[10px] text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90"
-        >
-          Search
-        </button>
-        {page.search && (
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("")
-              submitSearch("")
-            }}
-            className="rounded-lg border border-[#E7E0D4] bg-white px-[18px] py-[10px] text-[12px] font-semibold text-[#5E4A40] transition-colors hover:border-[#D8CDB9]"
-          >
-            Clear
-          </button>
-        )}
+      {/* Search — order no / customer / phone / email (debounced) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <AdminSearchBox
+          value={page.search}
+          onSearch={onSearch}
+          placeholder="Search order no, customer, phone, email…"
+          ariaLabel="Search orders by number, customer, phone or email"
+          className="min-w-[220px] flex-1"
+        />
         <button
           type="button"
           onClick={exportCsv}
@@ -228,7 +185,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         >
           {isExporting ? "Exporting…" : "Export CSV"}
         </button>
-      </form>
+      </div>
 
       {page.search && (
         <p className="-mt-2 text-[12.5px] text-[#8A7E74]">

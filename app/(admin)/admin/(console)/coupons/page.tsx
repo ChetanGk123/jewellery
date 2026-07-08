@@ -12,11 +12,12 @@ export const metadata: Metadata = {
 export default async function AdminCouponsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; q?: string }>
 }) {
   const sp = await searchParams
   const { data, error } = await listAdminCoupons({
     page: Math.max(1, Number(sp.page) || 1),
+    search: sp.q,
   })
   return (
     <div className="flex flex-col gap-6">

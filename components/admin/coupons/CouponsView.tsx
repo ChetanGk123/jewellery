@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { toggleCoupon } from "@/app/(admin)/admin/(console)/coupons/actions"
 import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { AdminSearchBox } from "@/components/admin/ui/AdminSearchBox"
 import {
   ADMIN_COUPONS_PAGE_SIZE,
   type AdminCouponRow,
@@ -15,8 +17,12 @@ import type { AdminCouponsPage } from "@/lib/db/admin-coupons"
 import { ROUTES } from "@/lib/routes"
 import { CouponModal } from "./CouponModal"
 
-function hrefForPage(page: number): string {
-  return page > 1 ? `${ROUTES.adminCoupons}?page=${page}` : ROUTES.adminCoupons
+function hrefFor(page: number, search: string): string {
+  const params = new URLSearchParams()
+  if (search) params.set("q", search)
+  if (page > 1) params.set("page", String(page))
+  const qs = params.toString()
+  return qs ? `${ROUTES.adminCoupons}?${qs}` : ROUTES.adminCoupons
 }
 
 /**
@@ -27,11 +33,17 @@ function hrefForPage(page: number): string {
  * CouponModal.
  */
 export function CouponsView({ page }: { page: AdminCouponsPage }) {
+  const router = useRouter()
   // `null` = closed; "new" = create; an object = edit that coupon.
   const [modal, setModal] = useState<"new" | AdminCouponRow | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
+  // Search is URL-driven (`?q=`) like the other lists — shareable, survives
+  // refresh; debounced as-you-type via AdminSearchBox (6.2).
+  const onSearch = (term: string) => {
+    router.replace(hrefFor(1, term))
+  }
 
   const onToggle = (row: AdminCouponRow) => {
     setError(null)
@@ -45,24 +57,34 @@ export function CouponsView({ page }: { page: AdminCouponsPage }) {
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <button
-        type="button"
-        onClick={() => setModal("new")}
-        className="inline-flex items-center gap-2 self-start rounded-lg bg-maroon-700 px-[18px] py-[11px] font-body text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          aria-hidden="true"
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setModal("new")}
+          className="inline-flex items-center gap-2 rounded-lg bg-maroon-700 px-[18px] py-[11px] font-body text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90"
         >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Create Coupon
-      </button>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Create Coupon
+        </button>
+
+        <AdminSearchBox
+          value={page.search}
+          onSearch={onSearch}
+          placeholder="Search code…"
+          ariaLabel="Search coupons by code"
+          className="ml-auto min-w-[180px] max-w-[280px] flex-1"
+        />
+      </div>
 
       {error && (
         <p className="rounded-lg border border-[#F0C8CE] bg-[#FBE9E7] px-3 py-2.5 font-body text-[12.5px] text-[#C0392F]">
@@ -86,7 +108,9 @@ export function CouponsView({ page }: { page: AdminCouponsPage }) {
 
             {page.rows.length === 0 ? (
               <p className="px-[22px] py-[50px] text-center font-body text-[13px] text-[#A99C90]">
-                No coupons yet. Create your first discount code.
+                {page.search
+                  ? `No coupons match “${page.search}”.`
+                  : "No coupons yet. Create your first discount code."}
               </p>
             ) : (
               page.rows.map((c) => (
@@ -153,7 +177,7 @@ export function CouponsView({ page }: { page: AdminCouponsPage }) {
         pageCount={page.pageCount}
         total={page.total}
         pageSize={ADMIN_COUPONS_PAGE_SIZE}
-        hrefForPage={hrefForPage}
+        hrefForPage={(n) => hrefFor(n, page.search)}
       />
 
       {modal !== null && (

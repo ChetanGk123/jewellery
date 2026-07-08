@@ -14,6 +14,7 @@ import { ROUTES } from "@/lib/routes"
 import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
 import { formatPaise } from "@/lib/utils/money"
 import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { AdminSearchBox } from "@/components/admin/ui/AdminSearchBox"
 import { ProductModal } from "./ProductModal"
 
 type ModalState = { open: boolean; product: AdminProductRow | null }
@@ -27,7 +28,6 @@ export function ProductsView({
   initialEdit?: AdminProductRow | null
 }) {
   const router = useRouter()
-  const [search, setSearch] = useState(page.search)
   const [modal, setModal] = useState<ModalState>(
     initialEdit ? { open: true, product: initialEdit } : { open: false, product: null },
   )
@@ -52,32 +52,13 @@ export function ProductsView({
     <div className="flex flex-col gap-[18px]">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            go({ search, page: "1" })
-          }}
-          className="flex min-w-[200px] max-w-[320px] flex-1 items-center rounded-lg border border-[#E7E0D4] bg-white px-3"
-        >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#9C8A7E"
-            strokeWidth={2}
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3-3" />
-          </svg>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or SKU"
-            className="flex-1 bg-transparent px-2 py-2.5 text-[13px] outline-none"
-          />
-        </form>
+        <AdminSearchBox
+          value={page.search}
+          onSearch={(term) => router.replace(hrefFor({ search: term, page: "1" }))}
+          placeholder="Search by name or SKU"
+          ariaLabel="Search products by name or SKU"
+          className="min-w-[200px] max-w-[320px] flex-1"
+        />
 
         <select
           value={page.categoryId}

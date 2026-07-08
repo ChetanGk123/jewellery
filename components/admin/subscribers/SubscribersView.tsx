@@ -7,6 +7,7 @@ import {
   removeSubscriber,
 } from "@/app/(admin)/admin/(console)/subscribers/actions"
 import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { AdminSearchBox } from "@/components/admin/ui/AdminSearchBox"
 import { ConfirmDialog } from "@/components/admin/ui/ConfirmDialog"
 import { csvCell } from "@/lib/utils/csv"
 import {
@@ -37,7 +38,6 @@ function hrefFor(search: string, page: number): string {
  */
 export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
   const router = useRouter()
-  const [query, setQuery] = useState(page.search)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -47,8 +47,8 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
   const [confirming, setConfirming] = useState<AdminSubscriberRow | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const submitSearch = (raw: string) => {
-    router.push(hrefFor(raw.trim(), 1))
+  const onSearch = (term: string) => {
+    router.replace(hrefFor(term, 1))
   }
 
   const confirmRemove = () => {
@@ -139,25 +139,13 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
       <div className="overflow-hidden rounded-xl border border-[#EAE3D7] bg-white">
         <div className="flex flex-wrap items-center gap-3 border-b border-[#EFE9DE] px-[22px] py-4">
           <span className="font-body text-[15px] font-semibold text-[#2A1F1A]">Mailing list</span>
-          <form
-            role="search"
-            onSubmit={(event) => {
-              event.preventDefault()
-              submitSearch(query)
-            }}
-            className="ml-auto flex min-w-[170px] max-w-[300px] items-center rounded-lg border border-[#E7E0D4] bg-[#FBF8F2] px-3"
-          >
-            <SearchIcon />
-            <input
-              type="search"
-              name="q"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search email"
-              aria-label="Search email"
-              className="flex-1 border-none bg-transparent px-2 py-[9px] font-body text-[13px] text-[#2A1F1A] outline-none"
-            />
-          </form>
+          <AdminSearchBox
+            value={page.search}
+            onSearch={onSearch}
+            placeholder="Search email"
+            ariaLabel="Search email"
+            className="ml-auto min-w-[170px] max-w-[300px]"
+          />
           <button
             type="button"
             onClick={copyEmails}
@@ -279,23 +267,6 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
         />
       )}
     </div>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#9C8A7E"
-      strokeWidth={2}
-      aria-hidden="true"
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3-3" />
-    </svg>
   )
 }
 
