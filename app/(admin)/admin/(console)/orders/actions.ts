@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache"
 import { requireAdmin } from "@/lib/admin/auth"
+import { normalizeAwb, normalizeTrackingUrl } from "@/lib/admin/awb"
 import { normalizeOrderNote } from "@/lib/admin/order-notes"
 import { CACHE_TAGS } from "@/lib/db/cache"
 import {
@@ -28,6 +29,8 @@ function messageFor(raw: string): string {
   if (raw.includes("NOT_ADMIN")) return "You don't have permission to do that."
   if (raw.includes("ORDER_NOT_FOUND")) return "That order no longer exists."
   if (raw.includes("ORDER_TERMINAL")) return "This order is already delivered or cancelled."
+  if (raw.includes("AWB_REQUIRED"))
+    return "Add the courier AWB before marking this order Delivered."
   if (raw.includes("INVALID_TRANSITION")) return "That status change isn't allowed from here."
   return "Couldn't update the order. Please try again."
 }
@@ -64,7 +67,7 @@ export async function setOrderStatus(
   if (NOTIFY.has(nextStatus)) {
     const { data: order } = await supabase
       .from("order")
-      .select("order_no, customer_email, customer_name, total_paise")
+      .select("order_no, customer_email, customer_name, total_paise, awb, tracking_url")
       .eq("id", orderId)
       .maybeSingle()
     if (order?.customer_email) {
@@ -74,6 +77,9 @@ export async function setOrderStatus(
         orderNo: order.order_no,
         customerName: order.customer_name,
         totalPaise: order.total_paise,
+        // Shipped emails carry the tracking number + link (6.4 follow-up).
+        awb: order.awb,
+        trackingUrl: order.tracking_url,
       })
     }
   }
@@ -82,6 +88,69 @@ export async function setOrderStatus(
   // A Cancel restores stock, which the cached catalog displays.
   updateTag(CACHE_TAGS.products)
   return { ok: true }
+}
+
+export type AwbActionResult = {
+  ok: boolean
+  /** The saved (trimmed) AWB, so the open drawer can show it in place. */
+  awb?: string
+  /** The saved tracking link (null when cleared/omitted) — same purpose. */
+  trackingUrl?: string | null
+  error?: string
+}
+
+const AWB_INVALID_MESSAGE = "AWB must be 1–40 letters, numbers, spaces or - / _ characters."
+const TRACKING_URL_INVALID_MESSAGE =
+  "Tracking link must be a full http(s) URL, up to 300 characters."
+
+/** Friendly messages for `admin_set_order_awb`'s raised exceptions (0031/0032). */
+function awbMessageFor(raw: string): string {
+  if (raw.includes("NOT_ADMIN")) return "You don't have permission to do that."
+  if (raw.includes("ORDER_NOT_FOUND")) return "That order no longer exists."
+  if (raw.includes("ORDER_TERMINAL")) return "This order is already delivered or cancelled."
+  if (raw.includes("INVALID_AWB")) return AWB_INVALID_MESSAGE
+  if (raw.includes("INVALID_TRACKING_URL")) return TRACKING_URL_INVALID_MESSAGE
+  return "Couldn't save the AWB. Please try again."
+}
+
+/**
+ * Record the courier AWB — and optionally the courier's tracking-page link
+ * (6.4c) — on an order via the admin-only `admin_set_order_awb` RPC
+ * (0031/0032). Shiprocket stays deferred — the operator books the courier
+ * outside the app and pastes the details here; the RPC re-checks admin,
+ * formats (http(s)-only link), and that the order isn't terminal. A blank
+ * link clears any stored one.
+ */
+export async function setOrderAwb(
+  orderId: string,
+  rawAwb: string,
+  rawTrackingUrl: string,
+): Promise<AwbActionResult> {
+  await requireAdmin(ROUTES.adminOrders)
+
+  const awb = normalizeAwb(rawAwb)
+  if (!orderId || !awb) {
+    return { ok: false, error: AWB_INVALID_MESSAGE }
+  }
+  // Blank = "no link" (clears); non-blank must be a valid http(s) URL.
+  const trackingUrl = normalizeTrackingUrl(rawTrackingUrl)
+  if (rawTrackingUrl.trim() && !trackingUrl) {
+    return { ok: false, error: TRACKING_URL_INVALID_MESSAGE }
+  }
+
+  const supabase = await createServerClient()
+  const { data, error } = await supabase.rpc("admin_set_order_awb", {
+    p_order_id: orderId,
+    p_awb: awb,
+    p_tracking_url: trackingUrl ?? "",
+  })
+
+  if (error) {
+    return { ok: false, error: awbMessageFor(error.message) }
+  }
+
+  revalidatePath(ROUTES.adminOrders)
+  return { ok: true, awb: typeof data === "string" ? data : awb, trackingUrl }
 }
 
 /**

@@ -1,13 +1,15 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { addOrderNote } from "@/app/(admin)/admin/(console)/orders/actions"
+import { addOrderNote, setOrderAwb } from "@/app/(admin)/admin/(console)/orders/actions"
 import type { AdminOrderRow, OrderEvent } from "@/lib/db/admin-orders"
+import { AWB_MAX_LEN, TRACKING_URL_MAX_LEN, showAwbCard } from "@/lib/admin/awb"
 import { NOTE_MAX_LEN } from "@/lib/admin/order-notes"
 import {
   advanceLabel,
   buildStepper,
   canCancel,
+  prevStatus,
   statusChip,
   type OrderStep,
   type StepState,
@@ -23,9 +25,13 @@ type Props = {
   isOpen: boolean
   onClose: () => void
   onAdvance: () => void
+  /** Undo a mis-click: move one step back along the flow (6.5). */
+  onMoveBack: () => void
   onCancel: () => void
   /** A note was saved — parent appends it to its drawer snapshot (5.16). */
   onNoteAdded: (event: OrderEvent) => void
+  /** The AWB (+ optional tracking link) was saved — parent updates its drawer snapshot (6.4). */
+  onAwbSaved: (awb: string, trackingUrl: string | null) => void
   isPending: boolean
   error: string | null
 }
@@ -33,22 +39,25 @@ type Props = {
 /**
  * Right-hand fulfilment drawer (prototype-matched). Slides in over a backdrop;
  * shows the status stepper, customer + address, item lines with totals, the
- * timeline + internal notes, a Shiprocket AWB stub, and the advance / cancel
- * actions. The parent owns the selection + the status action; the note
- * composer is self-contained but reports saves up via `onNoteAdded` so the
- * parent's snapshot stays current.
+ * timeline + internal notes, the manual courier-AWB card, and the move-back /
+ * advance / cancel actions. The parent owns the selection + the status action;
+ * the note composer and AWB card are self-contained but report saves up via
+ * `onNoteAdded` / `onAwbSaved` so the parent's snapshot stays current.
  */
 export function OrderDrawer({
   order,
   isOpen,
   onClose,
   onAdvance,
+  onMoveBack,
   onCancel,
   onNoteAdded,
+  onAwbSaved,
   isPending,
   error,
 }: Props) {
   const advance = order ? advanceLabel(order.status) : null
+  const back = order ? prevStatus(order.status) : null
   const showCancel = order ? canCancel(order.status) : false
   const steps = order ? buildStepper(order.status) : null
   const dialogRef = useDialog<HTMLElement>({ isOpen, onDismiss: onClose, isPending })
@@ -182,13 +191,28 @@ export function OrderDrawer({
 
               <Timeline order={order} onNoteAdded={onNoteAdded} />
 
-              <AwbStub awb={order.awb} />
+              {/* Hidden until the parcel stage (6.4d); key resets the inputs
+                  when a different order opens. */}
+              {showAwbCard(order.status, order.awb) && (
+                <AwbCard key={order.id} order={order} onAwbSaved={onAwbSaved} />
+              )}
             </div>
 
-            {(advance || showCancel) && (
+            {(advance || back || showCancel) && (
               <footer className="flex flex-col gap-2 border-t border-[#E7E0D4] bg-white px-4 py-[18px] sm:px-6">
                 {error && <p className="text-[12px] font-medium text-[#C0392F]">{error}</p>}
-                <div className="flex gap-2.5">
+                <div className="flex flex-wrap gap-2.5">
+                  {back && (
+                    <button
+                      type="button"
+                      onClick={onMoveBack}
+                      disabled={isPending}
+                      title={`Move back to ${back} (undo a mis-click)`}
+                      className="rounded-lg border border-[#DAD0C2] bg-white px-[14px] py-3.5 text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-60"
+                    >
+                      ← {back}
+                    </button>
+                  )}
                   {advance && (
                     <button
                       type="button"
@@ -584,35 +608,115 @@ function NoteComposer({
   )
 }
 
-/* --------------------------- Shiprocket (stub) --------------------------- */
+/* ----------------------------- Courier AWB ------------------------------- */
 
 /**
- * Shiprocket AWB card — a deliberate stub. Real courier integration is deferred
- * (with Razorpay) to a later phase, so the actions render disabled with a
- * "coming soon" hint rather than pretending to work.
+ * Manual courier-AWB card (6.4) — replaces the old Shiprocket stub. Courier
+ * integration stays deferred: the operator books the parcel outside the app
+ * and records the tracking number here. The status RPC (0031) refuses
+ * Delivered until one is saved. Read-only once the order is terminal.
  */
-function AwbStub({ awb }: { awb: string | null }) {
+function AwbCard({
+  order,
+  onAwbSaved,
+}: {
+  order: AdminOrderRow
+  onAwbSaved: (awb: string, trackingUrl: string | null) => void
+}) {
+  const isLocked = order.status === "Delivered" || order.status === "Cancelled"
+  const [value, setValue] = useState(order.awb ?? "")
+  const [link, setLink] = useState(order.trackingUrl ?? "")
+  const [awbError, setAwbError] = useState<string | null>(null)
+  const [isSaving, startSaving] = useTransition()
+
+  const isUnchanged =
+    value.trim() === (order.awb ?? "") && link.trim() === (order.trackingUrl ?? "")
+
+  const submit = () => {
+    const trimmed = value.trim()
+    if (!trimmed || isSaving) return
+    startSaving(async () => {
+      const res = await setOrderAwb(order.id, trimmed, link)
+      if (res.ok && res.awb) {
+        setAwbError(null)
+        setValue(res.awb)
+        setLink(res.trackingUrl ?? "")
+        onAwbSaved(res.awb, res.trackingUrl ?? null)
+      } else {
+        setAwbError(res.error ?? "Couldn't save the AWB.")
+      }
+    })
+  }
+
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[10px] border border-[#EAE3D7] bg-white p-4">
-      <div>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#A99C90]">
-          Shiprocket AWB
-        </span>
-        <div
-          className="mt-1.5 text-[14px] font-medium"
-          style={{ color: awb ? "#1B7A3D" : "#A99C90" }}
+    <div className="flex flex-col gap-2 rounded-[10px] border border-[#EAE3D7] bg-white p-4">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#A99C90]">
+        Courier AWB &amp; tracking
+      </span>
+      {isLocked ? (
+        <>
+          <span
+            className="text-[14px] font-medium"
+            style={{ color: order.awb ? "#1B7A3D" : "#A99C90" }}
+          >
+            {order.awb ?? "Not recorded"}
+          </span>
+          {order.trackingUrl && (
+            <a
+              href={order.trackingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="break-all text-[12px] text-[#5E4A40] underline underline-offset-2 hover:text-maroon-700"
+            >
+              {order.trackingUrl}
+            </a>
+          )}
+        </>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            submit()
+          }}
+          className="flex flex-col gap-2"
         >
-          {awb ?? "Not generated yet"}
-        </div>
-      </div>
-      <button
-        type="button"
-        disabled
-        title="Shiprocket integration is coming in a later phase"
-        className="cursor-not-allowed rounded-[7px] border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-[11.5px] font-semibold text-[#94A3B8]"
-      >
-        {awb ? "Print Label" : "Generate AWB"}
-      </button>
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            maxLength={AWB_MAX_LEN}
+            placeholder="AWB number, e.g. SR123456789"
+            aria-label="Courier AWB number"
+            className="rounded-md border border-[#E7E0D4] bg-[#FFFDF8] px-2.5 py-2 text-[12.5px] text-[#2A1F1A] outline-none placeholder:text-[#B7AB9E] focus:border-[#C9A24B]"
+          />
+          <input
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            type="url"
+            maxLength={TRACKING_URL_MAX_LEN}
+            placeholder="Tracking link (optional) — https://…"
+            aria-label="Courier tracking link"
+            className="rounded-md border border-[#E7E0D4] bg-[#FFFDF8] px-2.5 py-2 text-[12.5px] text-[#2A1F1A] outline-none placeholder:text-[#B7AB9E] focus:border-[#C9A24B]"
+          />
+          <button
+            type="submit"
+            disabled={isSaving || !value.trim() || isUnchanged}
+            className="self-end rounded-md border border-[#DAD0C2] bg-white px-3 py-1.5 text-[11.5px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-50"
+          >
+            {isSaving ? "Saving…" : order.awb ? "Update" : "Save"}
+          </button>
+        </form>
+      )}
+      {awbError && <p className="text-[12px] font-medium text-[#C0392F]">{awbError}</p>}
+      {!isLocked && order.status === "Shipped" && !order.awb && (
+        <p className="text-[11.5px] text-[#A87A1E]">
+          Required before marking this order Delivered.
+        </p>
+      )}
+      {!isLocked && (
+        <p className="text-[11px] text-[#A99C90]">
+          The customer sees the AWB on their order page — with the link, it becomes clickable.
+        </p>
+      )}
     </div>
   )
 }

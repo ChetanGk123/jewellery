@@ -19,6 +19,10 @@ export type OrderStatusEmailInput = {
   totalPaise: number
   /** Absolute URL of the order page. */
   orderUrl: string
+  /** Courier AWB (6.4 follow-up) — rendered as a tracking row on Shipped. */
+  awb?: string | null
+  /** Courier tracking page (6.4c) — when set, the AWB row links to it. */
+  trackingUrl?: string | null
 }
 
 const HEADING_FONT = "Georgia, 'Times New Roman', serif"
@@ -73,12 +77,21 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): EmailMessag
 
   const subject = `Order ${input.orderNo} ${copy.subjectWord} — ${STORE_INFO.name}`
 
+  // Tracking only makes sense while the parcel is moving — Shipped alone.
+  const awb = input.kind === "Shipped" ? (input.awb ?? "").trim() : ""
+  const trackingUrl = awb ? (input.trackingUrl ?? "").trim() : ""
+
+  const trackingTextLine = trackingUrl
+    ? `Tracking (AWB): ${awb} — track your parcel at ${trackingUrl}`
+    : `Tracking (AWB): ${awb} — use this number on the courier's tracking page.`
+
   const text = [
     `Namaste ${name},`,
     "",
     intro,
     "",
     `${copy.totalLabel}: ${total}`,
+    ...(awb ? [trackingTextLine] : []),
     copy.note,
     "",
     `View your order: ${input.orderUrl}`,
@@ -86,6 +99,17 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): EmailMessag
     `Questions? WhatsApp us at ${STORE_INFO.phone.display} or reply to this email.`,
     `— ${STORE_INFO.name}`,
   ].join("\n")
+
+  // With a link on file the AWB itself is the anchor; plain text otherwise.
+  const awbInner = trackingUrl
+    ? `<a href="${escapeHtml(trackingUrl)}" style="color:#71182B;">${escapeHtml(awb)}</a>`
+    : `<strong style="color:#2A0A12;">${escapeHtml(awb)}</strong>`
+  const awbHtml = awb
+    ? `
+      <div style="font-family:${BODY_FONT};font-size:13px;line-height:1.6;color:#5E4A44;border:1px solid #E7D9C2;border-radius:3px;padding:12px 14px;margin-bottom:12px;">
+        Tracking (AWB): ${awbInner} — ${trackingUrl ? "tap the number to track your parcel." : "use this number on the courier&rsquo;s tracking page."}
+      </div>`
+    : ""
 
   const html = `
 <div style="margin:0;padding:32px 12px;background:#FBF6EE;">
@@ -103,6 +127,7 @@ export function buildOrderStatusEmail(input: OrderStatusEmailInput): EmailMessag
         <tr><td style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding:16px 0 4px;">${escapeHtml(copy.totalLabel)}</td></tr>
         <tr><td style="font-family:${HEADING_FONT};font-size:22px;color:#2A0A12;padding-bottom:18px;">${escapeHtml(total)}</td></tr>
       </table>
+      ${awbHtml}
       <div style="font-family:${BODY_FONT};font-size:13px;line-height:1.6;color:#5E4A44;background:#FBF3DE;border:1px solid #E7C98A;border-radius:3px;padding:12px 14px;">
         ${escapeHtml(copy.note)}
       </div>

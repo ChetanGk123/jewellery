@@ -48,6 +48,8 @@ export type AdminOrderRow = {
   itemCount: number
   items: AdminOrderItem[]
   awb: string | null
+  /** Courier tracking page for this shipment (6.4c) — shown to the customer. */
+  trackingUrl: string | null
   /** Lifetime orders from this customer (matched by phone), incl. this one. */
   customerOrderCount: number
   /** How many of those were cancelled — the COD-risk signal. */
@@ -121,7 +123,7 @@ export function toOrderFilter(value: string | undefined): OrderFilter {
 // One string literal (not concatenated) so supabase-js can infer the embedded
 // order_item relation type from the select.
 const SELECT =
-  "id, order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, payment_method, subtotal_paise, discount_paise, shipping_paise, total_paise, awb, order_item(name, tone, qty, line_total_paise)"
+  "id, order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, payment_method, subtotal_paise, discount_paise, shipping_paise, total_paise, awb, tracking_url, order_item(name, tone, qty, line_total_paise)"
 
 const EMPTY_COUNTS: OrderCounts = {
   All: 0,
@@ -185,6 +187,7 @@ type OrderSelectRow = {
   shipping_paise: number
   total_paise: number
   awb: string | null
+  tracking_url: string | null
   order_item: {
     name: string
     tone: string | null
@@ -298,6 +301,7 @@ function mapOrderRow(
       lineTotalPaise: it.line_total_paise,
     })),
     awb: o.awb,
+    trackingUrl: o.tracking_url,
     // Without history context this order is at least the customer's first.
     customerOrderCount: history?.orders ?? 1,
     customerCancelledCount: history?.cancelled ?? 0,

@@ -45,3 +45,27 @@ test("falls back to 'there' when the name is blank", () => {
   const msg = buildOrderStatusEmail({ ...base, kind: "Delivered", customerName: "  " })
   expect(msg.text).toContain("Namaste there,")
 })
+
+test("Shipped carries the AWB tracking row in both bodies when present", () => {
+  const msg = buildOrderStatusEmail({ ...base, kind: "Shipped", awb: "SR123456789" })
+  expect(msg.text).toContain("SR123456789")
+  expect(msg.html).toContain("SR123456789")
+})
+
+test("Shipped links the AWB to the tracking page when a link is on file", () => {
+  const msg = buildOrderStatusEmail({
+    ...base,
+    kind: "Shipped",
+    awb: "SR123456789",
+    trackingUrl: "https://track.example/SR123456789",
+  })
+  expect(msg.html).toContain('href="https://track.example/SR123456789"')
+  expect(msg.text).toContain("https://track.example/SR123456789")
+})
+
+test("no tracking row without an AWB, and none on non-Shipped emails", () => {
+  expect(buildOrderStatusEmail({ ...base, kind: "Shipped" }).text).not.toContain("Tracking")
+  expect(
+    buildOrderStatusEmail({ ...base, kind: "Delivered", awb: "SR123456789" }).text,
+  ).not.toContain("SR123456789")
+})

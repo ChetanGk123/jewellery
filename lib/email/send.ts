@@ -111,6 +111,10 @@ export type QueueOrderStatusInput = {
   orderNo: string
   customerName: string
   totalPaise: number
+  /** Courier AWB — the Shipped email renders it as a tracking row (6.4). */
+  awb?: string | null
+  /** Courier tracking page — links the AWB row when set (6.4c). */
+  trackingUrl?: string | null
 }
 
 /**

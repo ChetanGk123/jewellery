@@ -43,6 +43,17 @@ export function nextStatus(status: string): OrderStatus | null {
   return i >= 0 && i < ORDER_FLOW.length - 1 ? ORDER_FLOW[i + 1] : null
 }
 
+/**
+ * One step back along the flow (6.5) — for undoing a mis-click. Null at the
+ * start of the flow and for terminal/off-flow statuses; the RPC enforces the
+ * same rule server-side (Delivered/Cancelled never move).
+ */
+export function prevStatus(status: string): OrderStatus | null {
+  if (status === "Delivered" || status === "Cancelled") return null
+  const i = ORDER_FLOW.indexOf(status as OrderStatus)
+  return i > 0 ? ORDER_FLOW[i - 1] : null
+}
+
 /** Primary action label, e.g. "Mark as Shipped" — null when nothing to advance. */
 export function advanceLabel(status: string): string | null {
   const next = nextStatus(status)

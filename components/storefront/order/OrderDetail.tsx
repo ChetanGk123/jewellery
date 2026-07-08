@@ -4,6 +4,7 @@ import { buildStepper, statusChip, type OrderStep, type StepState } from "@/lib/
 import { ROUTES } from "@/lib/routes"
 import { formatPaise } from "@/lib/utils/money"
 import { CancelOrderButton } from "./CancelOrderButton"
+import { CopyAwbButton } from "./CopyAwbButton"
 
 type Props = {
   order: MyOrderDetail
@@ -61,6 +62,37 @@ export function OrderDetail({ order }: Props) {
       )}
 
       <div className="mt-7 flex flex-col gap-5">
+        {/* Tracking (6.4 follow-up): the AWB the operator recorded, so the
+            customer can follow the parcel on the courier's site themselves. */}
+        {order.awb && order.status !== "Cancelled" && (
+          <Card title="Tracking">
+            <div className="flex flex-wrap items-center gap-2.5">
+              {order.trackingUrl ? (
+                // The AWB itself is the link (per operator request) — the
+                // courier's tracking page for this parcel.
+                <a
+                  href={order.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[14px] font-semibold tracking-wide text-maroon-700 underline decoration-gold-600 underline-offset-4 transition-colors hover:text-maroon-900"
+                >
+                  AWB {order.awb} ↗
+                </a>
+              ) : (
+                <span className="text-[14px] font-semibold tracking-wide text-maroon-900">
+                  AWB {order.awb}
+                </span>
+              )}
+              <CopyAwbButton awb={order.awb} />
+            </div>
+            <span className="text-[12.5px] leading-relaxed text-[#5E4A44]">
+              {order.trackingUrl
+                ? "Tap the AWB to track your parcel on the courier's site."
+                : "Use this number on your courier's tracking page to follow the parcel."}
+            </span>
+          </Card>
+        )}
+
         <Card title="Items">
           <div className="flex flex-col">
             {order.items.map((item, i) => (

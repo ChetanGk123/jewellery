@@ -178,6 +178,7 @@ export type Database = {
           status: string
           subtotal_paise: number
           total_paise: number
+          tracking_url: string | null
           user_id: string | null
         }
         Insert: {
@@ -201,6 +202,7 @@ export type Database = {
           status?: string
           subtotal_paise: number
           total_paise: number
+          tracking_url?: string | null
           user_id?: string | null
         }
         Update: {
@@ -224,6 +226,7 @@ export type Database = {
           status?: string
           subtotal_paise?: number
           total_paise?: number
+          tracking_url?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -663,6 +666,10 @@ export type Database = {
       }
       admin_set_order_status: {
         Args: { p_order_id: string; p_status: string }
+        Returns: string
+      }
+      admin_set_order_awb: {
+        Args: { p_order_id: string; p_awb: string; p_tracking_url?: string | null }
         Returns: string
       }
       admin_remove_subscriber: {

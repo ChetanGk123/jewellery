@@ -80,6 +80,10 @@ export type MyOrderDetail = {
   discountPaise: number
   shippingPaise: number
   totalPaise: number
+  /** Courier tracking number, once the operator records it (6.4 follow-up). */
+  awb: string | null
+  /** Courier tracking page — when set, the AWB renders as a link (6.4c). */
+  trackingUrl: string | null
   items: MyOrderItem[]
 }
 
@@ -95,7 +99,7 @@ export async function getMyOrderDetail(orderNo: string): Promise<MyOrderDetail |
   const { data, error } = await supabase
     .from("order")
     .select(
-      "order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, subtotal_paise, discount_paise, shipping_paise, total_paise, order_item(name, tone, qty, unit_price_paise, line_total_paise)",
+      "order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, subtotal_paise, discount_paise, shipping_paise, total_paise, awb, tracking_url, order_item(name, tone, qty, unit_price_paise, line_total_paise)",
     )
     .eq("order_no", orderNo)
     .maybeSingle()
@@ -120,6 +124,8 @@ export async function getMyOrderDetail(orderNo: string): Promise<MyOrderDetail |
     discountPaise: data.discount_paise,
     shippingPaise: data.shipping_paise,
     totalPaise: data.total_paise,
+    awb: data.awb,
+    trackingUrl: data.tracking_url,
     items: data.order_item.map((item) => ({
       name: item.name,
       tone: item.tone,

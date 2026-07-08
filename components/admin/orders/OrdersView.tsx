@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation"
 import { exportOrders, setOrderStatus } from "@/app/(admin)/admin/(console)/orders/actions"
 import { pendingAge } from "@/lib/admin/order-aging"
 import { DEFAULT_ORDER_WINDOW_DAYS, type OrderDateRange } from "@/lib/admin/order-dates"
-import { nextStatus, statusChip, ORDER_STATUSES, ORDERS_PAGE_SIZE } from "@/lib/admin/order-status"
+import {
+  nextStatus,
+  prevStatus,
+  statusChip,
+  ORDER_STATUSES,
+  ORDERS_PAGE_SIZE,
+} from "@/lib/admin/order-status"
 import { csvRow } from "@/lib/utils/csv"
 import type { AdminOrderRow, AdminOrdersPage, OrderEvent, OrderFilter } from "@/lib/db/admin-orders"
 import { ROUTES } from "@/lib/routes"
@@ -85,11 +91,13 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         // Keep the drawer open; reflect the confirmed new status in place,
         // including a timeline entry mirroring what the audit trigger just
         // wrote (the served rows carry the real one after revalidation).
+        // A backward step also cleared the courier details server-side (0033).
         setSelected((prev) =>
           prev
             ? {
                 ...prev,
                 status: next,
+                ...(next === prevStatus(prev.status) ? { awb: null, trackingUrl: null } : {}),
                 events: [
                   ...prev.events,
                   {
@@ -120,6 +128,21 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
     if (!selected) return
     const next = nextStatus(selected.status)
     if (next) runChange(next)
+  }
+
+  // Undo a mis-click: one step back along the flow (6.5) — the RPC enforces
+  // the same single-step rule server-side.
+  const onMoveBack = () => {
+    if (!selected) return
+    const prev = prevStatus(selected.status)
+    if (prev) runChange(prev)
+  }
+
+  // A saved AWB (+ optional tracking link) comes back normalised — reflect it
+  // in the open drawer's snapshot (6.4) so the Delivered gate hint clears
+  // without a refetch.
+  const onAwbSaved = (awb: string, trackingUrl: string | null) => {
+    setSelected((prev) => (prev ? { ...prev, awb, trackingUrl } : prev))
   }
 
   // CSV for the accountant (5.18): the whole order book (capped server-side),
@@ -356,11 +379,13 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         isOpen={selected !== null}
         onClose={closeOrder}
         onAdvance={onAdvance}
+        onMoveBack={onMoveBack}
         onCancel={() => {
           setError(null)
           setConfirmingCancel(true)
         }}
         onNoteAdded={onNoteAdded}
+        onAwbSaved={onAwbSaved}
         isPending={isPending}
         error={error}
       />
