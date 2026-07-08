@@ -69,20 +69,26 @@ export function CategoriesView({ page }: { page: AdminCategoriesPage }) {
               className="flex items-center gap-3.5 rounded-xl border border-[#EAE3D7] bg-white p-[18px]"
             >
               <span
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px]"
-                style={{ background: c.heroBg ?? PLACEHOLDER_GRADIENT }}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-cover bg-center"
+                style={
+                  c.imageUrl
+                    ? { backgroundImage: `url(${c.imageUrl})` }
+                    : { background: c.heroBg ?? PLACEHOLDER_GRADIENT }
+                }
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#A87A1E"
-                  strokeWidth={1.6}
-                  aria-hidden="true"
-                >
-                  <path d="M3 6a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6Z" />
-                </svg>
+                {!c.imageUrl && (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#A87A1E"
+                    strokeWidth={1.6}
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6Z" />
+                  </svg>
+                )}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate font-heading text-[16px] leading-tight text-[#2A1F1A]">

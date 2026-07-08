@@ -14,6 +14,8 @@ export type AdminCategoryRow = {
   slug: string
   description: string | null
   heroBg: string | null
+  /** Storefront tile photo (6.11); null falls back to the heroBg gradient. */
+  imageUrl: string | null
   sortOrder: number
   productCount: number
 }

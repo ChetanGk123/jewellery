@@ -35,7 +35,7 @@ export async function listAdminCategories(opts: {
 
       const { data: cats, count } = await supabase
         .from("category")
-        .select("id, name, slug, description, hero_bg, sort_order", {
+        .select("id, name, slug, description, hero_bg, image_url, sort_order", {
           count: "exact",
         })
         .order("sort_order", { ascending: true })
@@ -58,6 +58,7 @@ export async function listAdminCategories(opts: {
         slug: c.slug,
         description: c.description,
         heroBg: c.hero_bg,
+        imageUrl: c.image_url,
         sortOrder: c.sort_order,
         productCount: counts.get(c.id) ?? 0,
       }))

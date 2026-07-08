@@ -8,6 +8,7 @@ import {
   MAX_PLATING_OPTIONS,
   type ProductImage,
 } from "@/lib/admin/product-status"
+import { uploadAdminImage } from "@/lib/db/admin-storage"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
 
@@ -61,44 +62,17 @@ function normalizeImages(images: ProductImage[]): {
 }
 
 export type ProductActionResult = { ok: boolean; error?: string }
-export type UploadResult = { ok: boolean; url?: string; error?: string }
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB
-const PRODUCT_IMAGE_BUCKET = "product-images"
+export type { UploadResult } from "@/lib/db/admin-storage"
 
 /**
  * Upload one product image to Supabase Storage through the admin cookie session
  * (Storage writes are is_admin()-gated by 0010). Returns the public URL, which
- * the modal stores in the product's gallery. Validates type + size server-side.
+ * the modal stores in the product's gallery. Validation + upload live in the
+ * shared `uploadAdminImage` (also used by category photos, 6.11).
  */
-export async function uploadProductImage(formData: FormData): Promise<UploadResult> {
+export async function uploadProductImage(formData: FormData) {
   await requireAdmin(ROUTES.adminProducts)
-
-  const file = formData.get("file")
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, error: "No file selected." }
-  }
-  if (!file.type.startsWith("image/")) {
-    return { ok: false, error: "Please choose an image file." }
-  }
-  if (file.size > MAX_IMAGE_BYTES) {
-    return { ok: false, error: "Image must be under 5 MB." }
-  }
-
-  const ext = (file.name.split(".").pop() ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")
-  const path = `products/${crypto.randomUUID()}.${ext || "jpg"}`
-
-  const supabase = await createServerClient()
-  const { error } = await supabase.storage
-    .from(PRODUCT_IMAGE_BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false })
-
-  if (error) {
-    return { ok: false, error: "Upload failed. Please try again." }
-  }
-
-  const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(path)
-  return { ok: true, url: data.publicUrl }
+  return uploadAdminImage(formData, "products")
 }
 
 function messageFor(code: string | undefined, raw: string): string {

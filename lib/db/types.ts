@@ -18,6 +18,7 @@ export type Database = {
           description: string | null
           hero_bg: string | null
           id: string
+          image_url: string | null
           name: string
           slug: string
           sort_order: number
@@ -27,6 +28,7 @@ export type Database = {
           description?: string | null
           hero_bg?: string | null
           id?: string
+          image_url?: string | null
           name: string
           slug: string
           sort_order?: number
@@ -36,6 +38,7 @@ export type Database = {
           description?: string | null
           hero_bg?: string | null
           id?: string
+          image_url?: string | null
           name?: string
           slug?: string
           sort_order?: number

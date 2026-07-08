@@ -1,9 +1,14 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { deleteCategory, upsertCategory } from "@/app/(admin)/admin/(console)/categories/actions"
+import { useRef, useState, useTransition } from "react"
+import {
+  deleteCategory,
+  uploadCategoryImage,
+  upsertCategory,
+} from "@/app/(admin)/admin/(console)/categories/actions"
 import { useDialog } from "@/hooks/useDialog"
 import type { AdminCategoryRow } from "@/lib/admin/category"
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
 
 type Props = {
   category: AdminCategoryRow | null
@@ -20,6 +25,9 @@ export function CategoryModal({ category, onClose }: Props) {
   const editing = category !== null
   const [name, setName] = useState(category?.name ?? "")
   const [description, setDescription] = useState(category?.description ?? "")
+  const [imageUrl, setImageUrl] = useState<string | null>(category?.imageUrl ?? null)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -36,10 +44,28 @@ export function CategoryModal({ category, onClose }: Props) {
         id: category?.id ?? null,
         name,
         description,
+        imageUrl,
       })
       if (res.ok) onClose()
       else setError(res.error ?? "Couldn't save the category.")
     })
+  }
+
+  // Photo → shared admin Storage pipeline (6.11); the URL is stored on Save.
+  const onPickFile = async (file: File | undefined) => {
+    if (!file) return
+    setError(null)
+    setIsUploading(true)
+    try {
+      const fd = new FormData()
+      fd.set("file", file)
+      const res = await uploadCategoryImage(fd)
+      if (res.ok && res.url) setImageUrl(res.url)
+      else setError(res.error ?? "Upload failed. Please try again.")
+    } finally {
+      setIsUploading(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
   }
 
   const onDelete = () => {
@@ -109,6 +135,48 @@ export function CategoryModal({ category, onClose }: Props) {
               className="mt-1.5 block min-h-[64px] w-full resize-y rounded-lg border border-[#E7E0D4] bg-white px-[13px] py-3 font-body text-[14px] leading-relaxed text-[#2A1F1A] outline-none focus:border-gold-400"
             />
           </label>
+
+          {/* Tile photo (6.11) — shown on the storefront category tile;
+              without one the tile keeps its gradient. */}
+          <div className="font-body text-[12px] font-medium text-[#8A7E74]">
+            Tile photo <span className="font-normal text-[#A99C90]">(optional)</span>
+            <div className="mt-1.5 flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="h-[64px] w-[64px] flex-none rounded-lg border border-[#E7E0D4] bg-cover bg-center"
+                style={
+                  imageUrl
+                    ? { backgroundImage: `url(${imageUrl})` }
+                    : { background: category?.heroBg ?? PLACEHOLDER_GRADIENT }
+                }
+              />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onPickFile(e.target.files?.[0])}
+              />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={isUploading || isPending}
+                className="rounded-lg border border-[#DAD0C2] bg-white px-3.5 py-2 font-body text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-60"
+              >
+                {isUploading ? "Uploading…" : imageUrl ? "Replace photo" : "Upload photo"}
+              </button>
+              {imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setImageUrl(null)}
+                  disabled={isUploading || isPending}
+                  className="font-body text-[12px] font-semibold text-[#C0392F] hover:underline disabled:opacity-60"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
 
           {error && (
             <p className="rounded-lg border border-[#F0C8CE] bg-[#FBE9E7] px-3 py-2.5 font-body text-[12.5px] leading-snug text-[#C0392F]">
