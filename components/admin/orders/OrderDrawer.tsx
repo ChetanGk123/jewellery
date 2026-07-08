@@ -13,6 +13,7 @@ import {
   type StepState,
 } from "@/lib/admin/order-status"
 import { useDialog } from "@/hooks/useDialog"
+import type { PrintDoc } from "@/lib/admin/print"
 import { ROUTES } from "@/lib/routes"
 import { formatPaise } from "@/lib/utils/money"
 import { codConfirmationMessage, customerWhatsappUrl } from "@/lib/whatsapp"
@@ -51,6 +52,8 @@ export function OrderDrawer({
   const showCancel = order ? canCancel(order.status) : false
   const steps = order ? buildStepper(order.status) : null
   const dialogRef = useDialog<HTMLElement>({ isOpen, onDismiss: onClose, isPending })
+  // Which print document is open in the in-app dialog (6.6); null = closed.
+  const [printDoc, setPrintDoc] = useState<PrintDoc | null>(null)
 
   return (
     <>
@@ -169,12 +172,9 @@ export function OrderDrawer({
               </div>
 
               <div className="flex gap-2.5">
-                <PrintLink
-                  href={ROUTES.adminOrderPrint(order.orderNo, "invoice")}
-                  label="Print invoice"
-                />
-                <PrintLink
-                  href={ROUTES.adminOrderPrint(order.orderNo, "packing-slip")}
+                <PrintTrigger onClick={() => setPrintDoc("invoice")} label="Print invoice" />
+                <PrintTrigger
+                  onClick={() => setPrintDoc("packing-slip")}
                   label="Print packing slip"
                 />
               </div>
@@ -214,6 +214,11 @@ export function OrderDrawer({
           </>
         )}
       </aside>
+
+      {/* Sibling of the aside: its transform would trap a fixed dialog. */}
+      {order && printDoc && (
+        <PrintDialog orderNo={order.orderNo} doc={printDoc} onClose={() => setPrintDoc(null)} />
+      )}
     </>
   )
 }
@@ -296,13 +301,12 @@ function ContactActions({ order }: { order: AdminOrderRow }) {
   )
 }
 
-/** Opens one printable document (invoice or packing slip) in a new tab. */
-function PrintLink({ href, label }: { href: string; label: string }) {
+/** Opens one printable document (invoice or packing slip) in the dialog. */
+function PrintTrigger({ onClick, label }: { onClick: () => void; label: string }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
+      type="button"
+      onClick={onClick}
       className="flex flex-1 items-center justify-center gap-2 rounded-[10px] border border-[#DAD0C2] bg-white py-3 text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2]"
     >
       <svg
@@ -318,7 +322,75 @@ function PrintLink({ href, label }: { href: string; label: string }) {
         <path d="M6 14h12v7H6z" />
       </svg>
       {label}
-    </a>
+    </button>
+  )
+}
+
+/**
+ * In-app print preview (6.6): the auth-gated print route in a same-origin
+ * iframe — its own toolbar (Print, switch document) works inside, so this
+ * shell only hosts, offers a new-tab fallback, and dismisses. Rendered
+ * outside the drawer's transformed aside so `fixed` positions correctly.
+ */
+function PrintDialog({
+  orderNo,
+  doc,
+  onClose,
+}: {
+  orderNo: string
+  doc: PrintDoc
+  onClose: () => void
+}) {
+  const dialogRef = useDialog<HTMLDivElement>({ isOpen: true, onDismiss: onClose })
+  const src = ROUTES.adminOrderPrint(orderNo, doc)
+  const title = doc === "invoice" ? "Invoice" : "Packing slip"
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Close print preview"
+        onClick={onClose}
+        className="fixed inset-0 z-[70] bg-[rgba(42,10,18,0.5)]"
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${title} for ${orderNo}`}
+        tabIndex={-1}
+        className="fixed inset-x-3 bottom-[4vh] top-[4vh] z-[75] mx-auto flex max-w-[860px] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_60px_rgba(42,10,18,0.35)] outline-none"
+      >
+        <header className="flex items-center justify-between gap-3 border-b border-[#E7E0D4] bg-white px-4 py-3">
+          <span className="text-[13px] font-semibold text-[#2A1F1A]">
+            {title} · {orderNo}
+          </span>
+          <div className="flex items-center gap-4">
+            <a
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[12px] font-semibold text-[#5E4A40] transition-colors hover:text-maroon-700"
+            >
+              Open in new tab
+            </a>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={onClose}
+              className="text-[20px] leading-none text-[#8A7E74] hover:text-[#2A1F1A]"
+            >
+              ×
+            </button>
+          </div>
+        </header>
+        <iframe
+          src={src}
+          title={`${title} for ${orderNo}`}
+          className="w-full flex-1 bg-[#F5F1EA]"
+        />
+      </div>
+    </>
   )
 }
 

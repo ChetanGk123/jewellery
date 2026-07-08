@@ -64,8 +64,11 @@ export async function proxy(request: NextRequest) {
     `img-src 'self' data: ${supabase}`.trim(),
     `font-src 'self'`,
     connectSrc.trim(),
-    `frame-src 'none'`,
-    `frame-ancestors 'none'`,
+    // 'self' (was 'none'): the order print dialog (6.6) embeds our own
+    // /admin/orders/[no]/print route in an iframe. Cross-origin framing —
+    // both directions — stays blocked.
+    `frame-src 'self'`,
+    `frame-ancestors 'self'`,
     `form-action 'self'`,
     `base-uri 'self'`,
     `object-src 'none'`,

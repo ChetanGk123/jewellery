@@ -14,8 +14,9 @@ const securityHeaders = [
   },
   // Block MIME sniffing so a mistyped asset can't be treated as executable.
   { key: "X-Content-Type-Options", value: "nosniff" },
-  // Legacy clickjacking guard; CSP `frame-ancestors 'none'` is the modern one.
-  { key: "X-Frame-Options", value: "DENY" },
+  // Legacy clickjacking guard; CSP `frame-ancestors 'self'` is the modern one.
+  // SAMEORIGIN (was DENY) so the print dialog's same-origin iframe loads (6.6).
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
   // Send only the origin on cross-origin navigations — no full path/query leak.
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Drop powerful features we never use.
