@@ -79,29 +79,29 @@ export function OrderDrawer({
       >
         {order && (
           <>
-            <header className="flex items-start justify-between border-b border-[#E7E0D4] bg-white px-6 py-[22px]">
-              <div className="flex flex-col gap-1.5">
-                <span className="font-heading text-[22px] leading-none text-[#2A1F1A]">
+            <header className="flex items-start justify-between gap-3 border-b border-[#E7E0D4] bg-white px-4 py-[18px] sm:px-6 sm:py-[22px]">
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <span className="break-words font-heading text-[20px] leading-tight text-[#2A1F1A] sm:text-[22px] sm:leading-none">
                   {order.orderNo}
                 </span>
                 <span className="text-[12px] text-[#8A7E74]">
                   {order.dateLabel} · {order.paymentLabel}
                 </span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                 <StatusPill status={order.status} />
                 <button
                   type="button"
                   aria-label="Close"
                   onClick={onClose}
-                  className="text-[22px] leading-none text-[#8A7E74] hover:text-[#2A1F1A]"
+                  className="-m-1.5 p-1.5 text-[22px] leading-none text-[#8A7E74] hover:text-[#2A1F1A]"
                 >
                   ×
                 </button>
               </div>
             </header>
 
-            <div className="flex flex-1 flex-col gap-[22px] overflow-y-auto px-6 py-[22px]">
+            <div className="flex flex-1 flex-col gap-[22px] overflow-y-auto px-4 py-[22px] sm:px-6">
               {steps ? (
                 <Stepper steps={steps} />
               ) : (
@@ -123,10 +123,10 @@ export function OrderDrawer({
                     </span>
                   )}
                 </span>
-                <span className="text-[12.5px] leading-relaxed text-[#5E4A40]">
+                <span className="break-words text-[12.5px] leading-relaxed text-[#5E4A40]">
                   {order.phone} · {order.email}
                 </span>
-                <span className="text-[12.5px] leading-relaxed text-[#5E4A40]">
+                <span className="break-words text-[12.5px] leading-relaxed text-[#5E4A40]">
                   {order.addressLine}, {order.city}, {order.state} — {order.pincode}
                 </span>
                 <ContactActions order={order} />
@@ -171,7 +171,8 @@ export function OrderDrawer({
                 </div>
               </div>
 
-              <div className="flex gap-2.5">
+              {/* min-w + wrap: stacks instead of clipping on narrow phones */}
+              <div className="flex flex-wrap gap-2.5">
                 <PrintTrigger onClick={() => setPrintDoc("invoice")} label="Print invoice" />
                 <PrintTrigger
                   onClick={() => setPrintDoc("packing-slip")}
@@ -185,7 +186,7 @@ export function OrderDrawer({
             </div>
 
             {(advance || showCancel) && (
-              <footer className="flex flex-col gap-2 border-t border-[#E7E0D4] bg-white px-6 py-[18px]">
+              <footer className="flex flex-col gap-2 border-t border-[#E7E0D4] bg-white px-4 py-[18px] sm:px-6">
                 {error && <p className="text-[12px] font-medium text-[#C0392F]">{error}</p>}
                 <div className="flex gap-2.5">
                   {advance && (
@@ -307,7 +308,7 @@ function PrintTrigger({ onClick, label }: { onClick: () => void; label: string }
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-1 items-center justify-center gap-2 rounded-[10px] border border-[#DAD0C2] bg-white py-3 text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2]"
+      className="flex min-w-[150px] flex-1 items-center justify-center gap-2 rounded-[10px] border border-[#DAD0C2] bg-white py-3 text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2]"
     >
       <svg
         width="14"
@@ -362,15 +363,15 @@ function PrintDialog({
         className="fixed inset-x-3 bottom-[4vh] top-[4vh] z-[75] mx-auto flex max-w-[860px] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_60px_rgba(42,10,18,0.35)] outline-none"
       >
         <header className="flex items-center justify-between gap-3 border-b border-[#E7E0D4] bg-white px-4 py-3">
-          <span className="text-[13px] font-semibold text-[#2A1F1A]">
+          <span className="min-w-0 truncate text-[13px] font-semibold text-[#2A1F1A]">
             {title} · {orderNo}
           </span>
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-4">
             <a
               href={src}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[12px] font-semibold text-[#5E4A40] transition-colors hover:text-maroon-700"
+              className="whitespace-nowrap text-[12px] font-semibold text-[#5E4A40] transition-colors hover:text-maroon-700"
             >
               Open in new tab
             </a>
@@ -378,7 +379,7 @@ function PrintDialog({
               type="button"
               aria-label="Close"
               onClick={onClose}
-              className="text-[20px] leading-none text-[#8A7E74] hover:text-[#2A1F1A]"
+              className="-m-1.5 p-1.5 text-[20px] leading-none text-[#8A7E74] hover:text-[#2A1F1A]"
             >
               ×
             </button>
@@ -507,9 +508,9 @@ function Timeline({
               />
               {i < order.events.length - 1 && <span className="w-px flex-1 bg-[#EDE5D6]" />}
             </div>
-            <div className="flex flex-col gap-0.5 pb-3">
+            <div className="flex min-w-0 flex-col gap-0.5 pb-3">
               {event.kind === "note" ? (
-                <span className="whitespace-pre-line rounded-md bg-[#FBF6EE] px-2.5 py-1.5 text-[12.5px] leading-relaxed text-[#5E4A40]">
+                <span className="whitespace-pre-line break-words rounded-md bg-[#FBF6EE] px-2.5 py-1.5 text-[12.5px] leading-relaxed text-[#5E4A40]">
                   {event.summary}
                 </span>
               ) : (
