@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { AdminRealtimeRefresher } from "@/components/admin/layout/AdminRealtimeRefresher"
 import { AdminShell } from "@/components/admin/layout/AdminShell"
 import { requireAdmin } from "@/lib/admin/auth"
 import { getAdminNavCounts } from "@/lib/db/admin-metrics"
@@ -32,6 +33,9 @@ export default async function AdminConsoleLayout({
 
   return (
     <AdminShell counts={counts} adminName={adminName} adminEmail={email}>
+      {/* Live refresh (6.9): repaints the console when orders/reviews/messages
+          change — new orders appear and bell counts update without a reload. */}
+      <AdminRealtimeRefresher />
       {children}
     </AdminShell>
   )

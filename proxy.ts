@@ -52,10 +52,14 @@ export async function proxy(request: NextRequest) {
     ? `script-src 'self' 'unsafe-inline' 'unsafe-eval'`
     : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
 
+  // Realtime (6.9) opens a websocket to the Supabase host. CSP3 lets wss
+  // match the https origin, but older Safari needs it spelled out.
+  const supabaseWs = supabase.replace(/^https:/, "wss:")
+
   // Dev HMR opens a websocket back to the Next dev server; allow ws(s):.
   const connectSrc = isDev
     ? `connect-src 'self' ${supabase} ws: wss:`
-    : `connect-src 'self' ${supabase}`
+    : `connect-src 'self' ${supabase} ${supabaseWs}`
 
   const directives = [
     `default-src 'self'`,
