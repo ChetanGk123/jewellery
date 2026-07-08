@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { exportOrders, setOrderStatus } from "@/app/(admin)/admin/(console)/orders/actions"
 import { pendingAge } from "@/lib/admin/order-aging"
+import { DEFAULT_ORDER_WINDOW_DAYS, type OrderDateRange } from "@/lib/admin/order-dates"
 import { nextStatus, statusChip, ORDER_STATUSES, ORDERS_PAGE_SIZE } from "@/lib/admin/order-status"
 import { csvRow } from "@/lib/utils/csv"
 import type { AdminOrderRow, AdminOrdersPage, OrderEvent, OrderFilter } from "@/lib/db/admin-orders"
@@ -17,11 +18,21 @@ import { OrderDrawer } from "./OrderDrawer"
 
 const TABS: OrderFilter[] = ["All", ...ORDER_STATUSES]
 
-function hrefFor(filter: OrderFilter, page: number, search: string): string {
+// Sentinel ranges for the toggle links — the URL encodes only non-defaults.
+const DEFAULT_RANGE: OrderDateRange = { from: null, to: null, isAll: false, isDefault: true }
+const ALL_DATES: OrderDateRange = { from: null, to: null, isAll: true, isDefault: false }
+
+function hrefFor(filter: OrderFilter, page: number, search: string, range: OrderDateRange): string {
   const params = new URLSearchParams()
   if (filter !== "All") params.set("status", filter)
   if (page > 1) params.set("page", String(page))
   if (search) params.set("q", search)
+  // Default window is param-free; "all" and custom ranges are explicit (6.7).
+  if (range.isAll) params.set("from", "all")
+  else if (!range.isDefault && range.from) {
+    params.set("from", range.from)
+    if (range.to) params.set("to", range.to)
+  }
   const qs = params.toString()
   return qs ? `${ROUTES.adminOrders}?${qs}` : ROUTES.adminOrders
 }
@@ -32,7 +43,16 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
   // is shareable and survives refresh; debounced as-you-type (AdminSearchBox).
   const onSearch = (term: string) => {
     // Preserve the active status tab; drop the page so results start at 1.
-    router.replace(hrefFor(page.filter, 1, term))
+    router.replace(hrefFor(page.filter, 1, term, page.range))
+  }
+
+  // Date window (6.7). `from` anchors a custom range — clearing it returns to
+  // the default last-N-days window; the toggle links flip to/from "all".
+  const setDates = (from: string, to: string) => {
+    const range: OrderDateRange = from
+      ? { from, to: to || null, isAll: false, isDefault: false }
+      : DEFAULT_RANGE
+    router.replace(hrefFor(page.filter, 1, page.search, range))
   }
 
   // A snapshot of the open order — held locally (not derived from page.rows) so
@@ -177,6 +197,33 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
           ariaLabel="Search orders by number, customer, phone or email"
           className="min-w-[220px] flex-1"
         />
+        {/* Date window (6.7): default last 2 days; custom range; All dates. */}
+        <div className="flex items-center gap-1.5">
+          <input
+            type="date"
+            value={page.range.from ?? ""}
+            max={page.range.to ?? undefined}
+            onChange={(e) => setDates(e.target.value, page.range.to ?? "")}
+            aria-label="Orders from date"
+            className="rounded-lg border border-[#E7E0D4] bg-white px-2.5 py-[8px] text-[12px] text-[#5E4A40] outline-none focus:border-[#C9A24B]"
+          />
+          <span className="text-[12px] text-[#A99C90]">to</span>
+          <input
+            type="date"
+            value={page.range.to ?? ""}
+            min={page.range.from ?? undefined}
+            onChange={(e) => setDates(page.range.from ?? "", e.target.value)}
+            aria-label="Orders to date"
+            className="rounded-lg border border-[#E7E0D4] bg-white px-2.5 py-[8px] text-[12px] text-[#5E4A40] outline-none focus:border-[#C9A24B]"
+          />
+        </div>
+        <Link
+          href={hrefFor(page.filter, 1, page.search, page.range.isAll ? DEFAULT_RANGE : ALL_DATES)}
+          replace
+          className="rounded-lg border border-[#E7E0D4] bg-white px-[14px] py-[9px] text-[12px] font-semibold text-[#5E4A40] transition-colors hover:border-[#D8CDB9]"
+        >
+          {page.range.isAll ? `Last ${DEFAULT_ORDER_WINDOW_DAYS} days` : "All dates"}
+        </Link>
         <button
           type="button"
           onClick={exportCsv}
@@ -202,7 +249,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
           return (
             <Link
               key={tab}
-              href={hrefFor(tab, 1, page.search)}
+              href={hrefFor(tab, 1, page.search, page.range)}
               aria-current={active ? "page" : undefined}
               className={`rounded-full border px-4 py-[9px] text-[12.5px] font-medium transition-colors ${
                 active
@@ -232,7 +279,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
 
             {page.rows.length === 0 ? (
               <p className="px-[22px] py-[50px] text-center text-[13px] text-[#A99C90]">
-                No orders with this status.
+                No orders with this status{page.range.isAll ? "" : " in this date range"}.
               </p>
             ) : (
               page.rows.map((o) => {
@@ -301,7 +348,7 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         pageCount={page.pageCount}
         total={page.total}
         pageSize={ORDERS_PAGE_SIZE}
-        hrefForPage={(n) => hrefFor(page.filter, n, page.search)}
+        hrefForPage={(n) => hrefFor(page.filter, n, page.search, page.range)}
       />
 
       <OrderDrawer

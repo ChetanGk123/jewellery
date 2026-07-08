@@ -1,4 +1,5 @@
 import "server-only"
+import { shiftDate, type OrderDateRange } from "@/lib/admin/order-dates"
 import { ORDER_STATUSES, ORDERS_PAGE_SIZE, type OrderStatus } from "@/lib/admin/order-status"
 import { type AdminRead, loadAdmin } from "./admin-read"
 import { createServerClient } from "./server"
@@ -76,6 +77,8 @@ export type AdminOrdersPage = {
   counts: OrderCounts
   filter: OrderFilter
   search: string
+  /** The resolved date window the rows/counts reflect (6.7). */
+  range: OrderDateRange
   page: number
   pageCount: number
   total: number
@@ -130,16 +133,30 @@ const EMPTY_COUNTS: OrderCounts = {
   Cancelled: 0,
 }
 
-function emptyPage(filter: OrderFilter, search: string, page: number): AdminOrdersPage {
+function emptyPage(
+  filter: OrderFilter,
+  search: string,
+  range: OrderDateRange,
+  page: number,
+): AdminOrdersPage {
   return {
     rows: [],
     counts: EMPTY_COUNTS,
     filter,
     search,
+    range,
     page,
     pageCount: 0,
     total: 0,
   }
+}
+
+/**
+ * A calendar date's midnight in IST, as an ISO instant for timestamptz
+ * comparison — e.g. "2026-07-06" → "2026-07-05T18:30:00.000Z".
+ */
+function istDayStartIso(date: string): string {
+  return new Date(`${date}T00:00:00+05:30`).toISOString()
 }
 
 // Columns an operator would recognise an order by when a customer calls: the
@@ -402,11 +419,16 @@ export async function listAdminOrders(opts: {
   filter: OrderFilter
   page: number
   search?: string
+  range: OrderDateRange
 }): Promise<AdminRead<AdminOrdersPage>> {
   const filter = opts.filter
   const page = Math.max(1, opts.page)
   const search = (opts.search ?? "").trim()
+  const range = opts.range
   const orFilter = buildOrderSearchOr(search)
+  // IST day bounds: >= midnight of `from`, < midnight after `to` (inclusive).
+  const sinceIso = range.from ? istDayStartIso(range.from) : null
+  const untilIso = range.to ? istDayStartIso(shiftDate(range.to, 1)) : null
 
   return loadAdmin(
     "orders",
@@ -425,12 +447,16 @@ export async function listAdminOrders(opts: {
         .range(from, from + ORDERS_PAGE_SIZE - 1)
       if (filter !== "All") rowsQuery = rowsQuery.eq("status", filter)
       if (orFilter) rowsQuery = rowsQuery.or(orFilter)
+      if (sinceIso) rowsQuery = rowsQuery.gte("created_at", sinceIso)
+      if (untilIso) rowsQuery = rowsQuery.lt("created_at", untilIso)
 
       const [rowsRes, ...countRes] = await Promise.all([
         rowsQuery,
         ...ORDER_STATUSES.map((s) => {
           let q = supabase.from("order").select("*", { count: "exact", head: true }).eq("status", s)
           if (orFilter) q = q.or(orFilter)
+          if (sinceIso) q = q.gte("created_at", sinceIso)
+          if (untilIso) q = q.lt("created_at", untilIso)
           return q
         }),
       ])
@@ -478,8 +504,8 @@ export async function listAdminOrders(opts: {
         mapOrderRow(o, historyByPhone.get(o.customer_phone), eventsByOrder.get(o.order_no) ?? []),
       )
 
-      return { rows, counts, filter, search, page, pageCount, total }
+      return { rows, counts, filter, search, range, page, pageCount, total }
     },
-    emptyPage(filter, search, page),
+    emptyPage(filter, search, range, page),
   )
 }
