@@ -2,6 +2,7 @@ import "server-only"
 import { after } from "next/server"
 import { buildAbandonedCartEmail } from "./abandoned-cart"
 import { buildNewOrderAdminEmail, type NewOrderAdminEmailInput } from "./admin-alert"
+import type { EmailTemplateId } from "./copy"
 import { buildDailyDigestEmail, type DailyDigestEmailInput } from "./daily-digest"
 import {
   buildOrderConfirmationEmail,
@@ -9,6 +10,7 @@ import {
   type OrderConfirmationEmailInput,
 } from "./order-confirmation"
 import { buildOrderStatusEmail, orderStatusCopyFor, type OrderStatusEmailKind } from "./order-status"
+import { buildSampleEmail } from "./samples"
 import { buildSubscriberWelcomeEmail } from "./subscriber-welcome"
 import { getEmailCopy, getStoreInfo } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
@@ -248,6 +250,29 @@ export async function queueSubscriberWelcomeEmail(to: string): Promise<void> {
     ),
     fromAddress(info),
   )
+}
+
+/**
+ * Send one template's SAMPLE render to the store inbox (TASKS 7.4) — the
+ * Emails console's "Send test email". AWAITED: the admin is waiting on the
+ * outcome. Uses the SAVED copy (not unsaved form state) and the same sample
+ * fixtures as the console preview, so inbox and preview match. Returns the
+ * recipient so the UI can show where it went.
+ */
+export async function sendTestTemplateEmailNow(
+  templateId: EmailTemplateId,
+): Promise<{ sent: boolean; to: string }> {
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
+  const to = adminAlertTo(info)
+  if (!isEmailEnabled()) return { sent: false, to }
+
+  const message = buildSampleEmail(templateId, { info, copy: emailCopy, baseUrl: SITE_URL })
+  const sent = await sendEmail(
+    to,
+    { ...message, subject: `[Test] ${message.subject}` },
+    fromAddress(info),
+  )
+  return { sent, to }
 }
 
 export type SendDailyDigestInput = Omit<DailyDigestEmailInput, "adminUrl">

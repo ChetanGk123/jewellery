@@ -249,13 +249,18 @@ stay in code); copy stored as an `email_copy` jsonb blob on `setting`, resolved 
   `lib/email/send.ts`: all 6 queue/send fns fetch `Promise.all([getStoreInfo(), getEmailCopy()])` and
   pass the template slice (status kinds via new `orderStatusCopyFor(copy, kind)` export). `setting`
   Row/Insert/Update in types.ts gain `email_copy`. tsc/273/eslint green.
-- ⬜ **7.4 — Write path + test send.** `lib/admin/email-copy.ts` (client-safe zod schema, `optionalText`
-  style; toFormValues/toPayload — empty fields dropped so defaults keep applying).
-  `app/(admin)/admin/(console)/emails/actions.ts`: `updateEmailCopy` mirrors `updateStoreSettings`
-  (requireAdmin → safeParse → `admin_update_settings` RPC → `updateTag(settings)` + revalidate);
-  `sendTestTemplateEmail(templateId)` — requireAdmin + `checkRateLimit` (5/10min), builds from
-  `lib/email/samples.ts` fixtures + SAVED copy, awaited send to `adminAlertTo(info)` only (never a
-  caller-supplied address), `{ok,error}` result, friendly no-provider message when `!isEmailEnabled()`.
+- ✅ **7.4 — Write path + test send (TDD, 16 tests → 289).** `lib/admin/email-copy.ts` (client-safe
+  zod schema — `line` 200 / `paragraph` 600 trimmed maxima; `emailCopyToFormValues` seeds SAVED
+  overrides only so defaults stay placeholders; `formValuesToEmailCopyPayload` sends COMPLETE
+  per-template objects with empty strings kept — clearing a field genuinely resets it, round-trip
+  probed via `resolveEmailCopy`). `lib/email/samples.ts` — `buildSampleEmail(id, {info, copy, baseUrl})`,
+  one fixed bridal-jewellery fixture set (no clocks), Shipped sample carries an AWB, Delivered carries
+  review items; shared verbatim by preview and test send. `emails/actions.ts`: `updateEmailCopy`
+  (requireAdmin → safeParse → `admin_update_settings` `{email_copy}` payload → `updateTag(settings)` +
+  revalidate) and `sendTestEmail(templateId)` (z.enum-validated id, requireAdmin, 5/10min
+  `checkRateLimit` per admin, friendly no-provider message, recipient echoed back). send.ts gains
+  awaited `sendTestTemplateEmailNow` — SAVED copy + samples, "[Test] " subject prefix, recipient is
+  always `adminAlertTo(info)` (never caller-supplied). `ROUTES.adminEmails` added. tsc/289/eslint green.
 - ⬜ **7.5 — Emails console UI.** Nav: `ROUTES.adminEmails` (`/admin/emails`), `ADMIN_NAV` +
   `ADMIN_PAGE_META` entries, new `"emails"` `AdminIconKey` + envelope-pencil path in `AdminNavIcons.tsx`.
   Route `emails/page.tsx` (settings/page.tsx twin) → `components/admin/emails/EmailsView.tsx`:
