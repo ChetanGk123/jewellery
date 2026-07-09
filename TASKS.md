@@ -261,15 +261,20 @@ stay in code); copy stored as an `email_copy` jsonb blob on `setting`, resolved 
   `checkRateLimit` per admin, friendly no-provider message, recipient echoed back). send.ts gains
   awaited `sendTestTemplateEmailNow` — SAVED copy + samples, "[Test] " subject prefix, recipient is
   always `adminAlertTo(info)` (never caller-supplied). `ROUTES.adminEmails` added. tsc/289/eslint green.
-- ⬜ **7.5 — Emails console UI.** Nav: `ROUTES.adminEmails` (`/admin/emails`), `ADMIN_NAV` +
-  `ADMIN_PAGE_META` entries, new `"emails"` `AdminIconKey` + envelope-pencil path in `AdminNavIcons.tsx`.
-  Route `emails/page.tsx` (settings/page.tsx twin) → `components/admin/emails/EmailsView.tsx`:
-  master–detail (left template rail with Customer/Internal groups; Shipped/Delivered/Cancelled sub-tabs);
-  editor fields with `INPUT`/`LABEL_TEXT`/`HINT` constants, **defaults as placeholders** (blank = default),
-  token hints, per-template "Reset to defaults"; live preview pane — subject line + `<iframe srcDoc>`
-  rebuilt client-side from unsaved form values + `samples.ts` + server-passed resolved store info,
-  560px/375px width toggle; sticky save bar (SettingsView dirty/saved/error pattern); "Send test email"
-  button per template (NotificationsCard feedback pattern, disabled + hint without a provider, shows recipient).
+- ✅ **7.5 — Emails console UI.** Nav: `ADMIN_NAV`/`ADMIN_PAGE_META` entries between Subscribers and
+  Settings, `"emails"` `AdminIconKey` + paper-plane path (subscribers keeps the envelope). Route
+  `emails/page.tsx` (settings twin: loads saved blob + resolved store info + `isEmailEnabled()` +
+  `adminAlertTo` recipient, now exported). `components/admin/emails/EmailsView.tsx` — master–detail:
+  Settings-style left rail with Customer/Internal groups (8 rail entries — the 3 status kinds are
+  separate entries instead of sub-tabs, simpler than planned; chip strip on <lg); editor fields with the
+  Settings `INPUT`/`LABEL_TEXT` constants, **defaults as placeholders** (blank = default), per-field
+  token hints from `COPY_TOKENS`, "Reset to defaults" in the card header when overrides exist; test-send
+  block (border card: button + recipient line, saved-copy nudge when dirty, role=status/alert feedback,
+  disabled + RESEND hint when unconfigured); sticky save bar (SettingsView pattern, one Save persists
+  all templates). `EmailPreview.tsx` — subject inbox row + `<iframe srcDoc sandbox="">` rebuilt via
+  `useMemo` from UNSAVED form values (`resolveEmailCopy(values)` → `buildSampleEmail`), 600/375px
+  width toggle. tsc/289/eslint/build green (`ƒ /admin/emails` registers). Browser pass: auth gate
+  redirects to sign-in with `next=` ✓; full visual pass blocked on applying 0042 (→ 7.6).
 - ⬜ **7.6 — Verify end-to-end.** `bun test` + tsc + lint; apply 0042 and probe the RPC merge; authed
   browser pass (edit → live preview → save → reload persists → blank → default returns); confirm a real
   queued email (e.g. status change) uses the override; test send delivered with RESEND_API_KEY, disabled

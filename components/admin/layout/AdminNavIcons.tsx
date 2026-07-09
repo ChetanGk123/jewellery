@@ -47,6 +47,12 @@ const ICON_PATHS: Record<AdminIconKey, ReactNode> = {
       <path d="m3.4 6.5 8.6 6 8.6-6" />
     </>
   ),
+  emails: (
+    <>
+      <path d="m21 3-9.3 9.3" />
+      <path d="M21 3 14 21l-2.7-8.3L3 10l18-7Z" />
+    </>
+  ),
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />

@@ -169,7 +169,7 @@ export async function queueOrderStatusEmail(input: QueueOrderStatusInput): Promi
 export type QueueNewOrderAdminInput = Omit<NewOrderAdminEmailInput, "adminUrl">
 
 /** Where new-order alerts go — a dedicated inbox, else the store email. */
-function adminAlertTo(info: ResolvedStoreInfo): string {
+export function adminAlertTo(info: ResolvedStoreInfo): string {
   return process.env.ADMIN_ALERT_EMAIL ?? info.email.display
 }
 

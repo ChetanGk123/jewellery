@@ -21,6 +21,7 @@ export type AdminIconKey =
   | "reviews"
   | "messages"
   | "subscribers"
+  | "emails"
   | "settings"
   | "team"
 
@@ -56,6 +57,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
     badge: "messages",
   },
   { href: ROUTES.adminSubscribers, label: "Subscribers", icon: "subscribers" },
+  { href: ROUTES.adminEmails, label: "Emails", icon: "emails" },
   { href: ROUTES.adminSettings, label: "Settings", icon: "settings" },
   { href: ROUTES.adminTeam, label: "Team", icon: "team" },
 ]
@@ -96,6 +98,10 @@ export const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
   [ROUTES.adminSubscribers]: {
     title: "Subscribers",
     subtitle: "Your newsletter audience",
+  },
+  [ROUTES.adminEmails]: {
+    title: "Emails",
+    subtitle: "Preview and edit the wording of every email the store sends",
   },
   [ROUTES.adminSettings]: {
     title: "Settings",
