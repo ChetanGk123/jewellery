@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { resolveEmailCopy } from "./copy"
 import { buildAbandonedCartEmail, type AbandonedCartEmailInput } from "./abandoned-cart"
 import { resolveStoreInfo } from "@/lib/store-info"
 
@@ -43,4 +44,33 @@ test("a resolved store info overrides the brand (6.15 pattern)", () => {
   const msg = buildAbandonedCartEmail(base, resolveStoreInfo({ storeName: "Meera Jewels" }))
   expect(msg.subject).toContain("Meera Jewels")
   expect(msg.html).toContain("MEERA JEWELS")
+})
+
+test("custom copy overrides subject, heading, intro, notice and button (7.2)", () => {
+  const copy = resolveEmailCopy({
+    abandonedCart: {
+      subject: "Pieces reserved at {storeName}",
+      heading: "Your sparkle awaits",
+      intro: "These beauties are still held for you.",
+      notice: "COD available as always.",
+      button: "Finish checkout",
+    },
+  }).abandonedCart
+
+  const msg = buildAbandonedCartEmail(base, undefined, copy)
+
+  expect(msg.subject).toBe("Pieces reserved at RJ Jewellers")
+  expect(msg.html).toContain("Your sparkle awaits")
+  expect(msg.html).toContain("Finish checkout")
+  for (const body of [msg.html, msg.text]) {
+    expect(body).toContain("These beauties are still held for you.")
+    expect(body).toContain("COD available as always.")
+  }
+})
+
+test("hostile saved copy renders escaped (7.2)", () => {
+  const copy = resolveEmailCopy({ abandonedCart: { heading: "<script>x</script>" } }).abandonedCart
+  const msg = buildAbandonedCartEmail(base, undefined, copy)
+  expect(msg.html).not.toContain("<script>")
+  expect(msg.html).toContain("&lt;script&gt;")
 })

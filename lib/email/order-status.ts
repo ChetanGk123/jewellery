@@ -5,7 +5,15 @@
  * as `order-confirmation.ts`: inline styles, table layout, system font stack.
  */
 
-import { type EmailMessage, escapeHtml } from "./order-confirmation"
+import {
+  DEFAULT_EMAIL_COPY,
+  escapeHtml,
+  renderCopy,
+  renderCopyHtml,
+  type EmailTemplateId,
+  type OrderStatusKindCopy,
+} from "./copy"
+import type { EmailMessage } from "./order-confirmation"
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 
@@ -37,58 +45,35 @@ export type OrderStatusEmailInput = {
 const HEADING_FONT = "Georgia, 'Times New Roman', serif"
 const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 
-type Copy = {
-  subjectWord: string
-  heading: string
-  intro: (orderNo: string) => string
-  totalLabel: string
-  note: string
-  accent: string
-}
-
-const COPY: Record<OrderStatusEmailKind, Copy> = {
-  Shipped: {
-    subjectWord: "shipped",
-    heading: "Your order is on its way!",
-    intro: (o) => `Good news — order ${o} has been shipped and is on its way.`,
-    totalLabel: "Amount payable · Cash on Delivery",
-    note: "Please keep the amount ready — our courier collects payment in cash on delivery.",
-    accent: "#71182B",
-  },
-  Delivered: {
-    subjectWord: "delivered",
-    heading: "Delivered — thank you!",
-    intro: (o) => `Order ${o} has been delivered. We hope you love your new piece.`,
-    totalLabel: "Order total · paid on delivery",
-    note: "If anything isn't right, just reply to this email or WhatsApp us — we're happy to help.",
-    accent: "#15692F",
-  },
-  Cancelled: {
-    subjectWord: "cancelled",
-    heading: "Your order was cancelled",
-    intro: (o) =>
-      `Order ${o} has been cancelled. As this was Cash on Delivery, you haven't been charged.`,
-    totalLabel: "Cancelled order total",
-    note: "Changed your mind? Your favourites are waiting — browse the collection anytime.",
-    accent: "#C0392F",
-  },
+/**
+ * Per-kind structure that is NOT verbiage: the accent colour and which
+ * `email_copy` template group the kind reads from (7.2). The wording itself
+ * lives in copy.ts / the operator's saved overrides.
+ */
+const KIND_META: Record<OrderStatusEmailKind, { copyKey: EmailTemplateId; accent: string }> = {
+  Shipped: { copyKey: "orderShipped", accent: "#71182B" },
+  Delivered: { copyKey: "orderDelivered", accent: "#15692F" },
+  Cancelled: { copyKey: "orderCancelled", accent: "#C0392F" },
 }
 
 /**
  * Build a status-change message. The customer name is HTML-escaped; the total
  * is formatted from integer paise at this UI boundary. `info` carries the
- * Settings-editable brand/contact details (6.15).
+ * Settings-editable brand/contact details (6.15); `copy` the editable verbiage
+ * for this kind (7.2) — defaulted per kind, so the param stays optional.
  */
 export function buildOrderStatusEmail(
   input: OrderStatusEmailInput,
   info: ResolvedStoreInfo = DEFAULT_STORE_INFO,
+  copy?: OrderStatusKindCopy,
 ): EmailMessage {
-  const copy = COPY[input.kind]
+  const meta = KIND_META[input.kind]
+  const kindCopy = copy ?? (DEFAULT_EMAIL_COPY[meta.copyKey] as OrderStatusKindCopy)
   const total = formatPaise(input.totalPaise)
   const name = input.customerName.trim() || "there"
-  const intro = copy.intro(input.orderNo)
+  const intro = renderCopy(kindCopy.intro, { orderNo: input.orderNo })
 
-  const subject = `Order ${input.orderNo} ${copy.subjectWord} — ${info.name}`
+  const subject = renderCopy(kindCopy.subject, { orderNo: input.orderNo, storeName: info.name })
 
   // Tracking only makes sense while the parcel is moving — Shipped alone.
   const awb = input.kind === "Shipped" ? (input.awb ?? "").trim() : ""
@@ -118,12 +103,12 @@ export function buildOrderStatusEmail(
     "",
     intro,
     "",
-    `${copy.totalLabel}: ${total}`,
+    `${kindCopy.totalLabel}: ${total}`,
     ...(awb ? [trackingTextLine] : []),
-    copy.note,
+    kindCopy.note,
     ...reviewTextLines,
     "",
-    `View your order: ${input.orderUrl}`,
+    `${renderCopy(kindCopy.button, {})}: ${input.orderUrl}`,
     "",
     `Questions? WhatsApp us at ${info.phone.display} or reply to this email.`,
     `— ${info.name}`,
@@ -169,21 +154,21 @@ export function buildOrderStatusEmail(
       <div style="font-family:${BODY_FONT};font-size:11px;letter-spacing:2px;color:#A87A1E;text-transform:uppercase;padding-top:4px;">${escapeHtml(info.descriptor)}</div>
     </td></tr>
     <tr><td style="background:#FFFDF8;border:1px solid #E7D9C2;border-radius:3px;padding:34px 34px 30px;">
-      <div style="font-family:${HEADING_FONT};font-size:24px;color:${copy.accent};padding-bottom:10px;">${escapeHtml(copy.heading)}</div>
+      <div style="font-family:${HEADING_FONT};font-size:24px;color:${meta.accent};padding-bottom:10px;">${renderCopyHtml(kindCopy.heading, {})}</div>
       <div style="font-family:${BODY_FONT};font-size:14px;line-height:1.65;color:#5E4A44;">
-        Namaste ${escapeHtml(name)}, ${escapeHtml(intro)}
+        Namaste ${escapeHtml(name)}, ${renderCopyHtml(kindCopy.intro, { orderNo: input.orderNo })}
       </div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 0;border-top:1px solid #F3E3C7;">
-        <tr><td style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding:16px 0 4px;">${escapeHtml(copy.totalLabel)}</td></tr>
+        <tr><td style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding:16px 0 4px;">${renderCopyHtml(kindCopy.totalLabel, {})}</td></tr>
         <tr><td style="font-family:${HEADING_FONT};font-size:22px;color:#2A0A12;padding-bottom:18px;">${escapeHtml(total)}</td></tr>
       </table>
       ${awbHtml}${reviewHtml}
       <div style="font-family:${BODY_FONT};font-size:13px;line-height:1.6;color:#5E4A44;background:#FBF3DE;border:1px solid #E7C98A;border-radius:3px;padding:12px 14px;">
-        ${escapeHtml(copy.note)}
+        ${renderCopyHtml(kindCopy.note, {})}
       </div>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px auto 4px;">
-        <tr><td style="background:${copy.accent};border-radius:2px;">
-          <a href="${escapeHtml(input.orderUrl)}" style="display:inline-block;padding:12px 30px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">View your order</a>
+        <tr><td style="background:${meta.accent};border-radius:2px;">
+          <a href="${escapeHtml(input.orderUrl)}" style="display:inline-block;padding:12px 30px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">${renderCopyHtml(kindCopy.button, {})}</a>
         </td></tr>
       </table>
     </td></tr>

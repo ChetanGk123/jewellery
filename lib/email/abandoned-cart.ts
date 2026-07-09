@@ -6,7 +6,8 @@
  * already sanitizes what it stores (defense in depth).
  */
 
-import { type EmailMessage, escapeHtml } from "./order-confirmation"
+import { type AbandonedCartCopy, DEFAULT_EMAIL_COPY, escapeHtml, renderCopy, renderCopyHtml } from "./copy"
+import type { EmailMessage } from "./order-confirmation"
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 
@@ -33,23 +34,24 @@ const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 export function buildAbandonedCartEmail(
   input: AbandonedCartEmailInput,
   info: ResolvedStoreInfo = DEFAULT_STORE_INFO,
+  copy: AbandonedCartCopy = DEFAULT_EMAIL_COPY.abandonedCart,
 ): EmailMessage {
   const totalPaise = input.items.reduce((sum, it) => sum + it.unitPricePaise * it.qty, 0)
   const total = formatPaise(totalPaise)
 
-  const subject = `Your cart is waiting — ${info.name}`
+  const subject = renderCopy(copy.subject, { storeName: info.name })
 
   const itemLine = (it: AbandonedCartItem) =>
     `• ${it.name}${it.tone ? ` (${it.tone})` : ""} ×${it.qty} — ${formatPaise(it.unitPricePaise * it.qty)}`
 
   const text = [
-    "Namaste,",
+    renderCopy(copy.intro, {}),
     "",
-    "You left a few pieces sparkling in your cart — they're still saved for you:",
     ...input.items.map(itemLine),
     "",
-    `Cart total: ${total} (Cash on Delivery available)`,
-    `Complete your order: ${input.cartUrl}`,
+    `Cart total: ${total}`,
+    renderCopy(copy.notice, {}),
+    `${renderCopy(copy.button, {})}: ${input.cartUrl}`,
     "",
     `Questions? WhatsApp us at ${info.phone.display} or reply to this email.`,
     `— ${info.name}`,
@@ -78,9 +80,9 @@ export function buildAbandonedCartEmail(
       <div style="font-family:${BODY_FONT};font-size:11px;letter-spacing:2px;color:#A87A1E;text-transform:uppercase;padding-top:4px;">${escapeHtml(info.descriptor)}</div>
     </td></tr>
     <tr><td style="background:#FFFDF8;border:1px solid #E7D9C2;border-radius:3px;padding:34px 34px 30px;">
-      <div style="font-family:${HEADING_FONT};font-size:24px;color:#2A0A12;padding-bottom:10px;">Still thinking it over?</div>
+      <div style="font-family:${HEADING_FONT};font-size:24px;color:#2A0A12;padding-bottom:10px;">${renderCopyHtml(copy.heading, {})}</div>
       <div style="font-family:${BODY_FONT};font-size:14px;line-height:1.65;color:#5E4A44;">
-        Namaste — you left a few pieces sparkling in your cart. They're still saved for you.
+        ${renderCopyHtml(copy.intro, {})}
       </div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;border-top:1px solid #F3E3C7;padding-top:10px;">
         ${rowsHtml}
@@ -90,11 +92,11 @@ export function buildAbandonedCartEmail(
         </tr>
       </table>
       <div style="font-family:${BODY_FONT};font-size:13px;line-height:1.6;color:#8A6D1E;background:#FBF3DE;border:1px solid #E7C98A;border-radius:3px;padding:12px 14px;margin-top:18px;">
-        Cash on Delivery available — nothing to pay until it arrives.
+        ${renderCopyHtml(copy.notice, {})}
       </div>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px auto 4px;">
         <tr><td style="background:#71182B;border-radius:2px;">
-          <a href="${escapeHtml(input.cartUrl)}" style="display:inline-block;padding:12px 30px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">Complete your order</a>
+          <a href="${escapeHtml(input.cartUrl)}" style="display:inline-block;padding:12px 30px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">${renderCopyHtml(copy.button, {})}</a>
         </td></tr>
       </table>
     </td></tr>

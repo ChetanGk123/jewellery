@@ -5,7 +5,13 @@
  * (webfonts are unreliable in mail clients), brand palette from CLAUDE.md.
  */
 
-import { escapeHtml } from "./copy"
+import {
+  DEFAULT_EMAIL_COPY,
+  escapeHtml,
+  renderCopy,
+  renderCopyHtml,
+  type OrderConfirmationCopy,
+} from "./copy"
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 
@@ -60,6 +66,7 @@ const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 export function buildOrderConfirmationEmail(
   input: OrderConfirmationEmailInput,
   info: ResolvedStoreInfo = DEFAULT_STORE_INFO,
+  copy: OrderConfirmationCopy = DEFAULT_EMAIL_COPY.orderConfirmation,
 ): EmailMessage {
   const total = formatPaise(input.totalPaise)
   const name = input.customerName.trim() || "there"
@@ -71,15 +78,14 @@ export function buildOrderConfirmationEmail(
   // Matches the order page: a zero shipping line reads "Free", not "₹0".
   const shippingLabel = input.shippingPaise === 0 ? "Free" : formatPaise(input.shippingPaise ?? 0)
 
-  const subject = `Order confirmed — ${input.orderNo} · ${info.name}`
+  const subject = renderCopy(copy.subject, { orderNo: input.orderNo, storeName: info.name })
+  const codNoticeText = renderCopy(copy.codNotice, { total })
 
   const itemTextLine = (it: OrderConfirmationItem) =>
     `• ${it.name}${it.tone ? ` (${it.tone})` : ""} ×${it.qty} — ${formatPaise(it.lineTotalPaise)}`
 
   const text = [
-    `Namaste ${name},`,
-    "",
-    `Thank you for your order! ${input.orderNo} is confirmed and will be delivered in 4–7 days.`,
+    renderCopy(copy.intro, { name, orderNo: input.orderNo }),
     "",
     ...(items.length > 0 ? ["Your order:", ...items.map(itemTextLine), ""] : []),
     ...(hasBreakdown
@@ -92,8 +98,8 @@ export function buildOrderConfirmationEmail(
     `Total (Cash on Delivery): ${total}`,
     `Delivering to: ${addressLines.join(", ")}`,
     "",
-    `Please keep ${total} ready at delivery — our courier collects payment in cash.`,
-    `View your order: ${input.orderUrl}`,
+    codNoticeText,
+    `${renderCopy(copy.button, {})}: ${input.orderUrl}`,
     "",
     `Questions? WhatsApp us at ${info.phone.display} or reply to this email.`,
     `— ${info.name}`,
@@ -152,11 +158,9 @@ export function buildOrderConfirmationEmail(
       <div style="font-family:${BODY_FONT};font-size:11px;letter-spacing:2px;color:#A87A1E;text-transform:uppercase;padding-top:4px;">${escapeHtml(info.descriptor)}</div>
     </td></tr>
     <tr><td style="background:#FFFDF8;border:1px solid #E7D9C2;border-radius:3px;padding:34px 34px 30px;">
-      <div style="font-family:${HEADING_FONT};font-size:24px;color:#2A0A12;padding-bottom:10px;">Thank you for your order!</div>
+      <div style="font-family:${HEADING_FONT};font-size:24px;color:#2A0A12;padding-bottom:10px;">${renderCopyHtml(copy.heading, {})}</div>
       <div style="font-family:${BODY_FONT};font-size:14px;line-height:1.65;color:#5E4A44;">
-        Namaste ${escapeHtml(name)}, your order
-        <strong style="color:#71182B;">${escapeHtml(input.orderNo)}</strong>
-        is confirmed and will be delivered in 4–7 days.
+        ${renderCopyHtml(copy.intro, { name }, { orderNo: `<strong style="color:#71182B;">${escapeHtml(input.orderNo)}</strong>` })}
       </div>${summaryHtml}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${items.length > 0 || hasBreakdown ? "14px" : "22px"} 0 0;border-top:1px solid #F3E3C7;">
         <tr><td style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding:16px 0 4px;">Total · Cash on Delivery</td></tr>
@@ -165,11 +169,11 @@ export function buildOrderConfirmationEmail(
         <tr><td style="font-family:${BODY_FONT};font-size:14px;line-height:1.6;color:#3D2B25;padding-bottom:18px;">${addressLines.map(escapeHtml).join("<br/>")}</td></tr>
       </table>
       <div style="font-family:${BODY_FONT};font-size:13px;line-height:1.6;color:#8A6D1E;background:#FBF3DE;border:1px solid #E7C98A;border-radius:3px;padding:12px 14px;">
-        Please keep ${escapeHtml(total)} ready at delivery — our courier collects payment in cash.
+        ${renderCopyHtml(copy.codNotice, { total })}
       </div>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px auto 4px;">
         <tr><td style="background:#71182B;border-radius:2px;">
-          <a href="${escapeHtml(input.orderUrl)}" style="display:inline-block;padding:12px 30px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">View your order</a>
+          <a href="${escapeHtml(input.orderUrl)}" style="display:inline-block;padding:12px 30px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">${renderCopyHtml(copy.button, {})}</a>
         </td></tr>
       </table>
     </td></tr>

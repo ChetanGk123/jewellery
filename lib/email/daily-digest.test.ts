@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { resolveEmailCopy } from "./copy"
 import { buildDailyDigestEmail } from "./daily-digest"
 import { resolveStoreInfo } from "@/lib/store-info"
 
@@ -68,4 +69,27 @@ test("a resolved store info overrides the brand name and wordmark (6.15)", () =>
   const msg = buildDailyDigestEmail(base, info)
   expect(msg.text).toContain("Meera Jewels — daily digest")
   expect(msg.html).toContain("MEERA JEWELS · Admin")
+})
+
+test("custom copy overrides subject, heading and button (7.2)", () => {
+  const copy = resolveEmailCopy({
+    dailyDigest: {
+      subject: "Close of {day}: {orders} for {revenue}",
+      heading: "Numbers for {day}",
+      button: "Review day",
+    },
+  }).dailyDigest
+
+  const msg = buildDailyDigestEmail(base, undefined, copy)
+
+  expect(msg.subject).toBe("Close of 06 Jul 2026: 4 orders for ₹51,200")
+  expect(msg.html).toContain("Numbers for 06 Jul 2026")
+  expect(msg.html).toContain("Review day")
+})
+
+test("hostile saved copy renders escaped (7.2)", () => {
+  const copy = resolveEmailCopy({ dailyDigest: { heading: "<script>x</script> {day}" } }).dailyDigest
+  const msg = buildDailyDigestEmail(base, undefined, copy)
+  expect(msg.html).not.toContain("<script>")
+  expect(msg.html).toContain("&lt;script&gt;")
 })

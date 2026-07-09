@@ -5,7 +5,8 @@
  * customer emails.
  */
 
-import { type EmailMessage, escapeHtml } from "./order-confirmation"
+import { type AdminAlertCopy, DEFAULT_EMAIL_COPY, escapeHtml, renderCopy, renderCopyHtml } from "./copy"
+import type { EmailMessage } from "./order-confirmation"
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 
@@ -27,16 +28,17 @@ const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 export function buildNewOrderAdminEmail(
   input: NewOrderAdminEmailInput,
   info: ResolvedStoreInfo = DEFAULT_STORE_INFO,
+  copy: AdminAlertCopy = DEFAULT_EMAIL_COPY.adminAlert,
 ): EmailMessage {
   const total = formatPaise(input.totalPaise)
   const name = input.customerName.trim() || "A customer"
   const where = `${input.city}, ${input.state}`
   const items = `${input.itemCount} item${input.itemCount === 1 ? "" : "s"}`
 
-  const subject = `New COD order ${input.orderNo} — ${total}`
+  const subject = renderCopy(copy.subject, { orderNo: input.orderNo, total })
 
   const text = [
-    `New order placed: ${input.orderNo}`,
+    `${renderCopy(copy.heading, {})}: ${input.orderNo}`,
     "",
     `Customer: ${name}`,
     `Deliver to: ${where}`,
@@ -71,11 +73,11 @@ export function buildNewOrderAdminEmail(
       ${escapeHtml(info.wordmark)} · Admin
     </td></tr>
     <tr><td style="background:#FFFFFF;border:1px solid #EAE3D7;border-radius:10px;padding:26px 28px;">
-      <div style="font-family:${HEADING_FONT};font-size:22px;color:#71182B;padding-bottom:12px;">New order placed</div>
+      <div style="font-family:${HEADING_FONT};font-size:22px;color:#71182B;padding-bottom:12px;">${renderCopyHtml(copy.heading, {})}</div>
       <table role="presentation" cellpadding="0" cellspacing="0">${rowHtml}</table>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 2px;">
         <tr><td style="background:#71182B;border-radius:8px;">
-          <a href="${escapeHtml(input.adminUrl)}" style="display:inline-block;padding:11px 26px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">Open order queue</a>
+          <a href="${escapeHtml(input.adminUrl)}" style="display:inline-block;padding:11px 26px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">${renderCopyHtml(copy.button, {})}</a>
         </td></tr>
       </table>
     </td></tr>

@@ -5,7 +5,8 @@
  * re-subscribes as `alreadyMember`, which doesn't re-queue).
  */
 
-import { type EmailMessage, escapeHtml } from "./order-confirmation"
+import { DEFAULT_EMAIL_COPY, escapeHtml, renderCopy, renderCopyHtml, type SubscriberWelcomeCopy } from "./copy"
+import type { EmailMessage } from "./order-confirmation"
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 
 export type SubscriberWelcomeEmailInput = {
@@ -20,15 +21,14 @@ const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
 export function buildSubscriberWelcomeEmail(
   input: SubscriberWelcomeEmailInput,
   info: ResolvedStoreInfo = DEFAULT_STORE_INFO,
+  copy: SubscriberWelcomeCopy = DEFAULT_EMAIL_COPY.subscriberWelcome,
 ): EmailMessage {
-  const subject = `Welcome to ${info.name}`
+  const subject = renderCopy(copy.subject, { storeName: info.name })
 
   const text = [
-    "Namaste,",
+    renderCopy(copy.body, { storeName: info.name }),
     "",
-    `Thank you for joining the ${info.name} list. You'll be the first to hear about new arrivals, festive offers, and bridal-edit drops — a few times a month, never spam.`,
-    "",
-    `Browse the collection: ${input.shopUrl}`,
+    `${renderCopy(copy.button, {})}: ${input.shopUrl}`,
     "",
     `Questions? WhatsApp us at ${info.phone.display} or reply to this email.`,
     `— ${info.name}`,
@@ -42,14 +42,13 @@ export function buildSubscriberWelcomeEmail(
       <div style="font-family:${BODY_FONT};font-size:11px;letter-spacing:2px;color:#A87A1E;text-transform:uppercase;padding-top:4px;">${escapeHtml(info.descriptor)}</div>
     </td></tr>
     <tr><td style="background:#FFFDF8;border:1px solid #E7D9C2;border-radius:3px;padding:34px 34px 30px;">
-      <div style="font-family:${HEADING_FONT};font-size:24px;color:#2A0A12;padding-bottom:10px;">Welcome to the family</div>
+      <div style="font-family:${HEADING_FONT};font-size:24px;color:#2A0A12;padding-bottom:10px;">${renderCopyHtml(copy.heading, {})}</div>
       <div style="font-family:${BODY_FONT};font-size:14px;line-height:1.65;color:#5E4A44;">
-        Namaste — thank you for joining the ${escapeHtml(info.name)} list. You'll be the first to
-        hear about new arrivals, festive offers, and bridal-edit drops. A few times a month, never spam.
+        ${renderCopyHtml(copy.body, { storeName: info.name })}
       </div>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px auto 4px;">
         <tr><td style="background:#71182B;border-radius:2px;">
-          <a href="${escapeHtml(input.shopUrl)}" style="display:inline-block;padding:12px 30px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">Browse the collection</a>
+          <a href="${escapeHtml(input.shopUrl)}" style="display:inline-block;padding:12px 30px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">${renderCopyHtml(copy.button, {})}</a>
         </td></tr>
       </table>
     </td></tr>

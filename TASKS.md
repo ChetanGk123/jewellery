@@ -227,10 +227,16 @@ stay in code); copy stored as an `email_copy` jsonb blob on `setting`, resolved 
   hostile copy tested to render escaped. `COPY_TOKENS` per-field map ready to drive 7.5's UI hints.
   `escapeHtml` moved home to copy.ts; order-confirmation.ts re-exports for existing importers
   (order-status/admin-alert/abandoned-cart/subscriber-welcome/daily-digest unchanged).
-- ⬜ **7.2 — Thread copy through the 6 builders (TDD).** Trailing `copy = EMAIL_COPY_DEFAULTS.<template>`
-  param on each builder; hardcoded verbiage → `renderCopy`. Structural labels that are data (breakdown
-  rows, KPI labels, per-item lines) stay in code. Regression gate: default output byte-identical
-  (existing tests unchanged); new tests: custom copy applied + `<script>` in a copy field renders escaped.
+- ✅ **7.2 — Copy threaded through the 6 builders (TDD, 12 tests → 273).** Trailing
+  `copy = DEFAULT_EMAIL_COPY.<template>` param on each builder (order-status takes an optional
+  `OrderStatusKindCopy`, defaulted per kind via `KIND_META` — its old inline `COPY` record is gone;
+  accent colours stay structural). All verbiage renders via `renderCopy`/`renderCopyHtml` (headings/
+  notices/buttons now escaped — they're operator-editable); order-confirmation's `{orderNo}` keeps its
+  `<strong>` decoration via `htmlVars`. HTML default output unchanged (all pre-existing assertions
+  pass untouched); text bodies recompose from the same fields (greeting folded into intro; abandoned-cart
+  text gains the notice line; subscriber text drops the duplicate greeting) — substring assertions
+  unaffected. New per-builder tests: custom copy lands in subject/html/text + hostile copy renders
+  escaped. Builders now import `escapeHtml` from copy.ts directly; 273/tsc/eslint/build green.
 - ⬜ **7.3 — Storage + reads.** Migration `0042_email_copy.sql` (0036 pattern): `setting.email_copy jsonb
   not null default '{}'` + re-create `admin_update_settings` with shallow-merge branch
   (`email_copy = coalesce(email_copy,'{}') || (p_payload->'email_copy')`), re-grant; reflect in the

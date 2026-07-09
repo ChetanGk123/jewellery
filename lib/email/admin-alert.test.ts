@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { resolveEmailCopy } from "./copy"
 import { buildNewOrderAdminEmail } from "./admin-alert"
 import { resolveStoreInfo } from "@/lib/store-info"
 
@@ -40,4 +41,28 @@ test("a resolved store info overrides the wordmark (6.15)", () => {
   const info = resolveStoreInfo({ storeName: "Meera Jewels" })
   const msg = buildNewOrderAdminEmail(base, info)
   expect(msg.html).toContain("MEERA JEWELS · Admin")
+})
+
+test("custom copy overrides subject, heading and button (7.2)", () => {
+  const copy = resolveEmailCopy({
+    adminAlert: {
+      subject: "Kaching! {orderNo} worth {total}",
+      heading: "Fresh order in",
+      button: "Open console",
+    },
+  }).adminAlert
+
+  const msg = buildNewOrderAdminEmail(base, undefined, copy)
+
+  expect(msg.subject).toBe("Kaching! JR-260706-1001-AB12 worth ₹3,299")
+  expect(msg.html).toContain("Fresh order in")
+  expect(msg.html).toContain("Open console")
+  expect(msg.text).toContain("Fresh order in: JR-260706-1001-AB12")
+})
+
+test("hostile saved copy renders escaped (7.2)", () => {
+  const copy = resolveEmailCopy({ adminAlert: { heading: "<script>x</script>" } }).adminAlert
+  const msg = buildNewOrderAdminEmail(base, undefined, copy)
+  expect(msg.html).not.toContain("<script>")
+  expect(msg.html).toContain("&lt;script&gt;")
 })

@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { resolveEmailCopy } from "./copy"
 import {
   buildOrderConfirmationEmail,
   escapeHtml,
@@ -145,4 +146,38 @@ test("renders without an order summary when items are absent (pre-6.x callers)",
 
   expect(message.html).not.toContain("Order summary")
   expect(message.html).toContain("₹2,499")
+})
+
+test("custom copy overrides subject, heading, intro, notice and button (7.2)", () => {
+  const copy = resolveEmailCopy({
+    orderConfirmation: {
+      subject: "Order {orderNo} confirmed by {storeName}",
+      heading: "Dhanyavaad!",
+      intro: "Hi {name} — {orderNo} is booked and on its way soon.",
+      codNotice: "Keep {total} handy for our courier.",
+      button: "Track it",
+    },
+  }).orderConfirmation
+
+  const message = buildOrderConfirmationEmail(baseInput, undefined, copy)
+
+  expect(message.subject).toBe("Order JR-260706-1010-AB12 confirmed by RJ Jewellers")
+  expect(message.html).toContain("Dhanyavaad!")
+  expect(message.html).toContain("Hi Asha Rao")
+  expect(message.html).toContain("Track it")
+  for (const body of [message.html, message.text]) {
+    expect(body).toContain("Keep ₹2,499 handy for our courier.")
+  }
+})
+
+test("hostile saved copy renders escaped, never as markup (7.2)", () => {
+  const copy = resolveEmailCopy({
+    orderConfirmation: { heading: '<script>alert(1)</script>', intro: "<b>{name}</b> ordered" },
+  }).orderConfirmation
+
+  const message = buildOrderConfirmationEmail(baseInput, undefined, copy)
+
+  expect(message.html).not.toContain("<script>")
+  expect(message.html).toContain("&lt;script&gt;")
+  expect(message.html).toContain("&lt;b&gt;Asha Rao&lt;/b&gt; ordered")
 })

@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { resolveEmailCopy } from "./copy"
 import { buildOrderStatusEmail, type OrderStatusEmailKind } from "./order-status"
 import { resolveStoreInfo } from "@/lib/store-info"
 
@@ -114,4 +115,35 @@ test("review links render only on Delivered, and never without items", () => {
     "Write a review",
   )
   expect(buildOrderStatusEmail({ ...base, kind: "Delivered" }).text).not.toContain("Write a review")
+})
+
+test("custom copy overrides the kind's subject, heading, note and button (7.2)", () => {
+  const copy = resolveEmailCopy({
+    orderShipped: {
+      subject: "{orderNo} nikal padi — {storeName}",
+      heading: "Nikal padi!",
+      note: "Courier will call before arriving.",
+      button: "Follow the parcel",
+    },
+  }).orderShipped
+
+  const msg = buildOrderStatusEmail({ ...base, kind: "Shipped" }, undefined, copy)
+
+  expect(msg.subject).toBe("JR-260706-1001-AB12 nikal padi — RJ Jewellers")
+  expect(msg.html).toContain("Nikal padi!")
+  expect(msg.html).toContain("Follow the parcel")
+  for (const body of [msg.html, msg.text]) {
+    expect(body).toContain("Courier will call before arriving.")
+  }
+})
+
+test("hostile saved copy renders escaped (7.2)", () => {
+  const copy = resolveEmailCopy({
+    orderDelivered: { note: '<img src=x onerror="p()"> enjoy!' },
+  }).orderDelivered
+
+  const msg = buildOrderStatusEmail({ ...base, kind: "Delivered" }, undefined, copy)
+
+  expect(msg.html).not.toContain("<img src=x")
+  expect(msg.html).toContain("&lt;img src=x")
 })

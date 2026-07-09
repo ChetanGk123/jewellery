@@ -5,7 +5,8 @@
  * constraints as the other builders; all product-derived fields escaped.
  */
 
-import { type EmailMessage, escapeHtml } from "./order-confirmation"
+import { type DailyDigestCopy, DEFAULT_EMAIL_COPY, escapeHtml, renderCopy, renderCopyHtml } from "./copy"
+import type { EmailMessage } from "./order-confirmation"
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 
@@ -45,13 +46,14 @@ function dateLabel(iso: string): string {
 export function buildDailyDigestEmail(
   input: DailyDigestEmailInput,
   info: ResolvedStoreInfo = DEFAULT_STORE_INFO,
+  copy: DailyDigestCopy = DEFAULT_EMAIL_COPY.dailyDigest,
 ): EmailMessage {
   const day = dateLabel(input.dateIso)
   const revenue = formatPaise(input.revenuePaise)
   const orders = `${input.orders} order${input.orders === 1 ? "" : "s"}`
   const cancelledNote = input.cancelled > 0 ? ` (${input.cancelled} cancelled)` : ""
 
-  const subject = `Daily digest — ${day}: ${orders}, ${revenue}`
+  const subject = renderCopy(copy.subject, { day, orders, revenue })
 
   const stockLines =
     input.lowStock.length > 0
@@ -101,13 +103,13 @@ export function buildDailyDigestEmail(
       ${escapeHtml(info.wordmark)} · Admin
     </td></tr>
     <tr><td style="background:#FFFFFF;border:1px solid #EAE3D7;border-radius:10px;padding:26px 28px;">
-      <div style="font-family:${HEADING_FONT};font-size:22px;color:#71182B;padding-bottom:12px;">Daily digest · ${escapeHtml(day)}</div>
+      <div style="font-family:${HEADING_FONT};font-size:22px;color:#71182B;padding-bottom:12px;">${renderCopyHtml(copy.heading, { day })}</div>
       <table role="presentation" cellpadding="0" cellspacing="0">${kpiHtml}</table>
       <div style="font-family:${BODY_FONT};font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#8A7365;padding:16px 0 4px;">Low stock</div>
       ${stockHtml}
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 2px;">
         <tr><td style="background:#71182B;border-radius:8px;">
-          <a href="${escapeHtml(input.adminUrl)}" style="display:inline-block;padding:11px 26px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">Open dashboard</a>
+          <a href="${escapeHtml(input.adminUrl)}" style="display:inline-block;padding:11px 26px;font-family:${BODY_FONT};font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#F3E3C7;text-decoration:none;">${renderCopyHtml(copy.button, {})}</a>
         </td></tr>
       </table>
     </td></tr>
