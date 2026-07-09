@@ -295,6 +295,9 @@ stay in code); copy stored as an `email_copy` jsonb blob on `setting`, resolved 
 Ordered by launch impact: **8.1–8.5 are configuration-heavy launch blockers** (the "demo → business"
 week); 8.6–8.7 need operator/product decisions before build; the rest is feature work by value.
 Related open items that stay where they are: 4.5 photography, 4.13 deploy steps (absorbed by 8.2).
+Deployment operating model (branching, environments, CI/CD, release + rollback procedure) for
+8.1/8.2/8.3/8.4/8.5/8.21: see **`docs/DEPLOYMENT_PLAN.md`** (2026-07-10) — those items land in the
+order its §10 gives (8.4 → 8.21 → 8.1+8.2 → 8.5 → 8.3).
 
 **A. Launch blockers**
 - ⬜ **8.1 — Email deliverability.** Verify the sending domain in Resend (SPF + DKIM DNS records), set
