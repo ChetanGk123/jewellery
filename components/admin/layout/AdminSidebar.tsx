@@ -46,7 +46,7 @@ export function AdminSidebar({ counts, adminName, adminEmail, isOpen, onClose }:
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[236px] flex-col gap-1.5 overflow-y-auto bg-maroon-950 px-4 py-6 transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[236px] flex-col gap-1.5 overflow-y-auto bg-maroon-950 px-4 py-6 transition-transform duration-300 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
