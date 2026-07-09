@@ -44,6 +44,22 @@ export type AdminMessageRow = {
   status: MessageStatus
   /** ISO instant the ticket was raised. */
   createdAt: string
+  /** How the ticket was resolved (6.13) — set on Resolved, cleared on reopen. */
+  resolutionNote: string | null
+}
+
+/** Hard cap, mirrored by the `admin_set_message_status` RPC (0040). */
+export const RESOLUTION_NOTE_MAX_LEN = 500
+
+/**
+ * Trim an operator-typed resolution summary; null when nothing usable remains
+ * (empty, whitespace-only, or over the cap) — same rule as `normalizeOrderNote`
+ * (5.16), owned here because the cap is this RPC's contract.
+ */
+export function normalizeResolutionNote(raw: string): string | null {
+  const note = raw.trim()
+  if (!note || note.length > RESOLUTION_NOTE_MAX_LEN) return null
+  return note
 }
 
 type StatusChip = { label: string; color: string; bg: string }

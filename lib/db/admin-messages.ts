@@ -59,7 +59,9 @@ export async function listAdminMessages(opts: {
 
       let rowsQuery = supabase
         .from("contact_message")
-        .select("id, ticket_no, subject, body, name, email, phone, status, created_at")
+        .select(
+          "id, ticket_no, subject, body, name, email, phone, status, created_at, resolution_note",
+        )
         .order("created_at", { ascending: false })
         .range(from, from + ADMIN_MESSAGES_PAGE_SIZE - 1)
       if (filter !== "All") rowsQuery = rowsQuery.eq("status", filter)
@@ -93,6 +95,7 @@ export async function listAdminMessages(opts: {
         phone: m.phone,
         status: m.status as MessageStatus,
         createdAt: m.created_at,
+        resolutionNote: m.resolution_note,
       }))
 
       const total = counts[filter]

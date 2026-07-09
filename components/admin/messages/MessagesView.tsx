@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import Link from "next/link"
 import { setMessageStatus } from "@/app/(admin)/admin/(console)/messages/actions"
 import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { useDialog } from "@/hooks/useDialog"
 import {
   ADMIN_MESSAGES_PAGE_SIZE,
   type AdminMessageRow,
@@ -12,6 +13,8 @@ import {
   MESSAGE_FILTERS,
   messageDateLabel,
   messageStatusChip,
+  normalizeResolutionNote,
+  RESOLUTION_NOTE_MAX_LEN,
 } from "@/lib/admin/message"
 import type { AdminMessagesPage } from "@/lib/db/admin-messages"
 import { ROUTES } from "@/lib/routes"
@@ -37,6 +40,9 @@ function hrefFor(filter: MessageFilter, page: number): string {
 export function MessagesView({ page }: { page: AdminMessagesPage }) {
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Resolving needs a summary note (6.13) — collected in a small dialog.
+  const [resolveTarget, setResolveTarget] = useState<AdminMessageRow | null>(null)
+  const [dialogError, setDialogError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
   const move = (row: AdminMessageRow, status: MessageStatus) => {
@@ -46,6 +52,20 @@ export function MessagesView({ page }: { page: AdminMessagesPage }) {
       const res = await setMessageStatus(row.id, status)
       setPendingId(null)
       if (!res.ok) setError(res.error ?? "Couldn't update the message.")
+    })
+  }
+
+  const resolve = (row: AdminMessageRow, note: string) => {
+    setDialogError(null)
+    setPendingId(row.id)
+    startTransition(async () => {
+      const res = await setMessageStatus(row.id, "Resolved", note)
+      setPendingId(null)
+      if (!res.ok) {
+        setDialogError(res.error ?? "Couldn't resolve the message.")
+        return
+      }
+      setResolveTarget(null)
     })
   }
 
@@ -122,6 +142,13 @@ export function MessagesView({ page }: { page: AdminMessagesPage }) {
                   {m.body}
                 </p>
 
+                {/* Resolution summary (6.13) — the RPC clears it on reopen. */}
+                {m.status === "Resolved" && m.resolutionNote && (
+                  <p className="m-0 whitespace-pre-line rounded-lg border border-[#BFE0C9] bg-[#F2FAF4] px-3 py-2.5 font-body text-[12.5px] leading-[1.55] text-[#1E5C34]">
+                    <span className="font-semibold">Resolved:</span> {m.resolutionNote}
+                  </p>
+                )}
+
                 <div className="mt-0.5 flex items-center justify-between gap-2.5">
                   <span className="font-body text-[11.5px] text-[#A99C90]">
                     {messageDateLabel(m.createdAt)}
@@ -150,7 +177,10 @@ export function MessagesView({ page }: { page: AdminMessagesPage }) {
                     {m.status !== "Resolved" && (
                       <button
                         type="button"
-                        onClick={() => move(m, "Resolved")}
+                        onClick={() => {
+                          setDialogError(null)
+                          setResolveTarget(m)
+                        }}
                         disabled={isBusy}
                         className="rounded-md border border-[#BFE0C9] bg-[#E7F3EB] px-[13px] py-2 font-body text-[11.5px] font-semibold text-[#15692F] transition-opacity hover:opacity-90 disabled:opacity-60"
                       >
@@ -172,6 +202,108 @@ export function MessagesView({ page }: { page: AdminMessagesPage }) {
         pageSize={ADMIN_MESSAGES_PAGE_SIZE}
         hrefForPage={(n) => hrefFor(page.filter, n)}
       />
+
+      {resolveTarget && (
+        <ResolveDialog
+          message={resolveTarget}
+          isPending={pendingId === resolveTarget.id}
+          error={dialogError}
+          onSubmit={(note) => resolve(resolveTarget, note)}
+          onClose={() => setResolveTarget(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * Collects the resolution summary before a ticket is marked Resolved (TASKS
+ * 6.13): the `admin_set_message_status` RPC rejects the move without one, so
+ * "Resolved" always says HOW. ConfirmDialog's shell with a textarea; Escape /
+ * backdrop dismiss via `useDialog` (blocked while saving).
+ */
+function ResolveDialog({
+  message,
+  isPending,
+  error,
+  onSubmit,
+  onClose,
+}: {
+  message: AdminMessageRow
+  isPending: boolean
+  error: string | null
+  onSubmit: (note: string) => void
+  onClose: () => void
+}) {
+  const [note, setNote] = useState("")
+  const dialogRef = useDialog<HTMLDivElement>({ isOpen: true, onDismiss: onClose, isPending })
+  const canSave = normalizeResolutionNote(note) !== null
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(42,10,18,0.45)] p-6"
+      onClick={() => {
+        if (!isPending) onClose()
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Resolve ${message.ticketNo}`}
+        tabIndex={-1}
+        className="w-[440px] max-w-full overflow-hidden rounded-[14px] bg-[#F8F5EF] shadow-[0_30px_70px_rgba(42,10,18,0.3)] outline-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (canSave && !isPending) onSubmit(note)
+          }}
+        >
+          <div className="flex flex-col gap-2.5 px-[26px] py-6">
+            <h2 className="font-heading text-[22px] leading-tight text-[#2A1F1A]">
+              Resolve {message.ticketNo}
+            </h2>
+            <p className="m-0 font-body text-[13.5px] leading-relaxed text-[#5E4A40]">
+              Add a short summary of how this was resolved — it stays on the ticket for whoever
+              looks it up later.
+            </p>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={RESOLUTION_NOTE_MAX_LEN}
+              rows={3}
+              placeholder="e.g. Sent a replacement clasp by courier; customer confirmed receipt."
+              className="w-full resize-y rounded-lg border border-[#DAD0C2] bg-white px-3 py-2.5 font-body text-[13px] leading-[1.55] text-[#2A1F1A] outline-none placeholder:text-[#B9AC9E] focus:border-[#B58A3C]"
+            />
+
+            {error && (
+              <p className="m-0 rounded-lg border border-[#F0C8CE] bg-[#FBE9E7] px-3 py-2.5 font-body text-[12.5px] leading-snug text-[#C0392F]">
+                {error}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 border-t border-[#E7E0D4] bg-white px-[26px] py-[18px]">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isPending}
+              className="rounded-lg border border-[#DAD0C2] bg-white px-5 py-[11px] font-body text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isPending || !canSave}
+              className="rounded-lg bg-[#15692F] px-6 py-[11px] font-body text-[12px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {isPending ? "Resolving…" : "✓ Mark resolved"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

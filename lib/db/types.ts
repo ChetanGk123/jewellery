@@ -53,6 +53,7 @@ export type Database = {
           id: string
           name: string
           phone: string
+          resolution_note: string | null
           status: string
           subject: string | null
           ticket_no: string
@@ -64,6 +65,7 @@ export type Database = {
           id?: string
           name: string
           phone: string
+          resolution_note?: string | null
           status?: string
           subject?: string | null
           ticket_no: string
@@ -75,6 +77,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string
+          resolution_note?: string | null
           status?: string
           subject?: string | null
           ticket_no?: string
@@ -719,7 +722,7 @@ export type Database = {
         Returns: Json
       }
       admin_set_message_status: {
-        Args: { p_id: string; p_status: string }
+        Args: { p_id: string; p_status: string; p_note?: string }
         Returns: string
       }
       admin_set_review_status: {
