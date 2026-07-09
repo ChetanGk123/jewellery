@@ -7,6 +7,7 @@ import {
   codConfirmationMessage,
   customerWhatsappUrl,
   productEnquiryMessage,
+  reviewContactMessage,
   productEnquiryUrl,
   whatsappUrl,
 } from "./whatsapp"
@@ -143,5 +144,17 @@ describe("cartEnquiryUrl", () => {
     const url = cartEnquiryUrl(lines)
     expect(url.startsWith(PREFIX)).toBe(true)
     expect(decodeURIComponent(url.slice(PREFIX.length))).toBe(cartEnquiryMessage(lines))
+  })
+})
+
+describe("reviewContactMessage", () => {
+  test("names the reviewer, the product, and the store (6.12)", () => {
+    const message = reviewContactMessage({
+      reviewerName: "Asha Kapoor",
+      productName: "Polki Choker Necklace Set",
+    })
+    expect(message).toContain("Asha Kapoor")
+    expect(message).toContain("Polki Choker Necklace Set")
+    expect(message).toContain(STORE_INFO.name)
   })
 })

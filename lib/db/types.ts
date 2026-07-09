@@ -714,6 +714,10 @@ export type Database = {
         Args: { p_payload: Json }
         Returns: Json
       }
+      admin_review_contact: {
+        Args: { p_review_id: string }
+        Returns: Json
+      }
       admin_set_message_status: {
         Args: { p_id: string; p_status: string }
         Returns: string

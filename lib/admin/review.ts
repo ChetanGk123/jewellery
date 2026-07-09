@@ -41,6 +41,41 @@ export type AdminReviewRow = {
   status: ReviewStatus
   /** ISO instant the review was submitted. */
   createdAt: string
+  /**
+   * Whether the review is linked to an account (`user_id` non-null) — every
+   * review since 0022's purchase requirement is. Gates the "Contact reviewer"
+   * button (6.12); legacy unlinked reviews have nothing to look up.
+   */
+  hasContact: boolean
+}
+
+/** What `admin_review_contact` (0039) knows about a reviewer. */
+export type ReviewContact = {
+  name: string
+  /** Account email from auth.users; null on legacy unlinked reviews. */
+  email: string | null
+  /** The customer's latest order's phone; null if they've never ordered. */
+  phone: string | null
+}
+
+/** A trimmed non-empty string, else null. */
+function cleanOrNull(value: unknown): string | null {
+  if (typeof value !== "string") return null
+  const trimmed = value.trim()
+  return trimmed === "" ? null : trimmed
+}
+
+/**
+ * Validate the `admin_review_contact` RPC's jsonb payload into a typed
+ * contact (6.12). Returns null when the shape is wrong (never trust external
+ * data) — `name` is required, `email`/`phone` may legitimately be null.
+ */
+export function reviewContactFromRpc(value: unknown): ReviewContact | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null
+  const record = value as Record<string, unknown>
+  const name = cleanOrNull(record.name)
+  if (!name) return null
+  return { name, email: cleanOrNull(record.email), phone: cleanOrNull(record.phone) }
 }
 
 type StatusChip = { label: string; color: string; bg: string }

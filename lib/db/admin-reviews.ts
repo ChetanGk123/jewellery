@@ -61,7 +61,7 @@ export async function listAdminReviews(opts: {
 
       let rowsQuery = supabase
         .from("review")
-        .select("id, product_id, name, rating, title, body, status, created_at")
+        .select("id, product_id, user_id, name, rating, title, body, status, created_at")
         .order("created_at", { ascending: false })
         .range(from, from + ADMIN_REVIEWS_PAGE_SIZE - 1)
       if (status) rowsQuery = rowsQuery.eq("status", status)
@@ -99,6 +99,8 @@ export async function listAdminReviews(opts: {
         body: r.body,
         status: r.status as ReviewStatus,
         createdAt: r.created_at,
+        // Contact lookup (6.12) only works for account-linked reviews.
+        hasContact: r.user_id !== null,
       }))
 
       const total = counts[filter]

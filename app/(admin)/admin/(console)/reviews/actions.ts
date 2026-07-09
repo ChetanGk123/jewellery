@@ -3,7 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache"
 import { requireAdmin } from "@/lib/admin/auth"
 import { CACHE_TAGS } from "@/lib/db/cache"
-import type { ReviewStatus } from "@/lib/admin/review"
+import { type ReviewContact, reviewContactFromRpc, type ReviewStatus } from "@/lib/admin/review"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
 
@@ -42,4 +42,28 @@ export async function setReviewStatus(
   updateTag(CACHE_TAGS.reviews)
   updateTag(CACHE_TAGS.products)
   return { ok: true }
+}
+
+export type ReviewContactResult =
+  { ok: true; contact: ReviewContact } | { ok: false; error: string }
+
+/**
+ * Look up how to reach a reviewer (TASKS 6.12) via the admin-only
+ * `admin_review_contact` RPC (0039): account email from auth.users + the
+ * phone on their latest order. Fetched on demand (button click) — reviewer
+ * PII shouldn't ride along with every list render.
+ */
+export async function getReviewContact(reviewId: string): Promise<ReviewContactResult> {
+  await requireAdmin(ROUTES.adminReviews)
+
+  const supabase = await createServerClient()
+  const { data, error } = await supabase.rpc("admin_review_contact", {
+    p_review_id: reviewId,
+  })
+
+  if (error) return { ok: false, error: messageFor(error.message) }
+
+  const contact = reviewContactFromRpc(data)
+  if (!contact) return { ok: false, error: "Couldn't read the reviewer's contact details." }
+  return { ok: true, contact }
 }

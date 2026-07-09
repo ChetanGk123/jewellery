@@ -129,3 +129,21 @@ export function codConfirmationMessage({
     `Please reply YES to confirm and we'll pack and dispatch it right away.`
   )
 }
+
+export type ReviewContactInput = {
+  reviewerName: string
+  productName: string
+}
+
+/**
+ * Neutral opener the operator sends a reviewer from the moderation queue
+ * (TASKS 6.12): names their review's product so the customer knows what the
+ * message is about. Uses the const store name like `codConfirmationMessage`
+ * (client components can't fetch the resolved info — acceptable fallback).
+ */
+export function reviewContactMessage({ reviewerName, productName }: ReviewContactInput): string {
+  return (
+    `Namaste ${reviewerName}, this is ${STORE_INFO.name} — ` +
+    `about your review of ${productName}. `
+  )
+}
