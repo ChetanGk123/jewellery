@@ -1,24 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RJ Jewellers
 
-## Getting Started
+E-commerce for an Indian artificial/bridal jewellery store: a customer storefront
+and a full admin console in one Next.js app, backed by Supabase. Built for the
+Indian market — prices in ₹ (stored as integer paise), Cash on Delivery as the
+v1 tender, GSTIN on invoices, WhatsApp enquiry throughout.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 ·
+Supabase (Postgres + Auth + Storage + Realtime) · Bun (runtime, package manager,
+test runner) · Resend (transactional email) · Web Push.
+
+## What's inside
+
+**Storefront** (`app/(storefront)`) — home, category/product pages with plating-tone
+options, cart (Zustand, server-synced snapshots), sign-in-only COD checkout with
+coupons and free-shipping threshold, order confirmation + account order history
+with AWB tracking, product reviews (verified-purchase gated), contact/FAQ/legal
+pages. SEO: sitemap, robots, JSON-LD, OG images, nonce-based CSP.
+
+**Admin console** (`app/(admin)/admin`) — dashboard with KPIs and overdue-pending
+queue, orders (status flow, AWB + tracking, invoice/packing-slip print, CSV
+export, timeline & notes), products/categories CRUD with image uploads and bulk
+.xlsx import/export, coupons, review moderation, customer messages, subscribers,
+**Emails** (live preview + editable wording of every transactional email, test
+sends), settings (store identity, banner/promo, shipping, COD toggle, push
+notifications, storage sweep), team/roles. Realtime badge refresh; admin-only
+`SECURITY DEFINER` RPCs behind every write.
+
+**Transactional email** (`lib/email`) — order confirmation (itemised summary +
+price breakdown), shipped/delivered/cancelled notifications, new-order admin
+alert, abandoned-cart reminder, subscriber welcome, close-of-day digest. All
+templates are pure builders with operator-editable copy (`/admin/emails`),
+degrade to no-ops when no provider key is set, and never block checkout.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+cp .env.example .env.local        # fill in Supabase project values
+bun dev                           # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Required | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ | Public client key |
+| `NEXT_PUBLIC_SITE_URL` | deploy | Absolute origin (SEO, email links); falls back to localhost |
+| `RESEND_API_KEY` | optional | Enables all email; without it sends are silent no-ops |
+| `EMAIL_FROM` | optional | Verified sender (`Store <orders@domain>`); defaults to `onboarding@resend.dev`, which only delivers to the Resend account owner |
+| `ADMIN_ALERT_EMAIL` | optional | New-order alerts + test sends; defaults to the store email in Settings |
+| `CRON_SECRET` | optional | Bearer token for cron routes; the same value must exist in the `app_secret` table (see `.env.example`) |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | optional | Admin Web Push notifications |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Database
+
+Apply `supabase/migrations/` **0000a–0042 in order** to a fresh Supabase project,
+then run `supabase/seed.sql` once (creates the `setting` singleton the app
+assumes; its comments cover the two manual steps — bootstrapping the first admin
+and inserting the `app_secret` cron row). Storefront tables are RLS public-read;
+all writes go through validated RPCs.
+
+### Scheduled jobs
+
+Point a scheduler (Dokploy cron, GitHub Actions, etc.) with
+`Authorization: Bearer $CRON_SECRET` at:
+
+- `GET /api/cron/daily-digest` — once daily after IST close (e.g. `30 16 * * *` UTC)
+- `GET /api/cron/abandoned-carts` — e.g. every 6h (`0 */6 * * *`)
+
+## Development
+
+```bash
+bun test          # unit tests (Bun test runner)
+bun run lint      # ESLint
+bun run format    # Prettier (repo style: no semicolons, 100 cols)
+bun run build     # production build
+bun run e2e       # Playwright (needs E2E_USER_EMAIL/PASSWORD in .env.local)
+```
+
+Conventions worth knowing before contributing:
+
+- **Money is integer paise everywhere**; format with `formatPaise` only at the UI boundary.
+- **Prices are never trusted from the client** — the `place_order` RPC recomputes
+  every total from the DB.
+- Single-source registries: `lib/routes.ts` (every URL), `lib/navigation.ts`,
+  `lib/admin/nav.ts`, `lib/store-info.ts` (brand identity, DB-overridable).
+- Email copy defaults live in `lib/email/copy.ts`; operator overrides merge over
+  them from `setting.email_copy`.
+- `refereces/` holds the two original design prototypes (self-unpacking builder
+  exports) — the visual spec for both surfaces. See `CLAUDE.md` for how to decode
+  them, and `ARCHITECTURE_PLAN.md` for the domain model and roadmap; `TASKS.md`
+  is the build tracker.
 
 ## Docker
 
@@ -26,8 +99,8 @@ A production image is defined by the [`Dockerfile`](Dockerfile) (multi-stage,
 Bun + Next.js `output: "standalone"`, non-root runtime, ~360 MB).
 
 The two `NEXT_PUBLIC_*` Supabase values are inlined into the browser bundle at
-**build** time, so they must be passed as build args. `SUPABASE_SECRET_KEY` is a
-server-only secret passed at **run** time.
+**build** time, so they must be passed as build args; server-only secrets are
+passed at **run** time.
 
 ```bash
 # Build + run in one step (reads .env.local; set the two NEXT_PUBLIC_* vars in
@@ -43,19 +116,6 @@ docker build \
 docker run --rm -p 3000:3000 --env-file .env.local jr-jewellers:latest
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For a full self-hosted deployment walkthrough (Dokploy, domains, env, crons) see
+[`docs/DEPLOY_DOKPLOY.md`](docs/DEPLOY_DOKPLOY.md); for running your own Supabase,
+[`docs/SELF_HOSTED_SUPABASE.md`](docs/SELF_HOSTED_SUPABASE.md).
