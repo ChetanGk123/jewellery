@@ -237,12 +237,18 @@ stay in code); copy stored as an `email_copy` jsonb blob on `setting`, resolved 
   text gains the notice line; subscriber text drops the duplicate greeting) — substring assertions
   unaffected. New per-builder tests: custom copy lands in subject/html/text + hostile copy renders
   escaped. Builders now import `escapeHtml` from copy.ts directly; 273/tsc/eslint/build green.
-- ⬜ **7.3 — Storage + reads.** Migration `0042_email_copy.sql` (0036 pattern): `setting.email_copy jsonb
-  not null default '{}'` + re-create `admin_update_settings` with shallow-merge branch
-  (`email_copy = coalesce(email_copy,'{}') || (p_payload->'email_copy')`), re-grant; reflect in the
-  fresh-deploy seed capture. `lib/db/settings.ts`: `getEmailCopy()` (cached, `CACHE_TAGS.settings`,
-  const fallback on error) + raw blob on `StoreSettings` for the form seed. `lib/email/send.ts`: queue/send
-  fns await `getEmailCopy()` alongside `getStoreInfo()` and pass slices to builders.
+- ✅ **7.3 — Storage + reads.** Migration `0042_email_copy.sql` (0036 pattern verbatim):
+  `setting.email_copy jsonb not null default '{}'` + re-created `admin_update_settings` with the
+  shallow-merge branch (`coalesce(email_copy,'{}') || (p_payload->'email_copy')`; top-level keys =
+  template ids, form sends complete per-template objects), re-granted to `authenticated`.
+  **⚠️ NOT yet applied to the live project** (no CLI/credentials in this env — apply via SQL editor,
+  probe in 7.6). seed.sql is data-only (column default suffices); its stale "0000a–0040" range + the
+  two DEPLOY_DOKPLOY.md checklists bumped to 0042. `lib/db/settings.ts`: `getEmailCopy()` (unstable_cache
+  + React.cache, `settings` tag, never throws — falls back to `DEFAULT_EMAIL_COPY` so a copy hiccup
+  can't block a send) + raw `emailCopy` blob on `StoreSettings` (Emails form seed) + select extended.
+  `lib/email/send.ts`: all 6 queue/send fns fetch `Promise.all([getStoreInfo(), getEmailCopy()])` and
+  pass the template slice (status kinds via new `orderStatusCopyFor(copy, kind)` export). `setting`
+  Row/Insert/Update in types.ts gain `email_copy`. tsc/273/eslint green.
 - ⬜ **7.4 — Write path + test send.** `lib/admin/email-copy.ts` (client-safe zod schema, `optionalText`
   style; toFormValues/toPayload — empty fields dropped so defaults keep applying).
   `app/(admin)/admin/(console)/emails/actions.ts`: `updateEmailCopy` mirrors `updateStoreSettings`

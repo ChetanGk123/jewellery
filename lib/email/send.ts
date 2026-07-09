@@ -8,9 +8,9 @@ import {
   type EmailMessage,
   type OrderConfirmationEmailInput,
 } from "./order-confirmation"
-import { buildOrderStatusEmail, type OrderStatusEmailKind } from "./order-status"
+import { buildOrderStatusEmail, orderStatusCopyFor, type OrderStatusEmailKind } from "./order-status"
 import { buildSubscriberWelcomeEmail } from "./subscriber-welcome"
-import { getStoreInfo } from "@/lib/db/settings"
+import { getEmailCopy, getStoreInfo } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
 import { SITE_URL } from "@/lib/site-url"
 import type { ResolvedStoreInfo } from "@/lib/store-info"
@@ -107,13 +107,14 @@ export async function queueOrderConfirmationEmail(
 ): Promise<void> {
   if (!isEmailEnabled()) return
 
-  const info = await getStoreInfo()
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
   const { to, ...fields } = input
   queue(
     to,
     buildOrderConfirmationEmail(
       { ...fields, orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}` },
       info,
+      emailCopy.orderConfirmation,
     ),
     fromAddress(info),
   )
@@ -143,7 +144,7 @@ const REVIEWS_ANCHOR = "#reviews-heading"
 export async function queueOrderStatusEmail(input: QueueOrderStatusInput): Promise<void> {
   if (!isEmailEnabled()) return
 
-  const info = await getStoreInfo()
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
   const { to, items, ...fields } = input
   queue(
     to,
@@ -157,6 +158,7 @@ export async function queueOrderStatusEmail(input: QueueOrderStatusInput): Promi
         })),
       },
       info,
+      orderStatusCopyFor(emailCopy, input.kind),
     ),
     fromAddress(info),
   )
@@ -176,10 +178,14 @@ function adminAlertTo(info: ResolvedStoreInfo): string {
 export async function queueNewOrderAdminEmail(input: QueueNewOrderAdminInput): Promise<void> {
   if (!isEmailEnabled()) return
 
-  const info = await getStoreInfo()
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
   queue(
     adminAlertTo(info),
-    buildNewOrderAdminEmail({ ...input, adminUrl: `${SITE_URL}${ROUTES.adminOrders}` }, info),
+    buildNewOrderAdminEmail(
+      { ...input, adminUrl: `${SITE_URL}${ROUTES.adminOrders}` },
+      info,
+      emailCopy.adminAlert,
+    ),
     fromAddress(info),
   )
 }
@@ -203,7 +209,7 @@ export async function sendAbandonedCartEmailNow(input: {
 }): Promise<boolean> {
   if (!isEmailEnabled()) return false
 
-  const info = await getStoreInfo()
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
   return sendEmail(
     input.to,
     buildAbandonedCartEmail(
@@ -218,6 +224,7 @@ export async function sendAbandonedCartEmailNow(input: {
         })),
       },
       info,
+      emailCopy.abandonedCart,
     ),
     fromAddress(info),
   )
@@ -231,10 +238,14 @@ export async function sendAbandonedCartEmailNow(input: {
 export async function queueSubscriberWelcomeEmail(to: string): Promise<void> {
   if (!isEmailEnabled()) return
 
-  const info = await getStoreInfo()
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
   queue(
     to,
-    buildSubscriberWelcomeEmail({ shopUrl: `${SITE_URL}${ROUTES.shop}` }, info),
+    buildSubscriberWelcomeEmail(
+      { shopUrl: `${SITE_URL}${ROUTES.shop}` },
+      info,
+      emailCopy.subscriberWelcome,
+    ),
     fromAddress(info),
   )
 }
@@ -249,10 +260,14 @@ export type SendDailyDigestInput = Omit<DailyDigestEmailInput, "adminUrl">
 export async function sendDailyDigestEmailNow(input: SendDailyDigestInput): Promise<boolean> {
   if (!isEmailEnabled()) return false
 
-  const info = await getStoreInfo()
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
   return sendEmail(
     adminAlertTo(info),
-    buildDailyDigestEmail({ ...input, adminUrl: `${SITE_URL}${ROUTES.admin}` }, info),
+    buildDailyDigestEmail(
+      { ...input, adminUrl: `${SITE_URL}${ROUTES.admin}` },
+      info,
+      emailCopy.dailyDigest,
+    ),
     fromAddress(info),
   )
 }

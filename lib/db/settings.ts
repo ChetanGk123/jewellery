@@ -1,6 +1,7 @@
 import "server-only"
 import { unstable_cache } from "next/cache"
 import { cache } from "react"
+import { DEFAULT_EMAIL_COPY, type EmailCopy, resolveEmailCopy } from "@/lib/email/copy"
 import { resolveStoreInfo, type ResolvedStoreInfo } from "@/lib/store-info"
 import { CACHE_TAGS, CATALOG_REVALIDATE_SECONDS } from "./cache"
 import { publicClient } from "./public"
@@ -58,6 +59,8 @@ export type StoreSettings = {
   gstin: string | null
   /** Editable brand/contact blob fields (6.15) — raw, empty when unset. */
   storeInfo: StoreInfoFields
+  /** Raw saved email-verbiage overrides (7.3) — the Emails form seed; resolve via `getEmailCopy`. */
+  emailCopy: unknown
   banner: BannerSetting
   promo: PromoSetting
   /** Shipping & Payments (3.11) — the source of truth for the cart/checkout/place_order. */
@@ -162,7 +165,7 @@ export const getStoreSettings = cache(
       const { data, error } = await publicClient
         .from("setting")
         .select(
-          "store_name, support_email, phone, gstin, store_info, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
+          "store_name, support_email, phone, gstin, store_info, email_copy, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
         )
         .maybeSingle()
 
@@ -176,6 +179,7 @@ export const getStoreSettings = cache(
         phone: data?.phone ?? null,
         gstin: data?.gstin ?? null,
         storeInfo: readStoreInfoFields(data?.store_info),
+        emailCopy: data?.email_copy ?? {},
         banner: mergeBanner(data?.banner),
         promo: mergePromo(data?.homepage_promo),
         freeShipThresholdPaise:
@@ -216,6 +220,29 @@ export const getStoreInfo = cache(
       })
     },
     ["getStoreInfo"],
+    { tags: [CACHE_TAGS.settings], revalidate: CATALOG_REVALIDATE_SECONDS },
+  ),
+)
+
+/**
+ * The resolved email verbiage (TASKS 7.3): the operator's saved `email_copy`
+ * overrides merged over the code defaults. Cached like `getStoreInfo` (same
+ * `settings` tag, expired by the admin save) and `React.cache`d within a
+ * render. Never throws — on a read error the emails fall back to the const
+ * defaults, since a copy hiccup must never block a send.
+ */
+export const getEmailCopy = cache(
+  unstable_cache(
+    async (): Promise<EmailCopy> => {
+      try {
+        const { data } = await publicClient.from("setting").select("email_copy").maybeSingle()
+        return resolveEmailCopy(data?.email_copy)
+      } catch (error: unknown) {
+        console.error("getEmailCopy failed, using default copy", error)
+        return DEFAULT_EMAIL_COPY
+      }
+    },
+    ["getEmailCopy"],
     { tags: [CACHE_TAGS.settings], revalidate: CATALOG_REVALIDATE_SECONDS },
   ),
 )

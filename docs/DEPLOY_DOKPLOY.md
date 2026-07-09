@@ -33,7 +33,7 @@ committed compose/Dockerfile.
 - A running **Dokploy** host (Docker + Traefik) with a public IP.
 - This repo pushed to a Git remote Dokploy can reach (GitHub).
 - A **Supabase project** (managed cloud, or self-hosted per the companion doc)
-  with **all migrations applied** (`supabase/migrations/0000a`–`0040`, in
+  with **all migrations applied** (`supabase/migrations/0000a`–`0042`, in
   filename order) and **`supabase/seed.sql` run once** (creates the `setting`
   singleton — without it every Settings save fails with
   `SETTINGS_ROW_MISSING`; the file also documents the first-admin bootstrap
@@ -254,7 +254,7 @@ instead — see the companion doc §5.)
 
 ## 9. Pre-launch checklist
 
-- [ ] Migrations `0000a`–`0040` applied to the target Supabase project
+- [ ] Migrations `0000a`–`0042` applied to the target Supabase project
 - [ ] `supabase/seed.sql` run once (settings singleton; see its comments for the
       first-admin bootstrap + `app_secret` steps)
 - [ ] Build-time `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` set and reaching the build

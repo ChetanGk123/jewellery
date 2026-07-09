@@ -10,6 +10,7 @@ import {
   escapeHtml,
   renderCopy,
   renderCopyHtml,
+  type EmailCopy,
   type EmailTemplateId,
   type OrderStatusKindCopy,
 } from "./copy"
@@ -54,6 +55,14 @@ const KIND_META: Record<OrderStatusEmailKind, { copyKey: EmailTemplateId; accent
   Shipped: { copyKey: "orderShipped", accent: "#71182B" },
   Delivered: { copyKey: "orderDelivered", accent: "#15692F" },
   Cancelled: { copyKey: "orderCancelled", accent: "#C0392F" },
+}
+
+/** The saved copy group for one status kind (send-path convenience, 7.3). */
+export function orderStatusCopyFor(
+  copy: EmailCopy,
+  kind: OrderStatusEmailKind,
+): OrderStatusKindCopy {
+  return copy[KIND_META[kind].copyKey] as OrderStatusKindCopy
 }
 
 /**

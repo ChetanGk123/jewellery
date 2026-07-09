@@ -525,6 +525,7 @@ export type Database = {
         Row: {
           banner: Json
           cod_enabled: boolean
+          email_copy: Json
           flat_rate_paise: number
           free_ship_threshold_paise: number
           gstin: string | null
@@ -540,6 +541,7 @@ export type Database = {
         Insert: {
           banner?: Json
           cod_enabled?: boolean
+          email_copy?: Json
           flat_rate_paise?: number
           free_ship_threshold_paise?: number
           gstin?: string | null
@@ -555,6 +557,7 @@ export type Database = {
         Update: {
           banner?: Json
           cod_enabled?: boolean
+          email_copy?: Json
           flat_rate_paise?: number
           free_ship_threshold_paise?: number
           gstin?: string | null

@@ -1,6 +1,6 @@
 -- supabase/seed.sql — one-time data seed for a FRESH deploy (TASKS 6.15 follow-up)
 --
--- Run ONCE after applying every migration (0000a–0040) to a new Supabase
+-- Run ONCE after applying every migration (0000a–0042) to a new Supabase
 -- project — via the SQL editor, `psql`, or `supabase db reset` (which applies
 -- this file automatically for local/branch databases). Every statement is
 -- idempotent, so re-running is harmless.
