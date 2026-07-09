@@ -47,8 +47,8 @@ export function StorageCard() {
           </div>
           <p className="m-0 mt-1 font-body text-[12.5px] leading-relaxed text-[#8B8177]">
             Deletes uploaded files that no product or category uses any more — replaced photos,
-            abandoned uploads, and leftovers from bulk imports. Anything uploaded in the last 24
-            hours is left untouched.
+            abandoned uploads, and leftovers from bulk imports. Save any product or category edit
+            you have open first: a photo uploaded to an unsaved form counts as unused.
           </p>
           {outcome && (
             <p
@@ -77,7 +77,7 @@ export function StorageCard() {
       {isConfirming && (
         <ConfirmDialog
           title="Clean up unused images?"
-          body="This scans the image bucket and permanently deletes files that no product or category links to. Images uploaded in the last 24 hours are kept, just in case an edit is still in progress."
+          body="This permanently deletes every stored image that no product or category links to right now — including photos uploaded to a form that hasn\u2019t been saved yet. Finish and save any open edit before continuing."
           confirmLabel="Clean up"
           pendingLabel="Cleaning up…"
           dismissLabel="Not now"

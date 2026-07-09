@@ -57,7 +57,11 @@ type AdminClient = Awaited<ReturnType<typeof createServerClient>>
 async function isImageReferenced(supabase: AdminClient, url: string): Promise<boolean> {
   const checks = await Promise.all([
     supabase.from("product").select("id").eq("primary_image_url", url).limit(1),
-    supabase.from("product").select("id").contains("gallery", JSON.stringify([{ url }])).limit(1),
+    supabase
+      .from("product")
+      .select("id")
+      .contains("gallery", JSON.stringify([{ url }]))
+      .limit(1),
     supabase.from("category").select("id").eq("image_url", url).limit(1),
   ])
   if (checks.some((r) => r.error)) return true
@@ -80,9 +84,7 @@ export async function removeUnreferencedAdminImages(urls: string[]): Promise<voi
     if (candidates.length === 0) return
 
     const supabase = await createServerClient()
-    const referenced = await Promise.all(
-      candidates.map((c) => isImageReferenced(supabase, c.url)),
-    )
+    const referenced = await Promise.all(candidates.map((c) => isImageReferenced(supabase, c.url)))
     const orphanPaths = candidates.filter((_, i) => !referenced[i]).map((c) => c.path)
     if (orphanPaths.length === 0) return
 
@@ -98,8 +100,7 @@ export async function removeUnreferencedAdminImages(urls: string[]): Promise<voi
 /* ------------------------- Full-bucket sweep (6.16) ------------------------ */
 
 export type SweepResult =
-  | { ok: true; scanned: number; removed: number; freedBytes: number }
-  | { ok: false; error: string }
+  { ok: true; scanned: number; removed: number; freedBytes: number } | { ok: false; error: string }
 
 /** The two prefixes uploadAdminImage writes under. */
 const IMAGE_FOLDERS = ["products", "categories"] as const
@@ -113,8 +114,8 @@ const REMOVE_CHUNK_SIZE = 100
  * key needed). Lists the whole bucket, collects every image URL any product or
  * category holds, and removes objects that appear in neither — the historical
  * orphans, cancelled modal uploads, and bulk-import replacements the
- * write-time GC can't see. Objects younger than the 24h grace window are kept
- * (see lib/admin/storage-sweep.ts).
+ * write-time GC can't see. Deletes EVERY unreferenced object immediately — no
+ * grace window (operator decision 2026-07-09; see lib/admin/storage-sweep.ts).
  */
 export async function sweepUnusedAdminImages(): Promise<SweepResult> {
   try {
@@ -126,7 +127,7 @@ export async function sweepUnusedAdminImages(): Promise<SweepResult> {
     ])
     const objects = folderLists.flat()
 
-    const orphans = findOrphanImages(objects, referencedPaths, Date.now())
+    const orphans = findOrphanImages(objects, referencedPaths)
     for (let i = 0; i < orphans.length; i += REMOVE_CHUNK_SIZE) {
       const chunk = orphans.slice(i, i + REMOVE_CHUNK_SIZE)
       const { error } = await supabase.storage
