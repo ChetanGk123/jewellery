@@ -5,8 +5,12 @@
  * (webfonts are unreliable in mail clients), brand palette from CLAUDE.md.
  */
 
+import { escapeHtml } from "./copy"
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
+
+// Canonical implementation moved to copy.ts (7.1); re-exported for existing importers.
+export { escapeHtml }
 
 /** One server-priced order line, as `order_item` stores it. */
 export type OrderConfirmationItem = {
@@ -42,16 +46,6 @@ export type EmailMessage = {
   subject: string
   html: string
   text: string
-}
-
-/** Escape user-provided values before interpolating into HTML markup. */
-export function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;")
 }
 
 const HEADING_FONT = "Georgia, 'Times New Roman', serif"

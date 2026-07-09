@@ -205,6 +205,59 @@ User-identified changes, validated against the codebase and ordered quick-wins-f
 
 - ✅ **6.19-fu — Abandoned-cart + subscriber-welcome emails (user request 2026-07-10: "emails for … items left in cart for more than 24 hours and any other that would be useful").** New order / Shipped-with-AWB / Delivered-with-review already existed — the gaps were these two. **(1) Abandoned cart.** The cart is localStorage-only, so **migration 0041 (applied + live-probed, all rolled back)** adds RLS-sealed `cart_snapshot` (user_id PK → auth.users cascade) + three RPCs: `sync_cart(p_items)` (auth-gated; rebuilds items from an **allowlist of clamped fields** — probe: qty 99→10, unknown keys + nameless items dropped; empty array deletes the row; **identical re-syncs keep `updated_at`** so page reloads don't reset the idle clock — probed both ways); `get_abandoned_carts(p_secret)` / `mark_carts_reminded(p_secret, ids)` gated on the 0029 `app_secret` 'cron' row (FORBIDDEN probed; 24h window, remind-once with **re-arm on new cart activity** — mis-probe corrected then verified, ≤100/run, joins auth.users for email). Client: `CartSync` island in the storefront layout (zustand subscribe → 2.5s debounce → dedupe → `syncCart` action; action no-ops for anon — no address to mail); checkout's `placeOrder` clears the snapshot best-effort post-order (`sync_cart []`; 2 checkout-test assertions updated for the second RPC call). Template `buildAbandonedCartEmail` (**TDD, 3 tests**: items/qty/₹ totals/cart link, names escaped, resolved-info override) — item rows link product pages, COD nudge, "Complete your order" → /cart. Route `GET /api/cron/abandoned-carts` (daily-digest twin: 503/401/502 contract, zod-validated payload, sequential sends, **only successfully-sent carts marked** so failures retry). **(2) Subscriber welcome** — `buildSubscriberWelcomeEmail` (**2 tests** → 244 total) queued by the footer subscribe action for NEW addresses only (`alreadyMember` re-subscribes stay silent). docs/DEPLOY_DOKPLOY.md §4.4 (same CRON_SECRET, `0 */6 * * *` schedule) + env-table row updated; types.ts gains `cart_snapshot` + 3 RPCs. tsc/244/build/prettier green (route registers `ƒ`). *Deferred: anonymous carts (no address by design); a second/discount-coupon reminder; delayed post-delivery review nudge.*
 
+## Phase 7 — Admin Emails console (user request 2026-07-10: "visually see and update verbiage of all the emails")
+
+Scope confirmed with operator: **all 6 templates** (order confirmation; Shipped/Delivered/Cancelled;
+new-order admin alert; daily digest; abandoned cart; subscriber welcome) **+ per-template test send**.
+Approach: curated editable text fields with `{token}` placeholders (never raw HTML — layout/escaping
+stay in code); copy stored as an `email_copy` jsonb blob on `setting`, resolved like `store_info`
+(6.15: const defaults, blanks fall back); live browser preview via client-side builder render into
+`<iframe srcDoc>` (builders are pure — verified, only `send.ts` is server-only).
+
+- ✅ **7.1 — Copy layer (`lib/email/copy.ts`, TDD, 12 tests → 261).** `EMAIL_COPY_DEFAULTS` extracted
+  verbatim from the builders, grouped per template: `orderConfirmation` {subject, heading, intro,
+  codNotice, button}; `orderShipped`/`orderDelivered`/`orderCancelled` {subject, heading, intro,
+  totalLabel, note, button}; `adminAlert` {subject, heading, button}; `abandonedCart` {subject, heading,
+  intro, notice, button}; `subscriberWelcome` {subject, heading, body, button}; `dailyDigest` {subject,
+  heading, button}. `resolveEmailCopy(raw)` mirrors `resolveStoreInfo` (trimmed-non-empty wins; blanks/
+  junk/unknown keys fall back — probed by tests; never mutates defaults); `DEFAULT_EMAIL_COPY =
+  resolveEmailCopy({})`. `renderCopy(tpl, vars)` substitutes `{token}`s (unknown tokens stay literal —
+  typos degrade visibly, never throw); `renderCopyHtml(tpl, vars, htmlVars)` escapes the template FIRST
+  then injects escaped `vars` / verbatim pre-rendered `htmlVars` (`<strong>` order-no decoration) —
+  hostile copy tested to render escaped. `COPY_TOKENS` per-field map ready to drive 7.5's UI hints.
+  `escapeHtml` moved home to copy.ts; order-confirmation.ts re-exports for existing importers
+  (order-status/admin-alert/abandoned-cart/subscriber-welcome/daily-digest unchanged).
+- ⬜ **7.2 — Thread copy through the 6 builders (TDD).** Trailing `copy = EMAIL_COPY_DEFAULTS.<template>`
+  param on each builder; hardcoded verbiage → `renderCopy`. Structural labels that are data (breakdown
+  rows, KPI labels, per-item lines) stay in code. Regression gate: default output byte-identical
+  (existing tests unchanged); new tests: custom copy applied + `<script>` in a copy field renders escaped.
+- ⬜ **7.3 — Storage + reads.** Migration `0042_email_copy.sql` (0036 pattern): `setting.email_copy jsonb
+  not null default '{}'` + re-create `admin_update_settings` with shallow-merge branch
+  (`email_copy = coalesce(email_copy,'{}') || (p_payload->'email_copy')`), re-grant; reflect in the
+  fresh-deploy seed capture. `lib/db/settings.ts`: `getEmailCopy()` (cached, `CACHE_TAGS.settings`,
+  const fallback on error) + raw blob on `StoreSettings` for the form seed. `lib/email/send.ts`: queue/send
+  fns await `getEmailCopy()` alongside `getStoreInfo()` and pass slices to builders.
+- ⬜ **7.4 — Write path + test send.** `lib/admin/email-copy.ts` (client-safe zod schema, `optionalText`
+  style; toFormValues/toPayload — empty fields dropped so defaults keep applying).
+  `app/(admin)/admin/(console)/emails/actions.ts`: `updateEmailCopy` mirrors `updateStoreSettings`
+  (requireAdmin → safeParse → `admin_update_settings` RPC → `updateTag(settings)` + revalidate);
+  `sendTestTemplateEmail(templateId)` — requireAdmin + `checkRateLimit` (5/10min), builds from
+  `lib/email/samples.ts` fixtures + SAVED copy, awaited send to `adminAlertTo(info)` only (never a
+  caller-supplied address), `{ok,error}` result, friendly no-provider message when `!isEmailEnabled()`.
+- ⬜ **7.5 — Emails console UI.** Nav: `ROUTES.adminEmails` (`/admin/emails`), `ADMIN_NAV` +
+  `ADMIN_PAGE_META` entries, new `"emails"` `AdminIconKey` + envelope-pencil path in `AdminNavIcons.tsx`.
+  Route `emails/page.tsx` (settings/page.tsx twin) → `components/admin/emails/EmailsView.tsx`:
+  master–detail (left template rail with Customer/Internal groups; Shipped/Delivered/Cancelled sub-tabs);
+  editor fields with `INPUT`/`LABEL_TEXT`/`HINT` constants, **defaults as placeholders** (blank = default),
+  token hints, per-template "Reset to defaults"; live preview pane — subject line + `<iframe srcDoc>`
+  rebuilt client-side from unsaved form values + `samples.ts` + server-passed resolved store info,
+  560px/375px width toggle; sticky save bar (SettingsView dirty/saved/error pattern); "Send test email"
+  button per template (NotificationsCard feedback pattern, disabled + hint without a provider, shows recipient).
+- ⬜ **7.6 — Verify end-to-end.** `bun test` + tsc + lint; apply 0042 and probe the RPC merge; authed
+  browser pass (edit → live preview → save → reload persists → blank → default returns); confirm a real
+  queued email (e.g. status change) uses the override; test send delivered with RESEND_API_KEY, disabled
+  state without; screenshots of key states.
+
 ## Cross-cutting (ongoing, not a phase)
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**
 - ✅ **Testing** (0064c58, 0435e17, 8c76de5). **Unit (67 pass / 0 fail, `bun test`):** pure domain (cart, coupons, shipping, money, whatsapp, checkout schema/order mapping) plus `submitCheckout` — the authoritative write gate — with the Supabase server client mocked: honeypot drops bots before the RPC, invalid input never reaches the DB, the RPC payload provably carries no price, success/error/unexpected-shape all mapped. **E2E (Playwright, 2 pass):** `e2e/checkout.e2e.ts` runs the critical journey (shop → product → add to cart → cart → COD form → place order → confirmation with order number → cart cleared) against a **production build** on :3200, so the strict nonce CSP + per-request rendering are exercised as shipped. Config notes: system Chrome via `channel: "chrome"` (no browser download); `*.e2e.ts` naming so `bun test` ignores them; `bun run e2e`. **Data:** E2E writes a real order into live Supabase tagged `e2e-test@example.com` — clean with `delete from "order" where customer_email = 'e2e-test@example.com'` (+ `setval('order_no_seq', 1001, false)`); this run's order was cleaned. **Visual regression (16 pass):** `e2e/visual.e2e.ts` — full-page screenshots of home / shop / product / empty-cart at 320/768/1024/1440; baselines committed (`visual.e2e.ts-snapshots/`, ~7.8 MB); `toHaveScreenshot` defaults in config (animations disabled, 2% diff tolerance); verified stable across two fresh runs; regenerate with `bun run e2e -- --update-snapshots`. **Coverage (`bun test --coverage`):** 100% funcs / 99.78% lines across the tested domain + action layer (actions, cart, checkout order/schema, coupons, shipping, store-info, money, whatsapp) — exceeds the 80% target. Caveat: Bun reports only test-imported files; `lib/db` row-mappers, `stores/cart`, and components are exercised via E2E + visual regression instead (per web testing rules: visual regression > brittle markup assertions for visual components). **Deferred to deploy:** firefox/webkit projects (need `playwright install` browser downloads) and a staging/branch Supabase so E2E stops writing prod data.
