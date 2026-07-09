@@ -290,6 +290,104 @@ stay in code); copy stored as an `email_copy` jsonb blob on `setting`, resolved 
   previews show whole rupees. 289/tsc/eslint/build green. *Note: EMAIL_FROM still unset — Resend's
   onboarding sender only delivers to the account owner; verify the domain before real customer sends.*
 
+## Phase 8 — Production-readiness gap closure (audit 2026-07-10; excludes payments/shipment-tracking — deferred to the Razorpay/Shiprocket phase)
+
+Ordered by launch impact: **8.1–8.5 are configuration-heavy launch blockers** (the "demo → business"
+week); 8.6–8.7 need operator/product decisions before build; the rest is feature work by value.
+Related open items that stay where they are: 4.5 photography, 4.13 deploy steps (absorbed by 8.2).
+
+**A. Launch blockers**
+- ⬜ **8.1 — Email deliverability.** Verify the sending domain in Resend (SPF + DKIM DNS records), set
+  `EMAIL_FROM="RJ Jewellers <orders@domain>"` + `ADMIN_ALERT_EMAIL` in dev/prod env. Today everything
+  sends from `onboarding@resend.dev`, which delivers ONLY to the Resend account owner — customers get
+  nothing. Verify: real inbox delivery of a customer-facing template to a non-owner address; check spam
+  placement (Gmail + one other).
+- ⬜ **8.2 — Finish the production deploy.** Real domain → Dokploy service `web` :3000 → Let's Encrypt
+  (replaces the self-signed `*.traefik.me` cert); push full prod env (`NEXT_PUBLIC_SITE_URL`,
+  RESEND/EMAIL_FROM, VAPID ×3, `CRON_SECRET` — a DIFFERENT value than dev, + its `app_secret` row);
+  register both crons (`30 16 * * *` daily-digest, `0 */6 * * *` abandoned-carts, bearer = CRON_SECRET).
+  Follow docs/DEPLOY_DOKPLOY.md end-to-end; smoke-test checkout on the live URL. Absorbs 4.13.
+- ⬜ **8.3 — Observability.** Error tracking (Sentry or GlitchTip — self-hostable to match the Dokploy
+  setup) wired into Next server + client with the CSP nonce accounted for; uptime monitor on `/` and
+  one API route with alerting to the operator (email/WhatsApp); make the queued email failures
+  (`email send failed`) visible, not just container-log noise. Closes 4.11.
+- ⬜ **8.4 — CI.** GitHub Actions on push/PR: `bun install --frozen-lockfile` → `bun test` (289) →
+  `bunx tsc --noEmit` → `bun run lint` → `bun run build`. Optionally the Playwright e2e job gated on a
+  label (needs E2E secrets). Branch protection so main can't receive a red commit.
+- ⬜ **8.5 — Backups + restore drill.** Decide Supabase tier (PITR needs Pro); scheduled `pg_dump` of
+  the DB + sync of the `product`/`category` storage buckets to an off-site target (cron on the Dokploy
+  host is fine); document the restore procedure and RUN IT once against a scratch project. Order data
+  loss is existential for a store.
+
+**B. Operator/product decisions required, then build**
+- ⬜ **8.6 — GST-compliant invoicing.** Decide: registered composition vs regular scheme, tax rate per
+  category (jewellery imitation = 3%? confirm with CA), invoice number series format. Then: CGST/SGST
+  (intra-state) / IGST (inter-state by `state`) split on the 5.12 invoice, sequential invoice numbers
+  (new column or derived), HSN codes per product (schema addition). The current invoice deliberately
+  shows only a tax-inclusive total — that placeholder was flagged at 5.12.
+- ⬜ **8.7 — Returns & COD reconciliation.** Product decisions: return window, who pays return shipping,
+  exchange vs refund-by-UPI. Build: customer "Request return" on Delivered orders (reason + photos?);
+  admin return states (Requested → Approved → Received → Refunded/Exchanged) — extend the order status
+  machine or a sibling `return_request` table; refund/adjustment recording so COD cash reconciles
+  (the demand-gated 5.18 item); notification emails ride the Phase 7 copy layer.
+
+**C. Customer-facing feature gaps (by value)**
+- ⬜ **8.8 — Header search.** Storefront header gets a search box (expandable icon on mobile) that
+  submits to `/shop?q=` — the URL-driven listing search (lib/listing.ts) already does the work; this is
+  discoverability only. Optional: recent-searches dropdown, zero-results suggestions.
+- ⬜ **8.9 — Checkout friction: guest checkout OR phone-OTP auth.** Decision first — options: (a) true
+  guest checkout (order keyed by phone/email, RLS + `place_order` rework, order lookup by
+  order-no+phone), (b) keep sign-in-only but switch to Supabase phone-OTP (matches Indian buying
+  habits; SMS provider cost), (c) both. Today's email/password wall is the single biggest conversion
+  killer. Touches: checkout gate, abandoned-cart (currently signed-in-only by design), account pages.
+- ⬜ **8.10 — WhatsApp/SMS order notifications.** Order confirmed / shipped / delivered via WhatsApp
+  Business API (or MSG91/similar SMS fallback) alongside email — in this market customers read
+  WhatsApp, not email. Needs: provider account + template approvals (lead time!), consent checkbox at
+  checkout, send hooks next to the existing email queue calls, per-channel copy in the Phase 7 layer.
+- ⬜ **8.11 — Pincode serviceability at checkout.** Replace format-only validation with a serviceable-
+  pincode check (admin-managed list or ranges in a `serviceable_pincode` table + Settings card; COD
+  yes/no per zone). Checkout blocks early with a friendly message instead of accepting orders you
+  can't fulfil.
+- ⬜ **8.12 — Customer invoice access.** "Download invoice" on the account order page (and a link in the
+  Delivered email) — reuse the 5.12 print view via a customer-scoped route (RLS: own orders only,
+  Delivered+; browser print-to-PDF is enough, no PDF lib).
+- ⬜ **8.13 — Wishlist.** `wishlist_item` table (user_id + product_id, RLS own-rows), heart toggle on
+  product cards/PDP, account Wishlist page, move-to-cart. Later feeds "back in stock" and marketing.
+- ⬜ **8.14 — Account completeness.** Address book (multiple saved addresses, pick at checkout —
+  supersedes the single-profile prefill) + **account deletion** (self-serve, cascades cart
+  snapshot/wishlist/push subscriptions; orders are retained under the business-records exemption —
+  also required by 8.15).
+
+**D. Compliance**
+- ⬜ **8.15 — DPDP Act 2023 baseline.** Consent notice for non-essential storage/analytics (gates the
+  8.20 pixel), data-export ("email me my data") + the 8.14 deletion path, grievance-officer contact in
+  the privacy policy, and a legal-review pass over the template privacy/terms/refund copy (they've
+  never been reviewed by a human lawyer).
+
+**E. Operator console gaps**
+- ⬜ **8.16 — Customers directory.** `/admin/customers`: searchable list (name/phone/email), per-customer
+  order history + LTV + cancel rate (aggregate the existing by-phone reads), link from order drawer.
+  Guest checkout (8.9a) would make phone the identity key — build after that decision.
+- ⬜ **8.17 — Order editing.** Admin can correct the delivery address (+ phone) on Pending/Confirmed
+  orders via a definer RPC that audit-logs the change (0026 trail); item/qty edits stay out of scope
+  (cancel-and-reorder), but document that norm in the drawer.
+- ⬜ **8.18 — Roles + 2FA.** Staff role (orders/messages only — no products/coupons/settings/team) via
+  `role` claim + per-RPC gates; TOTP 2FA for admins (Supabase MFA). Was demand-gated in 5.18; required
+  the moment a second person touches the console.
+- ⬜ **8.19 — Abuse-protection hardening.** Swap the in-memory rate limiter for Upstash/Redis behind the
+  same `checkRateLimit` signature (its documented seam) so it survives multi-instance; add a
+  lightweight challenge (Turnstile) on sign-up/contact if bot pressure appears — honeypot is the only
+  defence today.
+
+**F. Growth & process**
+- ⬜ **8.20 — Marketing analytics.** Privacy-respecting analytics (Plausible/Umami, self-hostable) +
+  conversion events (view-item, add-to-cart, begin-checkout, purchase) behind the 8.15 consent;
+  optional GA4/Meta pixel only if ads are planned. Admin analytics covers sales, not acquisition —
+  today the funnel is unmeasurable.
+- ⬜ **8.21 — Staging + release discipline.** Supabase branch/second project + a staging Dokploy service;
+  documented release order: **apply migrations → deploy code** (the 7.6 `email_copy` incident is the
+  failure mode); e2e smoke on staging in CI before prod deploy.
+
 ## Cross-cutting (ongoing, not a phase)
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**
 - ✅ **Testing** (0064c58, 0435e17, 8c76de5). **Unit (67 pass / 0 fail, `bun test`):** pure domain (cart, coupons, shipping, money, whatsapp, checkout schema/order mapping) plus `submitCheckout` — the authoritative write gate — with the Supabase server client mocked: honeypot drops bots before the RPC, invalid input never reaches the DB, the RPC payload provably carries no price, success/error/unexpected-shape all mapped. **E2E (Playwright, 2 pass):** `e2e/checkout.e2e.ts` runs the critical journey (shop → product → add to cart → cart → COD form → place order → confirmation with order number → cart cleared) against a **production build** on :3200, so the strict nonce CSP + per-request rendering are exercised as shipped. Config notes: system Chrome via `channel: "chrome"` (no browser download); `*.e2e.ts` naming so `bun test` ignores them; `bun run e2e`. **Data:** E2E writes a real order into live Supabase tagged `e2e-test@example.com` — clean with `delete from "order" where customer_email = 'e2e-test@example.com'` (+ `setval('order_no_seq', 1001, false)`); this run's order was cleaned. **Visual regression (16 pass):** `e2e/visual.e2e.ts` — full-page screenshots of home / shop / product / empty-cart at 320/768/1024/1440; baselines committed (`visual.e2e.ts-snapshots/`, ~7.8 MB); `toHaveScreenshot` defaults in config (animations disabled, 2% diff tolerance); verified stable across two fresh runs; regenerate with `bun run e2e -- --update-snapshots`. **Coverage (`bun test --coverage`):** 100% funcs / 99.78% lines across the tested domain + action layer (actions, cart, checkout order/schema, coupons, shipping, store-info, money, whatsapp) — exceeds the 80% target. Caveat: Bun reports only test-imported files; `lib/db` row-mappers, `stores/cart`, and components are exercised via E2E + visual regression instead (per web testing rules: visual regression > brittle markup assertions for visual components). **Deferred to deploy:** firefox/webkit projects (need `playwright install` browser downloads) and a staging/branch Supabase so E2E stops writing prod data.
