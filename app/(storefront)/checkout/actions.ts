@@ -141,6 +141,14 @@ export async function submitCheckout(input: unknown): Promise<CheckoutActionResu
     }
   }
 
+  // The order emptied the cart — drop the server-side snapshot too so the
+  // abandoned-cart cron (6.19) can't remind about a cart that converted.
+  // Best-effort: the client's own clear-and-sync covers it otherwise.
+  const { error: cartClearError } = await supabase.rpc("sync_cart", { p_items: [] })
+  if (cartClearError) {
+    console.error("post-order cart snapshot clear failed:", cartClearError.message)
+  }
+
   // "Saved details" loop: remember this checkout's contact + address as the
   // customer's profile so the next checkout prefills. Best-effort — a profile
   // hiccup must never fail an already-placed order.

@@ -132,7 +132,9 @@ test("treats a whitespace-only honeypot as empty (real user)", async () => {
   })
 
   expect(result.ok).toBe(true)
-  expect(rpc).toHaveBeenCalledTimes(1)
+  // place_order, then the abandoned-cart snapshot clear (6.19).
+  expect(rpc).toHaveBeenCalledTimes(2)
+  expect(rpc.mock.calls.map((c) => c[0])).toEqual(["place_order", "sync_cart"])
 })
 
 test("rejects an empty cart without calling the RPC", async () => {
@@ -159,7 +161,6 @@ test("never sends a price to the RPC — only product_id, tone, qty", async () =
 
   await submitCheckout({ values: validValues, items: validItems, honeypot: "" })
 
-  expect(rpc).toHaveBeenCalledTimes(1)
   const [name, args] = rpc.mock.calls[0] as [string, Record<string, unknown>]
   expect(name).toBe("place_order")
   const items = args.p_items as Array<Record<string, unknown>>

@@ -12,6 +12,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart_snapshot: {
+        Row: {
+          user_id: string
+          items: Json
+          updated_at: string
+          reminded_at: string | null
+        }
+        Insert: {
+          user_id: string
+          items?: Json
+          updated_at?: string
+          reminded_at?: string | null
+        }
+        Update: {
+          user_id?: string
+          items?: Json
+          updated_at?: string
+          reminded_at?: string | null
+        }
+        Relationships: []
+      }
       category: {
         Row: {
           created_at: string
@@ -656,9 +677,21 @@ export type Database = {
         Args: { p_rows: Json }
         Returns: Json
       }
+      get_abandoned_carts: {
+        Args: { p_secret: string }
+        Returns: Json
+      }
       get_daily_digest: {
         Args: { p_secret: string }
         Returns: Json
+      }
+      mark_carts_reminded: {
+        Args: { p_secret: string; p_user_ids: string[] }
+        Returns: undefined
+      }
+      sync_cart: {
+        Args: { p_items: Json }
+        Returns: undefined
       }
       get_push_subscriptions: {
         Args: { p_secret: string }

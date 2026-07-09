@@ -138,7 +138,7 @@ compose they're passed as `build.args`.
 | `RESEND_API_KEY` | Optional | Enables order-confirmation (4.6) + status/admin emails (5.2). No key ⇒ all sends are no-ops. |
 | `EMAIL_FROM` | Optional | Sender address; needs a **verified Resend domain** to deliver beyond the Resend account owner. |
 | `ADMIN_ALERT_EMAIL` | Optional | Recipient for the new-order admin alert (falls back to `STORE_INFO.email`). |
-| `CRON_SECRET` | Optional | Bearer token for the daily-digest cron route (5.17). See §4.3. |
+| `CRON_SECRET` | Optional | Bearer token for the cron routes (daily digest 5.17, abandoned carts 6.19). See §4.3–4.4. |
 
 **Never** put `.env.local`, the E2E test creds, or any secret in the repo — they
 belong only in the Dokploy Environment panel. `.env.local` is gitignored.
@@ -170,6 +170,20 @@ The route answers `503` without `CRON_SECRET`, `401` on a bad bearer, `502`
 when the RPC or the email send fails (so the scheduler's logs show misfires),
 and `{ "ok": true, "date": …, "orders": … }` on success. Requires
 `RESEND_API_KEY` — without it the send is a no-op and the route reports `502`.
+
+### 4.4 Abandoned-cart cron (TASKS 6.19)
+
+`GET /api/cron/abandoned-carts` emails signed-in customers whose synced cart
+has sat idle for 24h+ (one reminder per abandonment; new cart activity
+re-arms it). Same `CRON_SECRET` + `app_secret` row as §4.3 — no extra setup
+beyond a second schedule, a few times a day:
+
+```
+0 */6 * * *  curl -fsS -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/abandoned-carts
+```
+
+Same status contract as the digest route; `{ "ok": true, "carts": …, "sent": … }`
+on success (carts whose send failed stay unmarked and retry on the next run).
 
 ---
 

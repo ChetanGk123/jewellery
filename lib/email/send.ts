@@ -1,5 +1,6 @@
 import "server-only"
 import { after } from "next/server"
+import { buildAbandonedCartEmail } from "./abandoned-cart"
 import { buildNewOrderAdminEmail, type NewOrderAdminEmailInput } from "./admin-alert"
 import { buildDailyDigestEmail, type DailyDigestEmailInput } from "./daily-digest"
 import {
@@ -8,6 +9,7 @@ import {
   type OrderConfirmationEmailInput,
 } from "./order-confirmation"
 import { buildOrderStatusEmail, type OrderStatusEmailKind } from "./order-status"
+import { buildSubscriberWelcomeEmail } from "./subscriber-welcome"
 import { getStoreInfo } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
 import { SITE_URL } from "@/lib/site-url"
@@ -178,6 +180,61 @@ export async function queueNewOrderAdminEmail(input: QueueNewOrderAdminInput): P
   queue(
     adminAlertTo(info),
     buildNewOrderAdminEmail({ ...input, adminUrl: `${SITE_URL}${ROUTES.adminOrders}` }, info),
+    fromAddress(info),
+  )
+}
+
+/** One synced cart item, as `get_abandoned_carts` returns it (0041 keys). */
+export type AbandonedCartSendItem = {
+  name: string
+  slug: string | null
+  qty: number
+  unit_price_paise: number
+  tone: string | null
+}
+
+/**
+ * Send one abandoned-cart reminder (TASKS 6.19). AWAITED like the digest —
+ * the cron route reports per-cart outcomes so failures land in its logs.
+ */
+export async function sendAbandonedCartEmailNow(input: {
+  to: string
+  items: AbandonedCartSendItem[]
+}): Promise<boolean> {
+  if (!isEmailEnabled()) return false
+
+  const info = await getStoreInfo()
+  return sendEmail(
+    input.to,
+    buildAbandonedCartEmail(
+      {
+        cartUrl: `${SITE_URL}${ROUTES.cart}`,
+        items: input.items.map((it) => ({
+          name: it.name,
+          qty: it.qty,
+          unitPricePaise: it.unit_price_paise,
+          tone: it.tone,
+          productUrl: it.slug ? `${SITE_URL}${ROUTES.product(it.slug)}` : null,
+        })),
+      },
+      info,
+    ),
+    fromAddress(info),
+  )
+}
+
+/**
+ * Queue the one-time newsletter welcome to a NEW subscriber (TASKS 6.19).
+ * Best-effort like the other queued sends — a mail hiccup must never fail an
+ * already-recorded sign-up.
+ */
+export async function queueSubscriberWelcomeEmail(to: string): Promise<void> {
+  if (!isEmailEnabled()) return
+
+  const info = await getStoreInfo()
+  queue(
+    to,
+    buildSubscriberWelcomeEmail({ shopUrl: `${SITE_URL}${ROUTES.shop}` }, info),
     fromAddress(info),
   )
 }

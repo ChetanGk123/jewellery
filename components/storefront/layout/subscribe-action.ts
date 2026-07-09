@@ -2,6 +2,7 @@
 
 import { z } from "zod"
 import { createServerClient } from "@/lib/db/server"
+import { queueSubscriberWelcomeEmail } from "@/lib/email/send"
 import { checkRateLimit, clientRateKey } from "@/lib/rate-limit"
 import { subscribeSchema } from "@/lib/subscribe/schema"
 
@@ -61,6 +62,13 @@ export async function subscribe(input: unknown): Promise<SubscribeResult> {
     data && typeof data === "object" && "status" in data
       ? String((data as { status: unknown }).status)
       : ""
+  const alreadyMember = status === "already"
 
-  return { ok: true, alreadyMember: status === "already" }
+  // One-time welcome for NEW addresses (6.19) — re-subscribes stay silent.
+  // Queued best-effort; a mail hiccup never fails the recorded sign-up.
+  if (!alreadyMember) {
+    await queueSubscriberWelcomeEmail(parsed.data.email)
+  }
+
+  return { ok: true, alreadyMember }
 }

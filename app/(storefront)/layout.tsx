@@ -1,3 +1,4 @@
+import { CartSync } from "@/components/storefront/cart/CartSync"
 import { Header } from "@/components/storefront/layout/Header"
 import { Footer } from "@/components/storefront/layout/Footer"
 import { getStoreInfo, getStoreSettings } from "@/lib/db/settings"
@@ -19,6 +20,8 @@ export default async function StorefrontLayout({
       <Header banner={settings.banner} info={info} />
       {children}
       <Footer info={info} />
+      {/* Mirrors the cart server-side for abandoned-cart reminders (6.19). */}
+      <CartSync />
     </>
   )
 }
