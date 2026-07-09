@@ -8,7 +8,7 @@ import {
   MAX_PLATING_OPTIONS,
   type ProductImage,
 } from "@/lib/admin/product-status"
-import { uploadAdminImage } from "@/lib/db/admin-storage"
+import { removeUnreferencedAdminImages, uploadAdminImage } from "@/lib/db/admin-storage"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
 import { pricePairFromRupees } from "@/lib/utils/money"
@@ -148,6 +148,11 @@ export async function upsertProduct(input: ProductInput): Promise<ProductActionR
   }
 
   const supabase = await createServerClient()
+
+  // Snapshot the stored gallery before the write so replaced images can be
+  // garbage-collected from Storage afterwards (they'd otherwise leak forever).
+  const previousUrls = input.id ? await currentImageUrls(supabase, input.id) : []
+
   const { error } = await supabase.rpc("admin_upsert_product", {
     p_id: input.id,
     p_payload: payload,
@@ -157,7 +162,32 @@ export async function upsertProduct(input: ProductInput): Promise<ProductActionR
     return { ok: false, error: messageFor(error.code, error.message) }
   }
 
+  const keptUrls = new Set(gallery.map((im) => im.url))
+  const removedUrls = previousUrls.filter((url) => !keptUrls.has(url))
+  if (removedUrls.length > 0) await removeUnreferencedAdminImages(removedUrls)
+
   revalidatePath(ROUTES.adminProducts)
   updateTag(CACHE_TAGS.products)
   return { ok: true }
+}
+
+/** Every image URL the product row holds today (gallery + denormalised primary). */
+async function currentImageUrls(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  productId: string,
+): Promise<string[]> {
+  const { data } = await supabase
+    .from("product")
+    .select("primary_image_url, gallery")
+    .eq("id", productId)
+    .maybeSingle()
+  if (!data) return []
+
+  const gallery = Array.isArray(data.gallery) ? data.gallery : []
+  const urls = gallery.map((im: unknown) =>
+    im && typeof im === "object" && typeof (im as { url?: unknown }).url === "string"
+      ? (im as { url: string }).url
+      : "",
+  )
+  return [...urls, data.primary_image_url ?? ""].filter(Boolean)
 }

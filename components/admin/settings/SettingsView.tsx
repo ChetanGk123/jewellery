@@ -4,6 +4,8 @@ import { useState, useTransition } from "react"
 import { updateStoreSettings } from "@/app/(admin)/admin/(console)/settings/actions"
 import type { SettingsFormValues } from "@/lib/admin/settings"
 import { STORE_INFO } from "@/lib/store-info"
+import { SectionCard } from "./SectionCard"
+import { StorageCard } from "./StorageCard"
 
 type Props = { initial: SettingsFormValues }
 
@@ -19,6 +21,7 @@ const NAV_SECTIONS = [
   { href: "#shipping-payments", label: "Shipping & Payments", color: "#3E8552" },
   { href: "#announcement-banner", label: "Announcement Banner", color: "#5B1A2E" },
   { href: "#promo-block", label: "Homepage Promo Block", color: "#B4863A" },
+  { href: "#storage", label: "Storage", color: "#3E8552" },
 ]
 
 /**
@@ -477,6 +480,8 @@ export function SettingsView({ initial }: Props) {
               </Field>
             </CardGrid>
           </SectionCard>
+
+          <StorageCard />
         </div>
       </div>
 
@@ -521,50 +526,7 @@ function toRupees(raw: string): number {
 }
 
 /* ------------------------------ Building blocks --------------------------- */
-
-function SectionCard({
-  id,
-  icon,
-  iconBg,
-  title,
-  subtitle,
-  headerRight,
-  children,
-}: {
-  id: string
-  icon: React.ReactNode
-  iconBg: string
-  title: string
-  subtitle: string
-  headerRight?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <section
-      id={id}
-      aria-label={title}
-      className="scroll-mt-24 overflow-hidden rounded-[14px] border border-[#E6DECF] bg-white"
-    >
-      <div className="flex items-center gap-3.5 border-b border-[#EFE9DE] px-[30px] py-[23px] max-sm:px-5">
-        <div
-          aria-hidden="true"
-          className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[9px]"
-          style={{ background: iconBg }}
-        >
-          {icon}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="m-0 font-heading text-[21px] font-semibold leading-tight text-[#241412]">
-            {title}
-          </h2>
-          <p className="m-0 mt-0.5 font-body text-[13px] leading-snug text-[#8B8177]">{subtitle}</p>
-        </div>
-        {headerRight}
-      </div>
-      {children}
-    </section>
-  )
-}
+/* SectionCard lives in ./SectionCard.tsx (shared with StorageCard). */
 
 /** The standard two-column field grid used by every card body. */
 function CardGrid({ children }: { children: React.ReactNode }) {

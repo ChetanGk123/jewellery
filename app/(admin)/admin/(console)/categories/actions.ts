@@ -3,7 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache"
 import { requireAdmin } from "@/lib/admin/auth"
 import { CACHE_TAGS } from "@/lib/db/cache"
-import { uploadAdminImage } from "@/lib/db/admin-storage"
+import { removeUnreferencedAdminImages, uploadAdminImage } from "@/lib/db/admin-storage"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
 
@@ -47,18 +47,29 @@ export async function upsertCategory(input: CategoryInput): Promise<CategoryActi
   const name = input.name?.trim() ?? ""
   if (!name) return { ok: false, error: "Category name is required." }
 
+  const imageUrl = input.imageUrl?.trim() ?? ""
+
   const supabase = await createServerClient()
+
+  // Snapshot the stored photo before the write so a replaced/cleared image can
+  // be garbage-collected from Storage afterwards.
+  const previousUrl = input.id ? await currentCategoryImageUrl(supabase, input.id) : null
+
   const { error } = await supabase.rpc("admin_upsert_category", {
     p_id: input.id,
     p_payload: {
       name,
       description: input.description?.trim() ?? "",
-      image_url: input.imageUrl?.trim() ?? "",
+      image_url: imageUrl,
     },
   })
 
   if (error) {
     return { ok: false, error: messageFor(error.code, error.message) }
+  }
+
+  if (previousUrl && previousUrl !== imageUrl) {
+    await removeUnreferencedAdminImages([previousUrl])
   }
 
   revalidatePath(ROUTES.adminCategories)
@@ -77,6 +88,10 @@ export async function deleteCategory(id: string): Promise<CategoryActionResult> 
   await requireAdmin(ROUTES.adminCategories)
 
   const supabase = await createServerClient()
+
+  // Snapshot the photo before the delete so its Storage object can be GC'd.
+  const imageUrl = await currentCategoryImageUrl(supabase, id)
+
   const { error } = await supabase.rpc("admin_delete_category", { p_id: id })
 
   if (error) {
@@ -89,8 +104,23 @@ export async function deleteCategory(id: string): Promise<CategoryActionResult> 
     return { ok: false, error: messageFor(error.code, error.message) }
   }
 
+  if (imageUrl) await removeUnreferencedAdminImages([imageUrl])
+
   revalidatePath(ROUTES.adminCategories)
   updateTag(CACHE_TAGS.categories)
   updateTag(CACHE_TAGS.products)
   return { ok: true }
+}
+
+/** The photo URL the category row holds today, if any. */
+async function currentCategoryImageUrl(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  categoryId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("category")
+    .select("image_url")
+    .eq("id", categoryId)
+    .maybeSingle()
+  return data?.image_url || null
 }

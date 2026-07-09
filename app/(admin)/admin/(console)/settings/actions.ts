@@ -4,10 +4,22 @@ import { revalidatePath, updateTag } from "next/cache"
 import { requireAdmin } from "@/lib/admin/auth"
 import { CACHE_TAGS } from "@/lib/db/cache"
 import { formValuesToPayload, settingsFormSchema } from "@/lib/admin/settings"
+import { type SweepResult, sweepUnusedAdminImages } from "@/lib/db/admin-storage"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
 
 export type SettingsActionResult = { ok: boolean; error?: string }
+export type { SweepResult } from "@/lib/db/admin-storage"
+
+/**
+ * Storage housekeeping (Settings → Storage): remove bucket objects no product
+ * or category references. Runs under the clicking admin's cookie session, so
+ * the is_admin() Storage policies authorise the deletes.
+ */
+export async function sweepUnusedImages(): Promise<SweepResult> {
+  await requireAdmin(ROUTES.adminSettings)
+  return sweepUnusedAdminImages()
+}
 
 /**
  * Save the store settings (TASKS 3.11) through the admin-only
