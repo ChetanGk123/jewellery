@@ -2,6 +2,8 @@
 
 import { reviewSchema, type ReviewFormValues } from "@/lib/review/schema"
 import { createServerClient, getCurrentUser } from "@/lib/db/server"
+import { queueAdminPush } from "@/lib/push/send"
+import { ROUTES } from "@/lib/routes"
 
 export type SubmitReviewResult =
   | { ok: true }
@@ -74,6 +76,20 @@ export async function submitReview(productId: string, input: unknown): Promise<S
     console.error("submit_review failed", error)
     return { ok: false, fieldErrors: {}, formError: DECLINE_MESSAGE }
   }
+
+  // System notification to subscribed admin devices (6.17): the review lands
+  // as `pending`, so the ping points at the moderation queue. Product name is
+  // best-effort colour — the push still reads fine without it.
+  const { data: product } = await supabase
+    .from("product")
+    .select("name")
+    .eq("id", productId)
+    .maybeSingle()
+  queueAdminPush({
+    title: "New review awaiting approval",
+    body: `${parsed.data.rating}★ from ${parsed.data.name}${product?.name ? ` on ${product.name}` : ""}`,
+    url: ROUTES.adminReviews,
+  })
 
   return { ok: true }
 }

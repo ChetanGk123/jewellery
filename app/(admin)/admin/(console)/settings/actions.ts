@@ -1,9 +1,11 @@
 "use server"
 
 import { revalidatePath, updateTag } from "next/cache"
+import { z } from "zod"
 import { requireAdmin } from "@/lib/admin/auth"
 import { CACHE_TAGS } from "@/lib/db/cache"
 import { formValuesToPayload, settingsFormSchema } from "@/lib/admin/settings"
+import { type PushSendReport, sendAdminPushNow } from "@/lib/push/send"
 import { type SweepResult, sweepUnusedAdminImages } from "@/lib/db/admin-storage"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
@@ -19,6 +21,71 @@ export type { SweepResult } from "@/lib/db/admin-storage"
 export async function sweepUnusedImages(): Promise<SweepResult> {
   await requireAdmin(ROUTES.adminSettings)
   return sweepUnusedAdminImages()
+}
+
+/** The browser's push subscription, as sent by the Notifications card (6.17). */
+const pushSubscriptionSchema = z.object({
+  endpoint: z.string().url(),
+  p256dh: z.string().min(1),
+  auth: z.string().min(1),
+  userAgent: z.string().max(400).optional(),
+})
+
+/**
+ * Store this device's push subscription so the server can notify the admin of
+ * new orders/messages/reviews. Goes through the is_admin()-gated
+ * `admin_save_push_subscription` RPC (0038); the table itself is sealed.
+ */
+export async function savePushSubscription(input: unknown): Promise<SettingsActionResult> {
+  await requireAdmin(ROUTES.adminSettings)
+
+  const parsed = pushSubscriptionSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: "That subscription looks invalid. Please try again." }
+  }
+
+  const supabase = await createServerClient()
+  const { error } = await supabase.rpc("admin_save_push_subscription", {
+    p_endpoint: parsed.data.endpoint,
+    p_p256dh: parsed.data.p256dh,
+    p_auth: parsed.data.auth,
+    p_user_agent: parsed.data.userAgent ?? null,
+  })
+  if (error) {
+    return { ok: false, error: "Couldn't enable notifications. Please try again." }
+  }
+  return { ok: true }
+}
+
+export type { PushSendReport } from "@/lib/push/send"
+
+/**
+ * Fire a real push at every subscribed device, immediately (no after() queue —
+ * the admin is waiting on the outcome). Doubles as the diagnostic: the report
+ * says exactly why nothing was delivered when config is incomplete.
+ */
+export async function sendTestPushNotification(): Promise<PushSendReport> {
+  await requireAdmin(ROUTES.adminSettings)
+  return sendAdminPushNow({
+    title: "Test notification",
+    body: "Push notifications are working — you'll be pinged like this for new orders.",
+    url: ROUTES.adminSettings,
+    tag: "test-notification",
+  })
+}
+
+/** Forget this device's subscription ("Disable on this device"). */
+export async function deletePushSubscription(endpoint: string): Promise<SettingsActionResult> {
+  await requireAdmin(ROUTES.adminSettings)
+
+  const supabase = await createServerClient()
+  const { error } = await supabase.rpc("admin_delete_push_subscription", {
+    p_endpoint: endpoint,
+  })
+  if (error) {
+    return { ok: false, error: "Couldn't disable notifications. Please try again." }
+  }
+  return { ok: true }
 }
 
 /**

@@ -4,6 +4,7 @@ import { revalidatePath, updateTag } from "next/cache"
 import { CACHE_TAGS } from "@/lib/db/cache"
 import { createServerClient, getCurrentUser } from "@/lib/db/server"
 import { queueOrderStatusEmail } from "@/lib/email/send"
+import { queueAdminPush } from "@/lib/push/send"
 import { ROUTES } from "@/lib/routes"
 
 export type CancelOrderResult = { ok: true } | { ok: false; error: string }
@@ -54,6 +55,17 @@ export async function cancelMyOrder(orderNo: string): Promise<CancelOrderResult>
       totalPaise: order.total_paise,
     })
   }
+
+  // System notification to subscribed admin devices (6.17). Same tag as the
+  // new-order push, so a quick place-then-cancel collapses into one alert.
+  queueAdminPush({
+    title: `Order ${orderNo} cancelled`,
+    body: order?.customer_name
+      ? `Cancelled by ${order.customer_name} while still Pending.`
+      : "Cancelled by the customer while still Pending.",
+    url: ROUTES.adminOrders,
+    tag: `order-${orderNo}`,
+  })
 
   revalidatePath(ROUTES.accountOrder(orderNo))
   revalidatePath(ROUTES.accountOrders)

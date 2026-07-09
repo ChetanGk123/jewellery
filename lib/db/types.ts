@@ -657,6 +657,22 @@ export type Database = {
         Args: { p_secret: string }
         Returns: Json
       }
+      get_push_subscriptions: {
+        Args: { p_secret: string }
+        Returns: Json
+      }
+      prune_push_subscriptions: {
+        Args: { p_secret: string; p_endpoints: string[] }
+        Returns: number
+      }
+      admin_save_push_subscription: {
+        Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string | null }
+        Returns: undefined
+      }
+      admin_delete_push_subscription: {
+        Args: { p_endpoint: string }
+        Returns: undefined
+      }
       admin_delete_category: {
         Args: { p_id: string }
         Returns: undefined

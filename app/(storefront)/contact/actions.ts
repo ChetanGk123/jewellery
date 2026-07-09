@@ -3,7 +3,9 @@
 import { z } from "zod"
 import { contactMessageSchema } from "@/lib/contact/schema"
 import { createServerClient } from "@/lib/db/server"
+import { queueAdminPush } from "@/lib/push/send"
 import { checkRateLimit, clientRateKey } from "@/lib/rate-limit"
+import { ROUTES } from "@/lib/routes"
 
 type ContactField = "name" | "email" | "phone" | "subject" | "message"
 
@@ -92,6 +94,15 @@ export async function submitContactMessage(input: unknown): Promise<ContactActio
     console.error("submit_contact_message returned an unexpected shape", data)
     return { ok: false, fieldErrors: {}, formError: DECLINE_MESSAGE }
   }
+
+  // System notification to subscribed admin devices (6.17).
+  const preview = parsed.data.subject || parsed.data.message
+  queueAdminPush({
+    title: `New message · ${ticketNo}`,
+    body: `${parsed.data.name}: ${preview.length > 90 ? `${preview.slice(0, 90)}…` : preview}`,
+    url: ROUTES.adminMessages,
+    tag: `message-${ticketNo}`,
+  })
 
   return { ok: true, ticketNo }
 }

@@ -8,7 +8,10 @@ import { CACHE_TAGS } from "@/lib/db/cache"
 import { upsertCustomerProfile } from "@/lib/db/profile"
 import { queueNewOrderAdminEmail, queueOrderConfirmationEmail } from "@/lib/email/send"
 import { createServerClient, getCurrentUser } from "@/lib/db/server"
+import { queueAdminPush } from "@/lib/push/send"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { ROUTES } from "@/lib/routes"
+import { formatPaise } from "@/lib/utils/money"
 
 export type CheckoutActionResult =
   | { ok: true; order: PlacedOrder }
@@ -164,13 +167,22 @@ export async function submitCheckout(input: unknown): Promise<CheckoutActionResu
   })
 
   // New-order alert to the store inbox (TASKS 5.2) — same best-effort queue.
+  const itemCount = wrapper.data.items.reduce((n, item) => n + item.qty, 0)
   queueNewOrderAdminEmail({
     orderNo: order.orderNo,
     customerName: contact.fullName,
     city: contact.city,
     state: contact.state,
-    itemCount: wrapper.data.items.reduce((n, item) => n + item.qty, 0),
+    itemCount,
     totalPaise: order.totalPaise,
+  })
+
+  // System notification to subscribed admin devices (6.17) — same queue shape.
+  queueAdminPush({
+    title: `New order ${order.orderNo}`,
+    body: `${contact.fullName} · ${itemCount} item${itemCount === 1 ? "" : "s"} · ${formatPaise(order.totalPaise)} · ${contact.city}`,
+    url: ROUTES.adminOrders,
+    tag: `order-${order.orderNo}`,
   })
 
   // The order decremented stock — expire cached catalog reads so sold-out

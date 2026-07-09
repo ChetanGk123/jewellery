@@ -3,6 +3,7 @@ import { SettingsView } from "@/components/admin/settings/SettingsView"
 import { ADMIN_PAGE_META } from "@/lib/admin/nav"
 import { settingsToFormValues } from "@/lib/admin/settings"
 import { getStoreSettings } from "@/lib/db/settings"
+import { getVapidPublicKey, isPushEnabled } from "@/lib/push/send"
 import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
@@ -17,5 +18,11 @@ export const metadata: Metadata = {
  */
 export default async function AdminSettingsPage() {
   const settings = await getStoreSettings()
-  return <SettingsView initial={settingsToFormValues(settings)} />
+  return (
+    <SettingsView
+      initial={settingsToFormValues(settings)}
+      vapidPublicKey={getVapidPublicKey()}
+      isPushConfigured={isPushEnabled()}
+    />
+  )
 }

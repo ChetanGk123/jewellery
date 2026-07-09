@@ -4,10 +4,17 @@ import { useState, useTransition } from "react"
 import { updateStoreSettings } from "@/app/(admin)/admin/(console)/settings/actions"
 import type { SettingsFormValues } from "@/lib/admin/settings"
 import { STORE_INFO } from "@/lib/store-info"
+import { NotificationsCard } from "./NotificationsCard"
 import { SectionCard } from "./SectionCard"
 import { StorageCard } from "./StorageCard"
 
-type Props = { initial: SettingsFormValues }
+type Props = {
+  initial: SettingsFormValues
+  /** VAPID public key for the Notifications card; null when push isn't configured. */
+  vapidPublicKey: string | null
+  /** True only when the server can actually SEND (all push env vars present). */
+  isPushConfigured: boolean
+}
 
 const INPUT =
   "block w-full rounded-lg border border-[#E2D8C8] bg-white px-3.5 py-3 font-body text-[14px] text-[#2B2420] outline-none placeholder:text-[#B4A99A] focus:border-[#C9A24B]"
@@ -21,6 +28,7 @@ const NAV_SECTIONS = [
   { href: "#shipping-payments", label: "Shipping & Payments", color: "#3E8552" },
   { href: "#announcement-banner", label: "Announcement Banner", color: "#5B1A2E" },
   { href: "#promo-block", label: "Homepage Promo Block", color: "#B4863A" },
+  { href: "#notifications", label: "Notifications", color: "#5B1A2E" },
   { href: "#storage", label: "Storage", color: "#3E8552" },
 ]
 
@@ -36,7 +44,7 @@ const NAV_SECTIONS = [
  * its mock top bar is the real `AdminTopbar`, and its Playfair/Inter map to
  * the app's heading/body fonts (self-hosted; CSP blocks font CDNs).
  */
-export function SettingsView({ initial }: Props) {
+export function SettingsView({ initial, vapidPublicKey, isPushConfigured }: Props) {
   const [values, setValues] = useState<SettingsFormValues>(initial)
   const [isDirty, setIsDirty] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -480,6 +488,8 @@ export function SettingsView({ initial }: Props) {
               </Field>
             </CardGrid>
           </SectionCard>
+
+          <NotificationsCard vapidPublicKey={vapidPublicKey} isConfigured={isPushConfigured} />
 
           <StorageCard />
         </div>
