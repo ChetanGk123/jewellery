@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { buildDailyDigestEmail } from "./daily-digest"
+import { resolveStoreInfo } from "@/lib/store-info"
 
 const base = {
   dateIso: "2026-07-06",
@@ -60,4 +61,11 @@ test("escapes product names in the HTML body", () => {
   })
   expect(msg.html).not.toContain("<script>x</script>")
   expect(msg.html).toContain("&lt;script&gt;")
+})
+
+test("a resolved store info overrides the brand name and wordmark (6.15)", () => {
+  const info = resolveStoreInfo({ storeName: "Meera Jewels" })
+  const msg = buildDailyDigestEmail(base, info)
+  expect(msg.text).toContain("Meera Jewels — daily digest")
+  expect(msg.html).toContain("MEERA JEWELS · Admin")
 })

@@ -198,3 +198,9 @@ export function resolveStoreInfo(input: StoreInfoInput): ResolvedStoreInfo {
     socials: mergeSocials(defaultSocials(whatsappNumber), blob.socials),
   }
 }
+
+/**
+ * The const resolved with no DB overrides — the fallback for pure builders
+ * (email templates) whose caller may not have fetched `getStoreInfo()`.
+ */
+export const DEFAULT_STORE_INFO: ResolvedStoreInfo = resolveStoreInfo({})

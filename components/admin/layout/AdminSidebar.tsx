@@ -4,13 +4,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ADMIN_NAV, type AdminBadgeKey } from "@/lib/admin/nav"
 import { ROUTES } from "@/lib/routes"
-import { STORE_INFO } from "@/lib/store-info"
 import { AdminNavIcon } from "./AdminNavIcons"
 import { AdminSignOutButton } from "@/components/admin/auth/AdminSignOutButton"
 import type { AdminNavCounts } from "@/lib/db/admin-metrics"
 
 type Props = {
   counts: AdminNavCounts
+  /** Resolved store wordmark (Settings-editable, 6.15) — client component, so it's a prop. */
+  wordmark: string
   /** Signed-in admin's display name (or email) — drives the footer avatar initials. */
   adminName: string
   /** Signed-in admin's email, shown in the footer card. */
@@ -26,7 +27,7 @@ type Props = {
  * and a Store Admin footer card. Static column at `lg`; an off-canvas drawer
  * with a backdrop below it.
  */
-export function AdminSidebar({ counts, adminName, adminEmail, isOpen, onClose }: Props) {
+export function AdminSidebar({ counts, wordmark, adminName, adminEmail, isOpen, onClose }: Props) {
   const pathname = usePathname()
 
   const isActive = (href: string) =>
@@ -52,7 +53,7 @@ export function AdminSidebar({ counts, adminName, adminEmail, isOpen, onClose }:
       >
         <div className="flex flex-col px-2.5 pb-5 pt-1.5 leading-none">
           <span className="font-display text-[22px] leading-none tracking-[0.12em] text-gold-300">
-            {STORE_INFO.wordmark}
+            {wordmark}
           </span>
           <span className="mt-1.5 text-[9.5px] uppercase leading-none tracking-[0.34em] text-[#9C7A6E]">
             Admin Console

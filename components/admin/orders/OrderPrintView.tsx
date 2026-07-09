@@ -3,7 +3,7 @@ import type { PrintDoc } from "@/lib/admin/print"
 import type { AdminOrderRow } from "@/lib/db/admin-orders"
 import type { StoreSettings } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
-import { STORE_INFO } from "@/lib/store-info"
+import type { ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 import { PrintButton } from "./PrintButton"
 
@@ -24,10 +24,13 @@ import { PrintButton } from "./PrintButton"
 export function OrderPrintView({
   order,
   settings,
+  info,
   doc,
 }: {
   order: AdminOrderRow
   settings: StoreSettings
+  /** Resolved store identity — the invoice/slip seller block (6.15). */
+  info: ResolvedStoreInfo
   doc: PrintDoc
 }) {
   const isCancelled = order.status === "Cancelled"
@@ -58,11 +61,12 @@ export function OrderPrintView({
         <InvoiceDocument
           order={order}
           settings={settings}
+          info={info}
           isCancelled={isCancelled}
           codOutstanding={codOutstanding}
         />
       ) : (
-        <PackingSlipDocument order={order} codOutstanding={codOutstanding} />
+        <PackingSlipDocument order={order} info={info} codOutstanding={codOutstanding} />
       )}
     </div>
   )
@@ -73,11 +77,13 @@ export function OrderPrintView({
 function InvoiceDocument({
   order,
   settings,
+  info,
   isCancelled,
   codOutstanding,
 }: {
   order: AdminOrderRow
   settings: StoreSettings
+  info: ResolvedStoreInfo
   isCancelled: boolean
   codOutstanding: boolean
 }) {
@@ -85,12 +91,12 @@ function InvoiceDocument({
     <section>
       <header className="flex items-start justify-between gap-6 border-b-2 border-[#1F1712] pb-4">
         <div>
-          <div className="font-display text-[22px] tracking-[0.08em]">{STORE_INFO.wordmark}</div>
-          <div className="mt-0.5 text-[11.5px] text-[#5E4A40]">{STORE_INFO.descriptor}</div>
+          <div className="font-display text-[22px] tracking-[0.08em]">{info.wordmark}</div>
+          <div className="mt-0.5 text-[11.5px] text-[#5E4A40]">{info.descriptor}</div>
           <div className="mt-2 text-[11.5px] leading-relaxed text-[#5E4A40]">
-            {STORE_INFO.address.line}
+            {info.address.line}
             <br />
-            {STORE_INFO.phone.display} · {STORE_INFO.email.display}
+            {info.phone.display} · {info.email.display}
             {settings.gstin && (
               <>
                 <br />
@@ -179,8 +185,8 @@ function InvoiceDocument({
             : "Paid by Cash on Delivery."}
       </p>
       <p className="mt-6 border-t border-[#E5DED2] pt-3 text-[10.5px] text-[#8A7E74]">
-        This is a computer-generated invoice from {STORE_INFO.name} and needs no signature.
-        Questions? {STORE_INFO.email.display} · {STORE_INFO.phone.display}
+        This is a computer-generated invoice from {info.name} and needs no signature. Questions?{" "}
+        {info.email.display} · {info.phone.display}
       </p>
     </section>
   )
@@ -190,18 +196,20 @@ function InvoiceDocument({
 
 function PackingSlipDocument({
   order,
+  info,
   codOutstanding,
 }: {
   order: AdminOrderRow
+  info: ResolvedStoreInfo
   codOutstanding: boolean
 }) {
   return (
     <section>
       <header className="flex items-start justify-between gap-6 border-b-2 border-[#1F1712] pb-4">
         <div>
-          <div className="font-display text-[22px] tracking-[0.08em]">{STORE_INFO.wordmark}</div>
+          <div className="font-display text-[22px] tracking-[0.08em]">{info.wordmark}</div>
           <div className="mt-0.5 text-[11.5px] text-[#5E4A40]">
-            {STORE_INFO.address.line} · {STORE_INFO.phone.display}
+            {info.address.line} · {info.phone.display}
           </div>
         </div>
         <div className="text-right">
@@ -257,7 +265,7 @@ function PackingSlipDocument({
       </p>
 
       <p className="mt-6 border-t border-[#E5DED2] pt-3 text-[10.5px] text-[#8A7E74]">
-        Fragile — jewellery, handle with care. Packed by {STORE_INFO.name}.
+        Fragile — jewellery, handle with care. Packed by {info.name}.
       </p>
     </section>
   )

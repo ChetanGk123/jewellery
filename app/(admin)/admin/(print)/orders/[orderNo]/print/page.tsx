@@ -4,7 +4,7 @@ import { OrderPrintView } from "@/components/admin/orders/OrderPrintView"
 import { toPrintDoc } from "@/lib/admin/print"
 import { requireAdmin } from "@/lib/admin/auth"
 import { getAdminOrderByNo } from "@/lib/db/admin-orders"
-import { getStoreSettings } from "@/lib/db/settings"
+import { getStoreInfo, getStoreSettings } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
@@ -32,8 +32,12 @@ export default async function AdminOrderPrintPage({
   const doc = toPrintDoc(sp.doc)
   await requireAdmin(ROUTES.adminOrderPrint(decoded, doc))
 
-  const [order, settings] = await Promise.all([getAdminOrderByNo(decoded), getStoreSettings()])
+  const [order, settings, info] = await Promise.all([
+    getAdminOrderByNo(decoded),
+    getStoreSettings(),
+    getStoreInfo(),
+  ])
   if (!order) notFound()
 
-  return <OrderPrintView order={order} settings={settings} doc={doc} />
+  return <OrderPrintView order={order} settings={settings} info={info} doc={doc} />
 }

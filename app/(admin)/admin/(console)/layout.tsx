@@ -3,6 +3,7 @@ import { AdminRealtimeRefresher } from "@/components/admin/layout/AdminRealtimeR
 import { AdminShell } from "@/components/admin/layout/AdminShell"
 import { requireAdmin } from "@/lib/admin/auth"
 import { getAdminNavCounts } from "@/lib/db/admin-metrics"
+import { getStoreInfo } from "@/lib/db/settings"
 
 /**
  * Admin console chrome. A sibling route group to `(storefront)`, so it renders
@@ -15,16 +16,19 @@ import { getAdminNavCounts } from "@/lib/db/admin-metrics"
  * or the chrome renders. The proxy does a coarse redirect first; this is the
  * authoritative check.
  */
-export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s · RJ Jewellers Admin" },
-  robots: { index: false, follow: false },
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await getStoreInfo()
+  return {
+    title: { default: "Admin", template: `%s · ${info.name} Admin` },
+    robots: { index: false, follow: false },
+  }
 }
 
 export default async function AdminConsoleLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const admin = await requireAdmin()
-  const counts = await getAdminNavCounts()
+  const [counts, info] = await Promise.all([getAdminNavCounts(), getStoreInfo()])
 
   // Prefer a real name for the footer avatar initials; fall back to the email.
   const meta = admin.user_metadata as { full_name?: string; name?: string } | undefined
@@ -32,7 +36,7 @@ export default async function AdminConsoleLayout({
   const adminName = meta?.full_name?.trim() || meta?.name?.trim() || email
 
   return (
-    <AdminShell counts={counts} adminName={adminName} adminEmail={email}>
+    <AdminShell counts={counts} wordmark={info.wordmark} adminName={adminName} adminEmail={email}>
       {/* Live refresh (6.9): repaints the console when orders/reviews/messages
           change — new orders appear and bell counts update without a reload. */}
       <AdminRealtimeRefresher />

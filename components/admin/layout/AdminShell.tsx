@@ -12,11 +12,14 @@ import type { AdminNavCounts } from "@/lib/db/admin-metrics"
  */
 export function AdminShell({
   counts,
+  wordmark,
   adminName,
   adminEmail,
   children,
 }: {
   counts: AdminNavCounts
+  /** Resolved store wordmark (Settings-editable, 6.15), forwarded to the sidebar. */
+  wordmark: string
   adminName: string
   adminEmail: string
   children: ReactNode
@@ -27,6 +30,7 @@ export function AdminShell({
     <div className="flex min-h-screen bg-[#F5F1EA] font-sans text-[#2A1F1A]">
       <AdminSidebar
         counts={counts}
+        wordmark={wordmark}
         adminName={adminName}
         adminEmail={adminEmail}
         isOpen={isSidebarOpen}

@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { buildOrderStatusEmail, type OrderStatusEmailKind } from "./order-status"
+import { resolveStoreInfo } from "@/lib/store-info"
 
 const base = {
   orderNo: "JR-260706-1001-AB12",
@@ -68,4 +69,15 @@ test("no tracking row without an AWB, and none on non-Shipped emails", () => {
   expect(
     buildOrderStatusEmail({ ...base, kind: "Delivered", awb: "SR123456789" }).text,
   ).not.toContain("SR123456789")
+})
+
+test("a resolved store info overrides the brand in subject and footer (6.15)", () => {
+  const info = resolveStoreInfo({ storeName: "Meera Jewels", phone: "+91 88888 22222" })
+  const msg = buildOrderStatusEmail({ ...base, kind: "Shipped" }, info)
+
+  expect(msg.subject).toContain("Meera Jewels")
+  expect(msg.html).toContain("MEERA JEWELS")
+  for (const body of [msg.html, msg.text]) {
+    expect(body).toContain("+91 88888 22222")
+  }
 })

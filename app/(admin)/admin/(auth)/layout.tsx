@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { getStoreInfo } from "@/lib/db/settings"
 
 /**
  * Admin auth screens (sign in / forgot / reset). A sibling group to `(console)`
@@ -6,9 +7,12 @@ import type { Metadata } from "next"
  * in to reach the sign-in page. No sidebar/topbar chrome; each page renders its
  * own centered `AdminAuthShell`.
  */
-export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s · RJ Jewellers Admin" },
-  robots: { index: false, follow: false },
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await getStoreInfo()
+  return {
+    title: { default: "Admin", template: `%s · ${info.name} Admin` },
+    robots: { index: false, follow: false },
+  }
 }
 
 export default function AdminAuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {

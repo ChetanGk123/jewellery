@@ -2,14 +2,16 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { HelpHeader } from "@/components/storefront/help/HelpHeader"
 import { LegalSection, LegalUpdatedNote } from "@/components/storefront/help/LegalBlocks"
+import { getStoreInfo } from "@/lib/db/settings"
 import { REFUND_SECTIONS } from "@/lib/legal-content"
 import { ROUTES } from "@/lib/routes"
-import { STORE_INFO } from "@/lib/store-info"
 
-export const metadata: Metadata = {
-  title: "Cancellation & Refund Policy",
-  description:
-    "How to cancel an order, request a return or exchange, and how refunds are processed at RJ Jewellers.",
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await getStoreInfo()
+  return {
+    title: "Cancellation & Refund Policy",
+    description: `How to cancel an order, request a return or exchange, and how refunds are processed at ${info.name}.`,
+  }
 }
 
 /**
@@ -17,8 +19,11 @@ export const metadata: Metadata = {
  * friendly Shipping & Returns page; authored to close the compliance gap
  * flagged in STOREFRONT_SHORTFALLS.md (India's Consumer Protection
  * (E-Commerce) Rules, 2020 require a published cancellation/refund policy).
+ * Contact details come from the Settings-editable resolved info (6.15).
  */
-export default function RefundPolicyPage() {
+export default async function RefundPolicyPage() {
+  const info = await getStoreInfo()
+
   return (
     <main>
       <HelpHeader
@@ -47,7 +52,7 @@ export default function RefundPolicyPage() {
         <LegalSection
           heading="Contact for returns"
           paragraphs={[
-            `Message us on WhatsApp, call ${STORE_INFO.phone.display}, or email ${STORE_INFO.email.display} to start a cancellation or return.`,
+            `Message us on WhatsApp, call ${info.phone.display}, or email ${info.email.display} to start a cancellation or return.`,
           ]}
         />
       </div>

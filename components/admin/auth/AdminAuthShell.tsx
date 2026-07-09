@@ -1,12 +1,13 @@
 import type { ReactNode } from "react"
-import { STORE_INFO } from "@/lib/store-info"
+import { getStoreInfo } from "@/lib/db/settings"
 
 /**
  * Chrome for the admin auth screens (sign in / forgot / reset). Centered card in
  * the storefront's auth language, topped with the wordmark + "Admin Console" so
- * it reads clearly as the operator login rather than the customer one.
+ * it reads clearly as the operator login rather than the customer one. Async
+ * server component — resolves the Settings-editable wordmark itself (6.15).
  */
-export function AdminAuthShell({
+export async function AdminAuthShell({
   title,
   subtitle,
   children,
@@ -17,12 +18,14 @@ export function AdminAuthShell({
   children: ReactNode
   footer?: ReactNode
 }) {
+  const { wordmark } = await getStoreInfo()
+
   return (
     <main className="flex flex-1 items-center justify-center bg-cream-100 px-6 py-16">
       <div className="w-full max-w-[400px]">
         <div className="mb-6 flex flex-col items-center text-center leading-none">
           <span className="font-display text-[24px] tracking-[0.14em] text-maroon-700">
-            {STORE_INFO.wordmark}
+            {wordmark}
           </span>
           <span className="mt-2 text-[9.5px] uppercase tracking-[0.34em] text-gold-600">
             Admin Console

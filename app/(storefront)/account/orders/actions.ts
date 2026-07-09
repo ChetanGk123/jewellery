@@ -47,7 +47,7 @@ export async function cancelMyOrder(orderNo: string): Promise<CancelOrderResult>
     .eq("order_no", orderNo)
     .maybeSingle()
   if (order?.customer_email) {
-    queueOrderStatusEmail({
+    await queueOrderStatusEmail({
       to: order.customer_email,
       kind: "Cancelled",
       orderNo: order.order_no,

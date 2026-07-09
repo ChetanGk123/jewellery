@@ -6,9 +6,13 @@
  * grievance contact). Kept in one module, same pattern as `help-content.ts`,
  * so the page components stay presentational.
  *
- * Business identity/contact details come from `@/lib/store-info` — the
- * single source of truth.
+ * Business identity/contact details come from the resolved store info
+ * (`getStoreInfo()`, 6.15) — the sections that name the store or its
+ * jurisdiction are functions of `ResolvedStoreInfo`; brand-free sections
+ * stay consts.
  */
+
+import type { ResolvedStoreInfo } from "@/lib/store-info"
 
 export const LEGAL_LAST_UPDATED = "5 July 2026"
 
@@ -18,11 +22,11 @@ export type LegalSectionData = {
   list?: { items: string[]; ordered?: boolean }
 }
 
-export const PRIVACY_SECTIONS: LegalSectionData[] = [
+export const privacySections = (info: ResolvedStoreInfo): LegalSectionData[] => [
   {
     heading: "Overview",
     paragraphs: [
-      "This policy explains what personal information RJ Jewellers collects when you use this website, why we collect it, and the choices you have. By using the site or placing an order, you agree to the practices described here.",
+      `This policy explains what personal information ${info.name} collects when you use this website, why we collect it, and the choices you have. By using the site or placing an order, you agree to the practices described here.`,
     ],
   },
   {
@@ -97,11 +101,11 @@ export const PRIVACY_SECTIONS: LegalSectionData[] = [
   },
 ]
 
-export const TERMS_SECTIONS: LegalSectionData[] = [
+export const termsSections = (info: ResolvedStoreInfo): LegalSectionData[] => [
   {
     heading: "Acceptance of terms",
     paragraphs: [
-      "These Terms of Use govern your access to and use of the RJ Jewellers website and your purchase of products through it. By browsing the site or placing an order, you agree to be bound by these terms.",
+      `These Terms of Use govern your access to and use of the ${info.name} website and your purchase of products through it. By browsing the site or placing an order, you agree to be bound by these terms.`,
     ],
   },
   {
@@ -143,19 +147,19 @@ export const TERMS_SECTIONS: LegalSectionData[] = [
   {
     heading: "Intellectual property",
     paragraphs: [
-      "All content on this site — including product photography, designs, logos, and text — belongs to RJ Jewellers and may not be reproduced without our written permission.",
+      `All content on this site — including product photography, designs, logos, and text — belongs to ${info.name} and may not be reproduced without our written permission.`,
     ],
   },
   {
     heading: "Limitation of liability",
     paragraphs: [
-      "To the fullest extent permitted by law, RJ Jewellers is not liable for indirect or consequential losses arising from your use of the site or a delayed/damaged delivery beyond our reasonable control (e.g. courier delays). This does not limit any right you have under Indian consumer-protection law.",
+      `To the fullest extent permitted by law, ${info.name} is not liable for indirect or consequential losses arising from your use of the site or a delayed/damaged delivery beyond our reasonable control (e.g. courier delays). This does not limit any right you have under Indian consumer-protection law.`,
     ],
   },
   {
     heading: "Governing law",
     paragraphs: [
-      "These terms are governed by the laws of India. Any dispute arising from these terms or your order will be subject to the exclusive jurisdiction of the courts of Jaipur, Rajasthan.",
+      `These terms are governed by the laws of India. Any dispute arising from these terms or your order will be subject to the exclusive jurisdiction of the courts of ${info.address.city}, ${info.address.state}.`,
     ],
   },
   {

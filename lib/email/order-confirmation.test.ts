@@ -4,6 +4,7 @@ import {
   escapeHtml,
   type OrderConfirmationEmailInput,
 } from "./order-confirmation"
+import { resolveStoreInfo } from "@/lib/store-info"
 
 const baseInput: OrderConfirmationEmailInput = {
   orderNo: "JR-260706-1010-AB12",
@@ -55,6 +56,24 @@ test("falls back to a generic greeting when the name is blank", () => {
   })
 
   expect(message.text).toContain("Namaste there")
+})
+
+test("a resolved store info overrides name, wordmark, phone and address (6.15)", () => {
+  const info = resolveStoreInfo({
+    storeName: "Meera Jewels",
+    phone: "+91 88888 22222",
+    storeInfo: { descriptor: "Handmade Silver", address: { line: "Meera Jewels, Pune" } },
+  })
+
+  const message = buildOrderConfirmationEmail(baseInput, info)
+
+  expect(message.subject).toContain("Meera Jewels")
+  expect(message.html).toContain("MEERA JEWELS")
+  expect(message.html).toContain("Handmade Silver")
+  expect(message.html).toContain("Meera Jewels, Pune")
+  for (const body of [message.html, message.text]) {
+    expect(body).toContain("+91 88888 22222")
+  }
 })
 
 test("escapeHtml covers the five significant characters", () => {

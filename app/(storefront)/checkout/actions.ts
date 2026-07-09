@@ -155,7 +155,8 @@ export async function submitCheckout(input: unknown): Promise<CheckoutActionResu
 
   // Confirmation email (TASKS 4.6) — queued to run after the response is
   // sent; best-effort and skipped entirely when no provider is configured.
-  queueOrderConfirmationEmail({
+  // Awaited (6.15): the queue fn resolves the editable store identity first.
+  await queueOrderConfirmationEmail({
     to: contact.email,
     orderNo: order.orderNo,
     customerName: contact.fullName,
@@ -168,7 +169,7 @@ export async function submitCheckout(input: unknown): Promise<CheckoutActionResu
 
   // New-order alert to the store inbox (TASKS 5.2) — same best-effort queue.
   const itemCount = wrapper.data.items.reduce((n, item) => n + item.qty, 0)
-  queueNewOrderAdminEmail({
+  await queueNewOrderAdminEmail({
     orderNo: order.orderNo,
     customerName: contact.fullName,
     city: contact.city,

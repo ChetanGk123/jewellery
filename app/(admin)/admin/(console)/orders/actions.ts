@@ -71,7 +71,7 @@ export async function setOrderStatus(
       .eq("id", orderId)
       .maybeSingle()
     if (order?.customer_email) {
-      queueOrderStatusEmail({
+      await queueOrderStatusEmail({
         to: order.customer_email,
         kind: nextStatus as OrderStatusEmailKind,
         orderNo: order.order_no,

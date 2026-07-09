@@ -8,9 +8,10 @@ import {
   type OrderConfirmationEmailInput,
 } from "./order-confirmation"
 import { buildOrderStatusEmail, type OrderStatusEmailKind } from "./order-status"
+import { getStoreInfo } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
 import { SITE_URL } from "@/lib/site-url"
-import { STORE_INFO } from "@/lib/store-info"
+import type { ResolvedStoreInfo } from "@/lib/store-info"
 
 /**
  * Transactional email via the Resend REST API (TASKS 4.6). Deliberately a
@@ -27,8 +28,11 @@ const SEND_TIMEOUT_MS = 10_000
  * Sender identity. Resend requires a verified domain for real addresses;
  * `onboarding@resend.dev` works out of the box but only delivers to the
  * account owner's inbox — set EMAIL_FROM once the domain is verified.
+ * Per-call (not module const) so the Settings-edited store name shows (6.15).
  */
-const FROM = process.env.EMAIL_FROM ?? `${STORE_INFO.name} <onboarding@resend.dev>`
+function fromAddress(info: ResolvedStoreInfo): string {
+  return process.env.EMAIL_FROM ?? `${info.name} <onboarding@resend.dev>`
+}
 
 /** True when a provider key is configured (drives the confirmation-page copy). */
 export function isEmailEnabled(): boolean {
@@ -40,7 +44,7 @@ export function isEmailEnabled(): boolean {
  * whether the provider accepted it (queued callers ignore this, the cron
  * digest reports it).
  */
-async function sendEmail(to: string, message: EmailMessage): Promise<boolean> {
+async function sendEmail(to: string, message: EmailMessage, from: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return false
 
@@ -52,7 +56,7 @@ async function sendEmail(to: string, message: EmailMessage): Promise<boolean> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: FROM,
+        from,
         to: [to],
         subject: message.subject,
         html: message.html,
@@ -78,12 +82,12 @@ async function sendEmail(to: string, message: EmailMessage): Promise<boolean> {
  * send outside a request scope (unit tests). Never throws — an email hiccup
  * must not fail an already-committed order or status change.
  */
-function queue(to: string, message: EmailMessage): void {
+function queue(to: string, message: EmailMessage, from: string): void {
   try {
-    after(() => sendEmail(to, message))
+    after(() => sendEmail(to, message, from))
   } catch {
     // No request scope (e.g. tests) — send detached instead.
-    void sendEmail(to, message)
+    void sendEmail(to, message, from)
   }
 }
 
@@ -91,17 +95,25 @@ export type QueueOrderConfirmationInput = Omit<OrderConfirmationEmailInput, "ord
   to: string
 }
 
-/** Queue the order-confirmation email on successful checkout (TASKS 4.6). */
-export function queueOrderConfirmationEmail(input: QueueOrderConfirmationInput): void {
+/**
+ * Queue the order-confirmation email on successful checkout (TASKS 4.6).
+ * Async since 6.15: resolves the Settings-editable store identity first —
+ * await it so `after()` still registers inside the request scope.
+ */
+export async function queueOrderConfirmationEmail(
+  input: QueueOrderConfirmationInput,
+): Promise<void> {
   if (!isEmailEnabled()) return
 
+  const info = await getStoreInfo()
   const { to, ...fields } = input
   queue(
     to,
-    buildOrderConfirmationEmail({
-      ...fields,
-      orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}`,
-    }),
+    buildOrderConfirmationEmail(
+      { ...fields, orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}` },
+      info,
+    ),
+    fromAddress(info),
   )
 }
 
@@ -121,37 +133,40 @@ export type QueueOrderStatusInput = {
  * Queue a Shipped / Delivered / Cancelled notification to the customer
  * (TASKS 5.2). Links to the public order page; a no-op without a provider.
  */
-export function queueOrderStatusEmail(input: QueueOrderStatusInput): void {
+export async function queueOrderStatusEmail(input: QueueOrderStatusInput): Promise<void> {
   if (!isEmailEnabled()) return
 
+  const info = await getStoreInfo()
   const { to, ...fields } = input
   queue(
     to,
-    buildOrderStatusEmail({
-      ...fields,
-      orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}`,
-    }),
+    buildOrderStatusEmail(
+      { ...fields, orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}` },
+      info,
+    ),
+    fromAddress(info),
   )
 }
 
 export type QueueNewOrderAdminInput = Omit<NewOrderAdminEmailInput, "adminUrl">
 
 /** Where new-order alerts go — a dedicated inbox, else the store email. */
-const ADMIN_ALERT_TO = process.env.ADMIN_ALERT_EMAIL ?? STORE_INFO.email.display
+function adminAlertTo(info: ResolvedStoreInfo): string {
+  return process.env.ADMIN_ALERT_EMAIL ?? info.email.display
+}
 
 /**
  * Queue the internal new-order alert to the store inbox (TASKS 5.2 / C2), so
  * orders are pushed rather than discovered by polling the console.
  */
-export function queueNewOrderAdminEmail(input: QueueNewOrderAdminInput): void {
+export async function queueNewOrderAdminEmail(input: QueueNewOrderAdminInput): Promise<void> {
   if (!isEmailEnabled()) return
 
+  const info = await getStoreInfo()
   queue(
-    ADMIN_ALERT_TO,
-    buildNewOrderAdminEmail({
-      ...input,
-      adminUrl: `${SITE_URL}${ROUTES.adminOrders}`,
-    }),
+    adminAlertTo(info),
+    buildNewOrderAdminEmail({ ...input, adminUrl: `${SITE_URL}${ROUTES.adminOrders}` }, info),
+    fromAddress(info),
   )
 }
 
@@ -165,11 +180,10 @@ export type SendDailyDigestInput = Omit<DailyDigestEmailInput, "adminUrl">
 export async function sendDailyDigestEmailNow(input: SendDailyDigestInput): Promise<boolean> {
   if (!isEmailEnabled()) return false
 
+  const info = await getStoreInfo()
   return sendEmail(
-    ADMIN_ALERT_TO,
-    buildDailyDigestEmail({
-      ...input,
-      adminUrl: `${SITE_URL}${ROUTES.admin}`,
-    }),
+    adminAlertTo(info),
+    buildDailyDigestEmail({ ...input, adminUrl: `${SITE_URL}${ROUTES.admin}` }, info),
+    fromAddress(info),
   )
 }

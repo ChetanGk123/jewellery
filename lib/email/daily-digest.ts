@@ -6,7 +6,7 @@
  */
 
 import { type EmailMessage, escapeHtml } from "./order-confirmation"
-import { STORE_INFO } from "@/lib/store-info"
+import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 
 export type DigestLowStockRow = { name: string; sku: string; stock: number }
@@ -41,8 +41,11 @@ function dateLabel(iso: string): string {
   })
 }
 
-/** Build the close-of-day digest. */
-export function buildDailyDigestEmail(input: DailyDigestEmailInput): EmailMessage {
+/** Build the close-of-day digest. `info` carries the editable brand (6.15). */
+export function buildDailyDigestEmail(
+  input: DailyDigestEmailInput,
+  info: ResolvedStoreInfo = DEFAULT_STORE_INFO,
+): EmailMessage {
   const day = dateLabel(input.dateIso)
   const revenue = formatPaise(input.revenuePaise)
   const orders = `${input.orders} order${input.orders === 1 ? "" : "s"}`
@@ -56,7 +59,7 @@ export function buildDailyDigestEmail(input: DailyDigestEmailInput): EmailMessag
       : ["No low-stock products."]
 
   const text = [
-    `${STORE_INFO.name} — daily digest for ${day}`,
+    `${info.name} — daily digest for ${day}`,
     "",
     `Orders: ${orders}${cancelledNote}`,
     `Revenue: ${revenue}`,
@@ -95,7 +98,7 @@ export function buildDailyDigestEmail(input: DailyDigestEmailInput): EmailMessag
 <div style="margin:0;padding:32px 12px;background:#F5F1EA;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;">
     <tr><td align="center" style="padding-bottom:18px;font-family:${HEADING_FONT};font-size:20px;letter-spacing:2px;color:#2A0A12;">
-      ${escapeHtml(STORE_INFO.wordmark)} · Admin
+      ${escapeHtml(info.wordmark)} · Admin
     </td></tr>
     <tr><td style="background:#FFFFFF;border:1px solid #EAE3D7;border-radius:10px;padding:26px 28px;">
       <div style="font-family:${HEADING_FONT};font-size:22px;color:#71182B;padding-bottom:12px;">Daily digest · ${escapeHtml(day)}</div>

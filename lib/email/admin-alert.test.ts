@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { buildNewOrderAdminEmail } from "./admin-alert"
+import { resolveStoreInfo } from "@/lib/store-info"
 
 const base = {
   orderNo: "JR-260706-1001-AB12",
@@ -33,4 +34,10 @@ test("HTML-escapes the customer name", () => {
   const msg = buildNewOrderAdminEmail({ ...base, customerName: "<b>x</b>" })
   expect(msg.html).not.toContain("<b>x</b>")
   expect(msg.html).toContain("&lt;b&gt;x&lt;/b&gt;")
+})
+
+test("a resolved store info overrides the wordmark (6.15)", () => {
+  const info = resolveStoreInfo({ storeName: "Meera Jewels" })
+  const msg = buildNewOrderAdminEmail(base, info)
+  expect(msg.html).toContain("MEERA JEWELS · Admin")
 })
