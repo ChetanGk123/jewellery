@@ -31,7 +31,7 @@ const ITEMS = [
   { name: "Polki Jhumka Earrings", tone: null, qty: 2, lineTotalPaise: 259800 },
 ]
 const SUBTOTAL_PAISE = 709700
-const DISCOUNT_PAISE = 70970
+const DISCOUNT_PAISE = 70900
 const TOTAL_PAISE = SUBTOTAL_PAISE - DISCOUNT_PAISE
 
 /**

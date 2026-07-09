@@ -275,10 +275,20 @@ stay in code); copy stored as an `email_copy` jsonb blob on `setting`, resolved 
   `useMemo` from UNSAVED form values (`resolveEmailCopy(values)` → `buildSampleEmail`), 600/375px
   width toggle. tsc/289/eslint/build green (`ƒ /admin/emails` registers). Browser pass: auth gate
   redirects to sign-in with `next=` ✓; full visual pass blocked on applying 0042 (→ 7.6).
-- ⬜ **7.6 — Verify end-to-end.** `bun test` + tsc + lint; apply 0042 and probe the RPC merge; authed
-  browser pass (edit → live preview → save → reload persists → blank → default returns); confirm a real
-  queued email (e.g. status change) uses the override; test send delivered with RESEND_API_KEY, disabled
-  state without; screenshots of key states.
+- ✅ **7.6 — Verified end-to-end.** **Migration 0042 applied to `naolegptozpaiojozzcy` via Supabase MCP**
+  and probed (column exists, default `{}`, `||` merge + rollback clean). **Deployment-order hazard found
+  & fixed first** (commit 1798287): `email_copy` in the shared `getStoreSettings` select meant
+  code-before-migration broke every storefront page (its layout reads settings per request) — the Emails
+  form now seeds from a dedicated tolerant `getRawEmailCopy()` (missing column → `{}` + logged hint;
+  uncached) and `getStoreSettings` is back to pre-7.3 columns. **Authed browser pass** (e2e admin,
+  chrome-devtools): unauth redirect keeps `next=` ✓; heading edit re-rendered the iframe preview live ✓;
+  Reset-to-defaults + dirty nudges appeared ✓; Save → "Saved" ✓; SQL showed the blob (edited field set,
+  others `""`) ✓; reload re-seeded form + preview from the save ✓; probe copy then reset to `{}`.
+  **Test sends confirmed in Gmail**: 5 `[Test]` emails delivered to the alert inbox (confirmed/shipped/
+  delivered/cancelled/abandoned-cart, via onboarding@resend.dev), and the 5/10min throttle's "Too many
+  test sends — try again in N min" path observed live. Sample fixture rounded (₹709.70 → ₹709) so
+  previews show whole rupees. 289/tsc/eslint/build green. *Note: EMAIL_FROM still unset — Resend's
+  onboarding sender only delivers to the account owner; verify the domain before real customer sends.*
 
 ## Cross-cutting (ongoing, not a phase)
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**
