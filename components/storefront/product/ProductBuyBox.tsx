@@ -3,7 +3,7 @@
 import { useState } from "react"
 import type { ProductOption } from "@/lib/db/queries"
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon"
-import { productEnquiryUrl } from "@/lib/whatsapp"
+import { productEnquiryUrl, type EnquiryStore } from "@/lib/whatsapp"
 import { useCartStore } from "@/stores/cart"
 
 const MIN_QTY = 1
@@ -33,11 +33,14 @@ export function ProductBuyBox({
   product,
   options,
   productUrl,
+  enquiryStore,
 }: {
   product: BuyBoxProduct
   options: ProductOption[]
   /** Absolute URL of this product page, appended to the WhatsApp enquiry. */
   productUrl?: string
+  /** Resolved store name + WhatsApp number (6.15) — from getStoreInfo(). */
+  enquiryStore?: EnquiryStore
 }) {
   const addItem = useCartStore((state) => state.addItem)
   const [tone, setTone] = useState(options[0]?.value ?? "")
@@ -72,11 +75,14 @@ export function ProductBuyBox({
   }
 
   const selectedLabel = options.find((option) => option.value === tone)?.label
-  const enquiryHref = productEnquiryUrl({
-    name: product.name,
-    tone: selectedLabel,
-    url: productUrl,
-  })
+  const enquiryHref = productEnquiryUrl(
+    {
+      name: product.name,
+      tone: selectedLabel,
+      url: productUrl,
+    },
+    enquiryStore,
+  )
 
   return (
     <div className="flex flex-col gap-[18px]">

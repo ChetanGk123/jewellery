@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { CartView } from "@/components/storefront/cart/CartView"
 import { getActiveCoupons } from "@/lib/db/coupons"
-import { getStoreSettings } from "@/lib/db/settings"
+import { getStoreInfo, getStoreSettings } from "@/lib/db/settings"
 
 export const metadata: Metadata = {
   title: "Your Cart",
@@ -14,7 +14,11 @@ export const metadata: Metadata = {
  * so all rendering happens in `CartView`.
  */
 export default async function CartPage() {
-  const [settings, coupons] = await Promise.all([getStoreSettings(), getActiveCoupons()])
+  const [settings, coupons, info] = await Promise.all([
+    getStoreSettings(),
+    getActiveCoupons(),
+    getStoreInfo(),
+  ])
 
   return (
     <main className="mx-auto max-w-[1180px] flex-1 px-6 pb-20 pt-[30px]">
@@ -25,6 +29,7 @@ export default async function CartPage() {
         freeShipThresholdPaise={settings.freeShipThresholdPaise}
         flatRatePaise={settings.flatRatePaise}
         coupons={coupons}
+        enquiryStore={{ name: info.name, whatsappNumber: info.whatsapp.number }}
       />
     </main>
   )

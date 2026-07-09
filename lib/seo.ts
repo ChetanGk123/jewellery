@@ -1,18 +1,21 @@
 import type { ProductDetail } from "@/lib/db/queries"
 import { ROUTES } from "@/lib/routes"
 import { SITE_URL } from "@/lib/site-url"
-import { STORE_INFO } from "@/lib/store-info"
+import type { ResolvedStoreInfo } from "@/lib/store-info"
 
-/** schema.org Organization for the site (TASKS 4.16) — rendered once in the root layout. */
-export function buildOrganizationJsonLd() {
-  const sameAs = STORE_INFO.socials
+/**
+ * schema.org Organization for the site (TASKS 4.16) — rendered once in the
+ * root layout, from the settings-resolved store info (6.15).
+ */
+export function buildOrganizationJsonLd(info: ResolvedStoreInfo) {
+  const sameAs = info.socials
     .map((social) => social.href)
     .filter((href): href is string => Boolean(href))
 
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: STORE_INFO.name,
+    name: info.name,
     url: SITE_URL,
     ...(sameAs.length > 0 ? { sameAs } : {}),
   }

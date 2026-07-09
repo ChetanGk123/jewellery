@@ -81,6 +81,12 @@ describe("resolveStoreInfo", () => {
     expect(r.whatsapp.href).toBe("https://wa.me/919812345678")
   })
 
+  test("the default WhatsApp social badge follows the resolved number", () => {
+    const r = resolveStoreInfo({ storeInfo: { whatsappE164: "919812345678" } })
+    const badge = r.socials.find((s) => s.label === "WhatsApp")
+    expect(badge?.href).toBe("https://wa.me/919812345678")
+  })
+
   test("socials from the blob replace the const list when a valid array is given", () => {
     const socials = [{ label: "Instagram", glyph: "IG", href: "https://instagram.com/x" }]
     const r = resolveStoreInfo({ storeInfo: { socials } })

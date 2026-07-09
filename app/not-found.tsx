@@ -1,6 +1,6 @@
 import Link from "next/link"
+import { getStoreInfo } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
-import { STORE_INFO } from "@/lib/store-info"
 
 /**
  * Root-level 404 (Phase 4.3) — catches genuinely unmatched top-level paths
@@ -8,11 +8,12 @@ import { STORE_INFO } from "@/lib/store-info"
  * Header/Footer chrome isn't available here. Self-contained, brand-styled
  * fallback instead of Next's unstyled default.
  */
-export default function RootNotFound() {
+export default async function RootNotFound() {
+  const info = await getStoreInfo()
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-[18px] bg-cream-100 px-6 py-[90px] text-center">
       <span className="font-display text-[15px] tracking-[0.14em] text-maroon-700">
-        {STORE_INFO.wordmark}
+        {info.wordmark}
       </span>
       <span
         aria-hidden="true"

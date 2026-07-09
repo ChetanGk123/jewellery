@@ -5,11 +5,12 @@
  * About have no prototype equivalent and are authored to match the brand voice.
  *
  * The business's own contact details (phone, email, WhatsApp, address, hours)
- * come from `@/lib/store-info` — the single source of truth — so updating them
- * doesn't mean editing this file too.
+ * are settings-driven (6.15): `contactChannels`/`supportHours` take the
+ * resolved store info from `getStoreInfo()`, so operator edits in Settings
+ * show here without touching this file.
  */
 
-import { STORE_INFO } from "@/lib/store-info"
+import type { ResolvedStoreInfo } from "@/lib/store-info"
 
 export type IconItem = { icon: string; title: string; body: string }
 export type NumberedItem = { n: string; title: string; body: string }
@@ -139,40 +140,50 @@ export type ContactChannel = {
   href?: string
 }
 
-export const CONTACT_CHANNELS: ContactChannel[] = [
-  {
-    icon: "☎",
-    label: "Call us",
-    value: STORE_INFO.phone.display,
-    note: STORE_INFO.hours.short,
-    href: STORE_INFO.phone.href,
-  },
-  {
-    icon: "✉",
-    label: "Email",
-    value: STORE_INFO.email.display,
-    note: "Replies within a few hours",
-    href: STORE_INFO.email.href,
-  },
-  {
-    icon: "◈",
-    label: "WhatsApp",
-    value: "Chat with us",
-    note: "Fastest way to reach support",
-    href: STORE_INFO.whatsapp.href,
-  },
-  {
-    icon: "⌂",
-    label: "Visit our studio",
-    value: STORE_INFO.address.line,
-    note: STORE_INFO.address.note,
-  },
-]
+/** Contact-channel cards for the Contact page, from the resolved store info. */
+export function contactChannels(info: ResolvedStoreInfo): ContactChannel[] {
+  return [
+    {
+      icon: "☎",
+      label: "Call us",
+      value: info.phone.display,
+      note: info.hours.short,
+      href: info.phone.href,
+    },
+    {
+      icon: "✉",
+      label: "Email",
+      value: info.email.display,
+      note: "Replies within a few hours",
+      href: info.email.href,
+    },
+    {
+      icon: "◈",
+      label: "WhatsApp",
+      value: "Chat with us",
+      note: "Fastest way to reach support",
+      href: info.whatsapp.href,
+    },
+    {
+      icon: "⌂",
+      label: "Visit our studio",
+      value: info.address.line,
+      note: info.address.note,
+    },
+  ]
+}
 
-export const SUPPORT_HOURS = {
-  title: "Support hours",
-  line: STORE_INFO.hours.long,
-  note: STORE_INFO.hours.note,
+/** Support-hours card copy, from the resolved store info. */
+export function supportHours(info: ResolvedStoreInfo): {
+  title: string
+  line: string
+  note: string
+} {
+  return {
+    title: "Support hours",
+    line: info.hours.long,
+    note: info.hours.note,
+  }
 }
 
 export type FaqItem = { q: string; a: string }

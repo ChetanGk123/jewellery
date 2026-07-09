@@ -5,7 +5,7 @@ import { cartSavingsPaise, cartSubtotalPaise } from "@/lib/cart"
 import { type Coupon, validateCoupon } from "@/lib/coupons"
 import { shippingPaise } from "@/lib/shipping"
 import { ROUTES } from "@/lib/routes"
-import { cartEnquiryUrl } from "@/lib/whatsapp"
+import { cartEnquiryUrl, type EnquiryStore } from "@/lib/whatsapp"
 import { useCartHydrated, useCartStore } from "@/stores/cart"
 import { CartLineRow } from "./CartLineRow"
 import { CartSummary } from "./CartSummary"
@@ -17,6 +17,8 @@ type Props = {
   flatRatePaise: number
   /** Currently-usable coupons, loaded server-side (display-only preview). */
   coupons: Coupon[]
+  /** Resolved store name + WhatsApp number (6.15) — from getStoreInfo(). */
+  enquiryStore?: EnquiryStore
 }
 
 /**
@@ -26,7 +28,7 @@ type Props = {
  * or the line list + order summary. All totals derive from the pure selectors in
  * `lib/cart` / `lib/shipping` at render time.
  */
-export function CartView({ freeShipThresholdPaise, flatRatePaise, coupons }: Props) {
+export function CartView({ freeShipThresholdPaise, flatRatePaise, coupons, enquiryStore }: Props) {
   const hasHydrated = useCartHydrated()
   const lines = useCartStore((state) => state.lines)
   const couponCode = useCartStore((state) => state.couponCode)
@@ -85,7 +87,7 @@ export function CartView({ freeShipThresholdPaise, flatRatePaise, coupons }: Pro
         totalPaise={totalPaise}
         freeShipThresholdPaise={freeShipThresholdPaise}
         checkoutHref={ROUTES.checkout}
-        whatsappHref={cartEnquiryUrl(lines)}
+        whatsappHref={cartEnquiryUrl(lines, enquiryStore)}
         couponSlot={<CouponField subtotalPaise={subtotalPaise} coupons={coupons} />}
       />
     </div>

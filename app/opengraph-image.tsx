@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og"
-import { STORE_INFO } from "@/lib/store-info"
+import { getStoreInfo } from "@/lib/db/settings"
 
 export const runtime = "edge"
 export const alt = "RJ Jewellers — Bridal & Fine Jewellery"
@@ -13,6 +13,7 @@ export const contentType = "image/png"
  * override this by adding its own `opengraph-image` file; none do yet.
  */
 export default async function Image() {
+  const info = await getStoreInfo()
   return new ImageResponse(
     <div
       style={{
@@ -33,7 +34,7 @@ export default async function Image() {
           color: "#F3E3C7",
         }}
       >
-        {STORE_INFO.wordmark}
+        {info.wordmark}
       </div>
       <div
         style={{
@@ -44,7 +45,7 @@ export default async function Image() {
           color: "#E6CA7E",
         }}
       >
-        {STORE_INFO.descriptor}
+        {info.descriptor}
       </div>
     </div>,
     { ...size },

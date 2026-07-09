@@ -13,9 +13,29 @@ import { formatPaise } from "@/lib/utils/money"
 
 const WA_BASE = "https://wa.me"
 
+/**
+ * The store identity an enquiry link speaks as (6.15). Server pages resolve
+ * this from `getStoreInfo()` and thread it into the client components; when
+ * omitted, the builders fall back to the `STORE_INFO` const so existing
+ * callers (and tests) keep working.
+ */
+export type EnquiryStore = {
+  name: string
+  /** E.164 digits for the `wa.me` link. */
+  whatsappNumber: string
+}
+
+const DEFAULT_STORE: EnquiryStore = {
+  name: STORE_INFO.name,
+  whatsappNumber: STORE_INFO.whatsapp.number,
+}
+
 /** A `wa.me` link to the store, with `message` prefilled into the chat box. */
-export function whatsappUrl(message: string): string {
-  return `${WA_BASE}/${STORE_INFO.whatsapp.number}?text=${encodeURIComponent(message)}`
+export function whatsappUrl(
+  message: string,
+  number: string = DEFAULT_STORE.whatsappNumber,
+): string {
+  return `${WA_BASE}/${number}?text=${encodeURIComponent(message)}`
 }
 
 /** Context for a product enquiry: the name, optional chosen tone, and page link. */
@@ -28,19 +48,28 @@ export type ProductEnquiry = {
 }
 
 /** Enquiry text for a product — names it, the chosen tone, and links the page. */
-export function productEnquiryMessage({ name, tone, url }: ProductEnquiry): string {
+export function productEnquiryMessage(
+  { name, tone, url }: ProductEnquiry,
+  store: EnquiryStore = DEFAULT_STORE,
+): string {
   const tonePart = tone ? ` (${tone} plating)` : ""
   const urlPart = url ? `\n${url}` : ""
-  return `Hi ${STORE_INFO.name}, I'm interested in the ${name}${tonePart}.${urlPart}`
+  return `Hi ${store.name}, I'm interested in the ${name}${tonePart}.${urlPart}`
 }
 
 /** Prefilled `wa.me` link enquiring about one product. */
-export function productEnquiryUrl(enquiry: ProductEnquiry): string {
-  return whatsappUrl(productEnquiryMessage(enquiry))
+export function productEnquiryUrl(
+  enquiry: ProductEnquiry,
+  store: EnquiryStore = DEFAULT_STORE,
+): string {
+  return whatsappUrl(productEnquiryMessage(enquiry, store), store.whatsappNumber)
 }
 
 /** Enquiry text listing the cart's lines (qty, name, tone, unit price) + subtotal. */
-export function cartEnquiryMessage(lines: readonly CartLine[]): string {
+export function cartEnquiryMessage(
+  lines: readonly CartLine[],
+  store: EnquiryStore = DEFAULT_STORE,
+): string {
   const items = lines
     .map((line) => {
       const tone = line.optionValue ? ` (${line.optionValue})` : ""
@@ -48,12 +77,15 @@ export function cartEnquiryMessage(lines: readonly CartLine[]): string {
     })
     .join("\n")
   const subtotal = formatPaise(cartSubtotalPaise(lines))
-  return `Hi ${STORE_INFO.name}, I'd like to enquire about my cart:\n${items}\nSubtotal: ${subtotal}`
+  return `Hi ${store.name}, I'd like to enquire about my cart:\n${items}\nSubtotal: ${subtotal}`
 }
 
 /** Prefilled `wa.me` link enquiring about the current cart. */
-export function cartEnquiryUrl(lines: readonly CartLine[]): string {
-  return whatsappUrl(cartEnquiryMessage(lines))
+export function cartEnquiryUrl(
+  lines: readonly CartLine[],
+  store: EnquiryStore = DEFAULT_STORE,
+): string {
+  return whatsappUrl(cartEnquiryMessage(lines, store), store.whatsappNumber)
 }
 
 /* ------------------- Operator → customer (admin, 5.15) ------------------- */

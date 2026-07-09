@@ -142,6 +142,15 @@ function mergeGroup<T extends Record<string, string>>(base: T, raw: unknown): T 
   return out
 }
 
+/** Default socials with the WhatsApp badge re-pointed at the resolved number. */
+function defaultSocials(whatsappNumber: string): SocialLink[] {
+  return STORE_INFO.socials.map((social) =>
+    social.label === "WhatsApp"
+      ? { ...social, href: `https://wa.me/${whatsappNumber}` }
+      : { ...social },
+  )
+}
+
 /** A DB `socials` override is honoured only if it's an array of valid links. */
 function mergeSocials(base: SocialLink[], raw: unknown): SocialLink[] {
   if (!Array.isArray(raw)) return base
@@ -186,6 +195,6 @@ export function resolveStoreInfo(input: StoreInfoInput): ResolvedStoreInfo {
     address: mergeGroup({ ...STORE_INFO.address }, blob.address),
     hours: mergeGroup({ ...STORE_INFO.hours }, blob.hours),
     gstin: clean(input.gstin) ?? STORE_INFO.gstin,
-    socials: mergeSocials([...STORE_INFO.socials], blob.socials),
+    socials: mergeSocials(defaultSocials(whatsappNumber), blob.socials),
   }
 }

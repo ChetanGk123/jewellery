@@ -12,7 +12,7 @@ import { getApprovedReviews, getProductBySlug, getRelatedProducts } from "@/lib/
 import { hasDeliveredPurchase } from "@/lib/db/orders"
 import { getCustomerProfile } from "@/lib/db/profile"
 import { getCurrentUser } from "@/lib/db/server"
-import { getStoreSettings } from "@/lib/db/settings"
+import { getStoreInfo, getStoreSettings } from "@/lib/db/settings"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { getNonce } from "@/lib/csp-nonce"
 import { ROUTES } from "@/lib/routes"
@@ -61,11 +61,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProductBySlug(slug)
   if (!product) notFound()
 
-  const [reviews, related, settings, user] = await Promise.all([
+  const [reviews, related, settings, user, info] = await Promise.all([
     getApprovedReviews(product.id),
     getRelatedProducts(product.category.slug, product.slug),
     getStoreSettings(),
     getCurrentUser(),
+    getStoreInfo(),
   ])
   // Both depend only on the signed-in user — run them together, not in series.
   const [profile, hasPurchased] = user
@@ -170,6 +171,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             }}
             options={product.options}
             productUrl={productUrl}
+            enquiryStore={{ name: info.name, whatsappNumber: info.whatsapp.number }}
           />
 
           <ul className="m-0 flex flex-wrap gap-[18px] border-y border-[#EFE3D0] py-[18px] text-[12.5px] font-normal leading-none text-[#5E4A44]">
