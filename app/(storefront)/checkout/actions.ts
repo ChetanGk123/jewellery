@@ -5,6 +5,7 @@ import { z } from "zod"
 import { type CheckoutFormValues, checkoutSchema } from "@/lib/checkout/schema"
 import { orderItemsSchema, type PlacedOrder, toPlacedOrder } from "@/lib/checkout/order"
 import { CACHE_TAGS } from "@/lib/db/cache"
+import { getMyOrderDetail } from "@/lib/db/orders"
 import { upsertCustomerProfile } from "@/lib/db/profile"
 import { queueNewOrderAdminEmail, queueOrderConfirmationEmail } from "@/lib/email/send"
 import { createServerClient, getCurrentUser } from "@/lib/db/server"
@@ -164,6 +165,21 @@ export async function submitCheckout(input: unknown): Promise<CheckoutActionResu
   // Confirmation email (TASKS 4.6) — queued to run after the response is
   // sent; best-effort and skipped entirely when no provider is configured.
   // Awaited (6.15): the queue fn resolves the editable store identity first.
+  // The itemised summary re-reads the order as the customer (RLS-scoped, same
+  // as the account order page) — best-effort: a failed read sends totals only.
+  const emailItems = await getMyOrderDetail(order.orderNo)
+    .then((detail) =>
+      detail?.items.map((item) => ({
+        name: item.name,
+        tone: item.tone,
+        qty: item.qty,
+        lineTotalPaise: item.lineTotalPaise,
+      })),
+    )
+    .catch((error: unknown) => {
+      console.error("confirmation-email items read failed", error)
+      return undefined
+    })
   await queueOrderConfirmationEmail({
     to: contact.email,
     orderNo: order.orderNo,
@@ -173,6 +189,10 @@ export async function submitCheckout(input: unknown): Promise<CheckoutActionResu
     state: contact.state,
     pincode: contact.pincode,
     totalPaise: order.totalPaise,
+    items: emailItems,
+    subtotalPaise: order.subtotalPaise,
+    discountPaise: order.discountPaise,
+    shippingPaise: order.shippingPaise,
   })
 
   // New-order alert to the store inbox (TASKS 5.2) — same best-effort queue.

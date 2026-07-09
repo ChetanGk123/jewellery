@@ -8,6 +8,15 @@
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 
+/** One server-priced order line, as `order_item` stores it. */
+export type OrderConfirmationItem = {
+  name: string
+  /** Chosen plating tone, when the line had one. */
+  tone: string | null
+  qty: number
+  lineTotalPaise: number
+}
+
 export type OrderConfirmationEmailInput = {
   orderNo: string
   customerName: string
@@ -18,6 +27,15 @@ export type OrderConfirmationEmailInput = {
   totalPaise: number
   /** Absolute URL of the order confirmation page. */
   orderUrl: string
+  /**
+   * Itemised summary + price breakdown. All optional: the items read is
+   * best-effort at the call site, and older callers send totals only —
+   * without them the email renders the pre-6.x total-and-address layout.
+   */
+  items?: OrderConfirmationItem[]
+  subtotalPaise?: number
+  discountPaise?: number
+  shippingPaise?: number
 }
 
 export type EmailMessage = {
@@ -53,13 +71,30 @@ export function buildOrderConfirmationEmail(
   const name = input.customerName.trim() || "there"
   const addressLines = [input.addressLine, `${input.city}, ${input.state} ${input.pincode}`]
 
+  const items = input.items ?? []
+  const hasBreakdown = typeof input.subtotalPaise === "number"
+  const discountPaise = input.discountPaise ?? 0
+  // Matches the order page: a zero shipping line reads "Free", not "₹0".
+  const shippingLabel = input.shippingPaise === 0 ? "Free" : formatPaise(input.shippingPaise ?? 0)
+
   const subject = `Order confirmed — ${input.orderNo} · ${info.name}`
+
+  const itemTextLine = (it: OrderConfirmationItem) =>
+    `• ${it.name}${it.tone ? ` (${it.tone})` : ""} ×${it.qty} — ${formatPaise(it.lineTotalPaise)}`
 
   const text = [
     `Namaste ${name},`,
     "",
     `Thank you for your order! ${input.orderNo} is confirmed and will be delivered in 4–7 days.`,
     "",
+    ...(items.length > 0 ? ["Your order:", ...items.map(itemTextLine), ""] : []),
+    ...(hasBreakdown
+      ? [
+          `Subtotal: ${formatPaise(input.subtotalPaise ?? 0)}`,
+          ...(discountPaise > 0 ? [`Discount: −${formatPaise(discountPaise)}`] : []),
+          `Shipping: ${shippingLabel}`,
+        ]
+      : []),
     `Total (Cash on Delivery): ${total}`,
     `Delivering to: ${addressLines.join(", ")}`,
     "",
@@ -69,6 +104,51 @@ export function buildOrderConfirmationEmail(
     `Questions? WhatsApp us at ${info.phone.display} or reply to this email.`,
     `— ${info.name}`,
   ].join("\n")
+
+  const itemRowsHtml = items
+    .map(
+      (it) => `
+        <tr>
+          <td style="font-family:${BODY_FONT};font-size:14px;line-height:1.7;color:#3D2B25;padding:4px 12px 4px 0;">
+            ${escapeHtml(it.name)}${it.tone ? `<span style="color:#8A7365;"> · ${escapeHtml(it.tone)}</span>` : ""}<span style="color:#8A7365;"> ×${it.qty}</span>
+          </td>
+          <td style="font-family:${BODY_FONT};font-size:14px;line-height:1.7;color:#2A0A12;white-space:nowrap;" align="right">${escapeHtml(formatPaise(it.lineTotalPaise))}</td>
+        </tr>`,
+    )
+    .join("")
+
+  const breakdownRow = (label: string, value: string, valueColor = "#3D2B25") => `
+        <tr>
+          <td style="font-family:${BODY_FONT};font-size:13px;line-height:1.9;color:#8A7365;padding-right:12px;">${label}</td>
+          <td style="font-family:${BODY_FONT};font-size:13px;line-height:1.9;color:${valueColor};white-space:nowrap;" align="right">${escapeHtml(value)}</td>
+        </tr>`
+
+  const breakdownHtml = hasBreakdown
+    ? [
+        breakdownRow("Subtotal", formatPaise(input.subtotalPaise ?? 0)),
+        discountPaise > 0
+          ? breakdownRow("Discount", `−${formatPaise(discountPaise)}`, "#5E7A45")
+          : "",
+        breakdownRow("Shipping", shippingLabel),
+      ].join("")
+    : ""
+
+  const summaryHtml =
+    items.length > 0 || hasBreakdown
+      ? `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 0;border-top:1px solid #F3E3C7;">
+        ${
+          items.length > 0
+            ? `<tr><td colspan="2" style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding:16px 0 6px;">Order summary</td></tr>${itemRowsHtml}`
+            : ""
+        }
+        ${
+          breakdownHtml
+            ? `<tr><td colspan="2" style="border-top:1px solid #F3E3C7;font-size:0;line-height:0;padding-top:10px;">&nbsp;</td></tr>${breakdownHtml}`
+            : ""
+        }
+      </table>`
+      : ""
 
   const html = `
 <div style="margin:0;padding:32px 12px;background:#FBF6EE;">
@@ -83,8 +163,8 @@ export function buildOrderConfirmationEmail(
         Namaste ${escapeHtml(name)}, your order
         <strong style="color:#71182B;">${escapeHtml(input.orderNo)}</strong>
         is confirmed and will be delivered in 4–7 days.
-      </div>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 0;border-top:1px solid #F3E3C7;">
+      </div>${summaryHtml}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${items.length > 0 || hasBreakdown ? "14px" : "22px"} 0 0;border-top:1px solid #F3E3C7;">
         <tr><td style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding:16px 0 4px;">Total · Cash on Delivery</td></tr>
         <tr><td style="font-family:${HEADING_FONT};font-size:22px;color:#2A0A12;">${escapeHtml(total)}</td></tr>
         <tr><td style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding:18px 0 4px;">Delivering to</td></tr>
