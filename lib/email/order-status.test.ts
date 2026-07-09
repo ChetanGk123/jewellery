@@ -81,3 +81,37 @@ test("a resolved store info overrides the brand in subject and footer (6.15)", (
     expect(body).toContain("+91 88888 22222")
   }
 })
+
+test("Delivered email lists a review link per item (6.18)", () => {
+  const msg = buildOrderStatusEmail({
+    ...base,
+    kind: "Delivered",
+    items: [
+      {
+        name: "Polki Choker <Set>",
+        reviewUrl: "https://shop.example/product/polki#reviews-heading",
+      },
+      { name: "Kundan Jhumkas", reviewUrl: null },
+    ],
+  })
+
+  expect(msg.text).toContain(
+    "Write a review: Polki Choker <Set> — https://shop.example/product/polki#reviews-heading",
+  )
+  expect(msg.html).toContain("https://shop.example/product/polki#reviews-heading")
+  expect(msg.html).toContain("Polki Choker &lt;Set&gt;")
+  expect(msg.html).not.toContain("Polki Choker <Set>")
+  // Item without a live product page still shows, just unlinked in the text list.
+  expect(msg.text).toContain("Kundan Jhumkas")
+})
+
+test("review links render only on Delivered, and never without items", () => {
+  const items = [{ name: "Polki Choker", reviewUrl: "https://shop.example/p" }]
+  expect(buildOrderStatusEmail({ ...base, kind: "Shipped", items }).text).not.toContain(
+    "Write a review",
+  )
+  expect(buildOrderStatusEmail({ ...base, kind: "Cancelled", items }).text).not.toContain(
+    "Write a review",
+  )
+  expect(buildOrderStatusEmail({ ...base, kind: "Delivered" }).text).not.toContain("Write a review")
+})

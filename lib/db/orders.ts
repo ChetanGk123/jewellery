@@ -62,6 +62,8 @@ export type MyOrderItem = {
   qty: number
   unitPricePaise: number
   lineTotalPaise: number
+  /** Product-page slug for the "Write a review" link on Delivered orders (6.18). */
+  productSlug: string | null
 }
 
 /** Full detail for one of the signed-in customer's own orders (TASKS 4.14). */
@@ -99,7 +101,7 @@ export async function getMyOrderDetail(orderNo: string): Promise<MyOrderDetail |
   const { data, error } = await supabase
     .from("order")
     .select(
-      "order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, subtotal_paise, discount_paise, shipping_paise, total_paise, awb, tracking_url, order_item(name, tone, qty, unit_price_paise, line_total_paise)",
+      "order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, subtotal_paise, discount_paise, shipping_paise, total_paise, awb, tracking_url, order_item(name, tone, qty, unit_price_paise, line_total_paise, product(slug))",
     )
     .eq("order_no", orderNo)
     .maybeSingle()
@@ -132,6 +134,7 @@ export async function getMyOrderDetail(orderNo: string): Promise<MyOrderDetail |
       qty: item.qty,
       unitPricePaise: item.unit_price_paise,
       lineTotalPaise: item.line_total_paise,
+      productSlug: item.product?.slug ?? null,
     })),
   }
 }

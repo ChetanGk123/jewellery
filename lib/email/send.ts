@@ -127,7 +127,12 @@ export type QueueOrderStatusInput = {
   awb?: string | null
   /** Courier tracking page — links the AWB row when set (6.4c). */
   trackingUrl?: string | null
+  /** Ordered items — the Delivered email invites a review per item (6.18). */
+  items?: Array<{ name: string; slug: string | null }>
 }
+
+/** Anchor of the product page's reviews section (ProductReviews heading). */
+const REVIEWS_ANCHOR = "#reviews-heading"
 
 /**
  * Queue a Shipped / Delivered / Cancelled notification to the customer
@@ -137,11 +142,18 @@ export async function queueOrderStatusEmail(input: QueueOrderStatusInput): Promi
   if (!isEmailEnabled()) return
 
   const info = await getStoreInfo()
-  const { to, ...fields } = input
+  const { to, items, ...fields } = input
   queue(
     to,
     buildOrderStatusEmail(
-      { ...fields, orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}` },
+      {
+        ...fields,
+        orderUrl: `${SITE_URL}${ROUTES.order(input.orderNo)}`,
+        items: items?.map((it) => ({
+          name: it.name,
+          reviewUrl: it.slug ? `${SITE_URL}${ROUTES.product(it.slug)}${REVIEWS_ANCHOR}` : null,
+        })),
+      },
       info,
     ),
     fromAddress(info),

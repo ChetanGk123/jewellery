@@ -12,6 +12,13 @@ import { formatPaise } from "@/lib/utils/money"
 /** The three order statuses that notify the customer (audit C2). */
 export type OrderStatusEmailKind = "Shipped" | "Delivered" | "Cancelled"
 
+/** One ordered item, for the Delivered email's review invitations (6.18). */
+export type OrderStatusEmailItem = {
+  name: string
+  /** Absolute product-page URL (reviews anchor); null when unavailable. */
+  reviewUrl: string | null
+}
+
 export type OrderStatusEmailInput = {
   kind: OrderStatusEmailKind
   orderNo: string
@@ -23,6 +30,8 @@ export type OrderStatusEmailInput = {
   awb?: string | null
   /** Courier tracking page (6.4c) — when set, the AWB row links to it. */
   trackingUrl?: string | null
+  /** Ordered items — the Delivered email invites a review for each (6.18). */
+  items?: OrderStatusEmailItem[]
 }
 
 const HEADING_FONT = "Georgia, 'Times New Roman', serif"
@@ -89,6 +98,21 @@ export function buildOrderStatusEmail(
     ? `Tracking (AWB): ${awb} — track your parcel at ${trackingUrl}`
     : `Tracking (AWB): ${awb} — use this number on the courier's tracking page.`
 
+  // Review invitations belong to the moment the jewellery arrives — Delivered
+  // alone (6.18). One line/row per item; unlinked items still get named.
+  const reviewItems = input.kind === "Delivered" ? (input.items ?? []) : []
+
+  const reviewTextLines =
+    reviewItems.length > 0
+      ? [
+          "",
+          "How was your jewellery? A short review helps other brides:",
+          ...reviewItems.map((it) =>
+            it.reviewUrl ? `Write a review: ${it.name} — ${it.reviewUrl}` : `• ${it.name}`,
+          ),
+        ]
+      : []
+
   const text = [
     `Namaste ${name},`,
     "",
@@ -97,6 +121,7 @@ export function buildOrderStatusEmail(
     `${copy.totalLabel}: ${total}`,
     ...(awb ? [trackingTextLine] : []),
     copy.note,
+    ...reviewTextLines,
     "",
     `View your order: ${input.orderUrl}`,
     "",
@@ -115,6 +140,27 @@ export function buildOrderStatusEmail(
       </div>`
     : ""
 
+  const reviewRowsHtml = reviewItems
+    .map((it) => {
+      const label = it.reviewUrl
+        ? `<a href="${escapeHtml(it.reviewUrl)}" style="color:#71182B;">Write a review →</a>`
+        : ""
+      return `
+        <tr>
+          <td style="font-family:${BODY_FONT};font-size:13px;line-height:1.7;color:#3D2B25;padding-right:12px;">${escapeHtml(it.name)}</td>
+          <td style="font-family:${BODY_FONT};font-size:13px;line-height:1.7;white-space:nowrap;" align="right">${label}</td>
+        </tr>`
+    })
+    .join("")
+  const reviewHtml =
+    reviewItems.length > 0
+      ? `
+      <div style="border:1px solid #E7D9C2;border-radius:3px;padding:14px;margin-bottom:12px;">
+        <div style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding-bottom:6px;">How was your jewellery?</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${reviewRowsHtml}</table>
+      </div>`
+      : ""
+
   const html = `
 <div style="margin:0;padding:32px 12px;background:#FBF6EE;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
@@ -131,7 +177,7 @@ export function buildOrderStatusEmail(
         <tr><td style="font-family:${BODY_FONT};font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8A7365;padding:16px 0 4px;">${escapeHtml(copy.totalLabel)}</td></tr>
         <tr><td style="font-family:${HEADING_FONT};font-size:22px;color:#2A0A12;padding-bottom:18px;">${escapeHtml(total)}</td></tr>
       </table>
-      ${awbHtml}
+      ${awbHtml}${reviewHtml}
       <div style="font-family:${BODY_FONT};font-size:13px;line-height:1.6;color:#5E4A44;background:#FBF3DE;border:1px solid #E7C98A;border-radius:3px;padding:12px 14px;">
         ${escapeHtml(copy.note)}
       </div>

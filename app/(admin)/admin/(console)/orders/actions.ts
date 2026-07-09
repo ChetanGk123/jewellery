@@ -65,11 +65,18 @@ export async function setOrderStatus(
   // Best-effort: read the order authoritatively (admin RLS) and queue — an
   // email hiccup must never fail an already-applied status change.
   if (NOTIFY.has(nextStatus)) {
-    const { data: order } = await supabase
-      .from("order")
-      .select("order_no, customer_email, customer_name, total_paise, awb, tracking_url")
-      .eq("id", orderId)
-      .maybeSingle()
+    const [{ data: order }, { data: items }] = await Promise.all([
+      supabase
+        .from("order")
+        .select("order_no, customer_email, customer_name, total_paise, awb, tracking_url")
+        .eq("id", orderId)
+        .maybeSingle(),
+      // The Delivered email invites a review per item (6.18) — it needs each
+      // item's product slug for the review link; other statuses skip the read.
+      nextStatus === "Delivered"
+        ? supabase.from("order_item").select("name, product(slug)").eq("order_id", orderId)
+        : Promise.resolve({ data: null }),
+    ])
     if (order?.customer_email) {
       await queueOrderStatusEmail({
         to: order.customer_email,
@@ -80,6 +87,7 @@ export async function setOrderStatus(
         // Shipped emails carry the tracking number + link (6.4 follow-up).
         awb: order.awb,
         trackingUrl: order.tracking_url,
+        items: items?.map((it) => ({ name: it.name, slug: it.product?.slug ?? null })),
       })
     }
   }

@@ -104,6 +104,16 @@ export function OrderDetail({ order }: Props) {
                   {item.name}
                   {item.tone && <span className="font-normal text-[#9C8A84]"> · {item.tone}</span>}
                   <span className="font-normal text-[#9C8A84]"> ×{item.qty}</span>
+                  {/* Review invitation (6.18) — Delivered is when it's reviewable
+                      (the submit_review RPC enforces the same gate). */}
+                  {order.status === "Delivered" && item.productSlug && (
+                    <Link
+                      href={`${ROUTES.product(item.productSlug)}#reviews-heading`}
+                      className="mt-0.5 block w-fit text-[12px] font-medium text-maroon-700 underline-offset-4 hover:underline"
+                    >
+                      Write a review →
+                    </Link>
+                  )}
                 </span>
                 <span className="text-[13.5px] font-semibold text-maroon-900">
                   {formatPaise(item.lineTotalPaise)}
