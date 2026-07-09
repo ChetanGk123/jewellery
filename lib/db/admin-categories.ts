@@ -15,6 +15,44 @@ function emptyPage(page: number): AdminCategoriesPage {
 }
 
 /**
+ * Every category for the bulk .xlsx export and the import's diff context
+ * (admin gate is the caller's job). Product counts ride along for the sheet's
+ * read-only reference column.
+ */
+export async function getAllCategoriesForExport(): Promise<AdminCategoryRow[]> {
+  try {
+    const supabase = await createServerClient()
+    const [{ data: cats }, { data: products }] = await Promise.all([
+      supabase
+        .from("category")
+        .select("id, name, slug, description, hero_bg, image_url, sort_order")
+        .order("sort_order", { ascending: true }),
+      supabase.from("product").select("category_id"),
+    ])
+
+    const counts = new Map<string, number>()
+    for (const p of products ?? []) {
+      if (!p.category_id) continue
+      counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1)
+    }
+
+    return (cats ?? []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      description: c.description,
+      heroBg: c.hero_bg,
+      imageUrl: c.image_url,
+      sortOrder: c.sort_order,
+      productCount: counts.get(c.id) ?? 0,
+    }))
+  } catch (err) {
+    console.error("[admin-read] categories export failed:", err)
+    return []
+  }
+}
+
+/**
  * Admin categories (Phase 3.5, paginated in 5.10). Reads one page of `category`
  * rows through the admin's cookie session, ordered by `sort_order`, then tallies
  * the product count per collection with a **bounded** `product` read — only the

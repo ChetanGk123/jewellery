@@ -150,6 +150,29 @@ export async function getAdminProductById(id: string): Promise<AdminProductRow |
   }
 }
 
+/** Cap on rows in the bulk .xlsx export (well above the current catalogue). */
+const EXPORT_PRODUCTS_CAP = 5000
+
+/**
+ * Every product for the bulk .xlsx export and the import's diff context —
+ * the list itself paginates, so this reads the lot on demand (admin gate is
+ * the caller's job, mirroring `getAllOrdersForExport`).
+ */
+export async function getAllProductsForExport(): Promise<AdminProductRow[]> {
+  try {
+    const supabase = await createServerClient()
+    const { data } = await supabase
+      .from("product")
+      .select(SELECT)
+      .order("name", { ascending: true })
+      .limit(EXPORT_PRODUCTS_CAP)
+    return ((data ?? []) as ProductSelectRow[]).map(mapProductRow)
+  } catch (err) {
+    console.error("[admin-read] products export failed:", err)
+    return []
+  }
+}
+
 /** Coerce an untrusted `?status=` value to a valid filter. */
 export function toProductStatusFilter(value: string | undefined): ProductStatusFilter {
   return value && (PRODUCT_STATUS_FILTERS as readonly string[]).includes(value)

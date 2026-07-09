@@ -13,8 +13,13 @@ import type { AdminProductRow, AdminProductsPage } from "@/lib/db/admin-products
 import { ROUTES } from "@/lib/routes"
 import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
 import { formatPaise } from "@/lib/utils/money"
+import {
+  applyProductsImport,
+  parseProductsImport,
+} from "@/app/(admin)/admin/(console)/products/import-actions"
 import { AdminPager } from "@/components/admin/ui/AdminPager"
 import { AdminSearchBox } from "@/components/admin/ui/AdminSearchBox"
+import { BulkImportControl } from "@/components/admin/ui/BulkImportControl"
 import { ProductModal } from "./ProductModal"
 
 type ModalState = { open: boolean; product: AdminProductRow | null }
@@ -85,7 +90,13 @@ export function ProductsView({
           ))}
         </select>
 
-        <div className="ml-auto flex gap-2.5">
+        <div className="ml-auto flex flex-wrap gap-2.5">
+          <BulkImportControl
+            entityLabel="products"
+            exportHref={`${ROUTES.adminProducts}/export`}
+            parseAction={parseProductsImport}
+            applyAction={applyProductsImport}
+          />
           <button
             type="button"
             onClick={() => setModal({ open: true, product: null })}

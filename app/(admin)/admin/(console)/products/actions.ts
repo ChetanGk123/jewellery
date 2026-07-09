@@ -11,6 +11,7 @@ import {
 import { uploadAdminImage } from "@/lib/db/admin-storage"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
+import { pricePairFromRupees } from "@/lib/utils/money"
 
 /** The add/edit form's payload — rupees for money, `id: null` means create. */
 export type ProductInput = {
@@ -112,17 +113,7 @@ export async function upsertProduct(input: ProductInput): Promise<ProductActionR
     return { ok: false, error: "Enter a valid stock quantity." }
   }
 
-  // "Sale price" is what the customer pays; the higher "Price" becomes the
-  // strike-through MRP. Without a valid sale, Price is the charged amount.
-  let pricePaise: number
-  let mrpPaise: number | null
-  if (sale != null && sale > 0 && sale < price) {
-    pricePaise = Math.round(sale * 100)
-    mrpPaise = Math.round(price * 100)
-  } else {
-    pricePaise = Math.round(price * 100)
-    mrpPaise = null
-  }
+  const { pricePaise, mrpPaise } = pricePairFromRupees(price, sale)
 
   const { gallery, primaryUrl } = normalizeImages(input.images)
   // Plating labels are free-form since 6.3 (defaults + operator-defined):

@@ -15,7 +15,7 @@ function resolveSiteUrl(): string {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim()
   if (!raw) return FALLBACK_SITE_URL
   try {
-    // Normalise (drops any trailing slash, validates the origin is parseable).
+    // Normalize (drops any trailing slash, validates the origin is parseable).
     return new URL(raw).origin
   } catch {
     return FALLBACK_SITE_URL

@@ -641,6 +641,18 @@ export type Database = {
         Args: { p_order_no: string; p_note: string }
         Returns: Json
       }
+      admin_bulk_upsert_categories: {
+        Args: { p_rows: Json }
+        Returns: Json
+      }
+      admin_bulk_upsert_coupons: {
+        Args: { p_rows: Json }
+        Returns: Json
+      }
+      admin_bulk_upsert_products: {
+        Args: { p_rows: Json }
+        Returns: Json
+      }
       get_daily_digest: {
         Args: { p_secret: string }
         Returns: Json

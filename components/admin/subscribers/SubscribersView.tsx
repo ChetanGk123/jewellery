@@ -144,26 +144,28 @@ export function SubscribersView({ page }: { page: AdminSubscribersPage }) {
             onSearch={onSearch}
             placeholder="Search email"
             ariaLabel="Search email"
-            className="ml-auto min-w-[170px] max-w-[300px]"
+            className="min-w-[170px] max-w-[300px] flex-1"
           />
-          <button
-            type="button"
-            onClick={copyEmails}
-            disabled={isExporting}
-            className="inline-flex items-center gap-[7px] rounded-lg border border-[#E7E0D4] bg-white px-[15px] py-2.5 font-body text-[12px] font-semibold text-[#5E4A40] transition-colors hover:border-[#C9A24B] hover:text-[#71182B] disabled:opacity-50"
-          >
-            <CopyIcon />
-            {copied ? "Copied" : "Copy emails"}
-          </button>
-          <button
-            type="button"
-            onClick={exportCsv}
-            disabled={isExporting}
-            className="inline-flex items-center gap-[7px] rounded-lg border-none bg-[#71182B] px-[15px] py-2.5 font-body text-[12px] font-semibold text-[#F3E3C7] transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            <ExportIcon />
-            Export CSV
-          </button>
+          <div className="ml-auto flex flex-wrap gap-2.5">
+            <button
+              type="button"
+              onClick={copyEmails}
+              disabled={isExporting}
+              className="inline-flex items-center gap-[7px] rounded-lg border border-[#DAD0C2] bg-white px-[15px] py-2.5 font-body text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-50"
+            >
+              <CopyIcon />
+              {copied ? "Copied" : "Copy emails"}
+            </button>
+            <button
+              type="button"
+              onClick={exportCsv}
+              disabled={isExporting}
+              className="inline-flex items-center gap-[7px] rounded-lg border-none bg-[#71182B] px-[15px] py-2.5 font-body text-[12px] font-semibold text-[#F3E3C7] transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              <ExportIcon />
+              Export CSV
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">

@@ -31,6 +31,13 @@ const nextConfig: NextConfig = {
   // the Docker runtime image ships a minimal `server.js` + pruned node_modules
   // instead of the whole repo. See Dockerfile.
   output: "standalone",
+  experimental: {
+    serverActions: {
+      // The bulk .xlsx import posts the sheet to a server action twice
+      // (preview + apply); the 1 MB default would reject bigger catalogues.
+      bodySizeLimit: "4mb",
+    },
+  },
   images: {
     remotePatterns: [
       {

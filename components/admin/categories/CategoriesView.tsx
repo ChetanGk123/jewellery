@@ -1,7 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import {
+  applyCategoriesImport,
+  parseCategoriesImport,
+} from "@/app/(admin)/admin/(console)/categories/import-actions"
 import { AdminPager } from "@/components/admin/ui/AdminPager"
+import { BulkImportControl } from "@/components/admin/ui/BulkImportControl"
 import {
   ADMIN_CATEGORIES_PAGE_SIZE,
   categoryCountLabel,
@@ -36,24 +41,35 @@ export function CategoriesView({ page }: { page: AdminCategoriesPage }) {
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <button
-        type="button"
-        onClick={openNew}
-        className="inline-flex items-center gap-2 self-start rounded-lg bg-maroon-700 px-[18px] py-[11px] font-body text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90"
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          aria-hidden="true"
-        >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        New Category
-      </button>
+      {/* Canonical admin toolbar: Export · Import · primary, right-aligned. */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="ml-auto flex flex-wrap gap-2.5">
+          <BulkImportControl
+            entityLabel="categories"
+            exportHref={`${ROUTES.adminCategories}/export`}
+            parseAction={parseCategoriesImport}
+            applyAction={applyCategoriesImport}
+          />
+          <button
+            type="button"
+            onClick={openNew}
+            className="inline-flex items-center gap-2 rounded-lg bg-maroon-700 px-[18px] py-[11px] font-body text-[12px] font-semibold text-cream-200 transition-opacity hover:opacity-90"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            New Category
+          </button>
+        </div>
+      </div>
 
       {page.rows.length === 0 ? (
         <div className="rounded-xl border border-[#EAE3D7] bg-white px-6 py-[50px] text-center">

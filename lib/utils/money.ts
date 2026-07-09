@@ -42,3 +42,35 @@ export function discountPercent(pricePaise: number, mrpPaise: number | null | un
   if (!mrpPaise || mrpPaise <= pricePaise) return 0
   return Math.round(((mrpPaise - pricePaise) / mrpPaise) * 100)
 }
+
+/**
+ * The admin "Price / Sale price" pair (rupees) → stored columns. "Sale price"
+ * is what the customer pays, so a valid sale below the price becomes
+ * `pricePaise` while the higher price becomes the strike-through `mrpPaise`;
+ * otherwise the price is charged as-is with no MRP. Shared by the single
+ * product upsert and the bulk import so the mapping can't drift.
+ */
+export function pricePairFromRupees(
+  priceRupees: number,
+  saleRupees: number | null,
+): { pricePaise: number; mrpPaise: number | null } {
+  if (saleRupees != null && saleRupees > 0 && saleRupees < priceRupees) {
+    return { pricePaise: Math.round(saleRupees * 100), mrpPaise: Math.round(priceRupees * 100) }
+  }
+  return { pricePaise: Math.round(priceRupees * 100), mrpPaise: null }
+}
+
+/**
+ * Stored columns → the admin "Price / Sale price" pair (rupees). Inverse of
+ * `pricePairFromRupees`; used when exporting products so the sheet shows the
+ * same two numbers the edit modal would.
+ */
+export function rupeesFromPricePair(
+  pricePaise: number,
+  mrpPaise: number | null,
+): { priceRupees: number; saleRupees: number | null } {
+  if (mrpPaise != null && mrpPaise > pricePaise) {
+    return { priceRupees: paiseToRupees(mrpPaise), saleRupees: paiseToRupees(pricePaise) }
+  }
+  return { priceRupees: paiseToRupees(pricePaise), saleRupees: null }
+}

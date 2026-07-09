@@ -212,13 +212,13 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
   return (
     <div className="flex flex-col gap-[18px]">
       {/* Search — order no / customer / phone / email (debounced) */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <AdminSearchBox
           value={page.search}
           onSearch={onSearch}
           placeholder="Search order no, customer, phone, email…"
           ariaLabel="Search orders by number, customer, phone or email"
-          className="min-w-[220px] flex-1"
+          className="min-w-[200px] max-w-[320px] flex-1"
         />
         {/* Date window (6.7): default last 2 days; custom range; All dates. */}
         <div className="flex items-center gap-1.5">
@@ -247,14 +247,16 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
         >
           {page.range.isAll ? `Last ${DEFAULT_ORDER_WINDOW_DAYS} days` : "All dates"}
         </Link>
-        <button
-          type="button"
-          onClick={exportCsv}
-          disabled={isExporting}
-          className="rounded-lg border border-[#E7E0D4] bg-white px-[18px] py-[10px] text-[12px] font-semibold text-[#5E4A40] transition-colors hover:border-[#D8CDB9] disabled:opacity-60"
-        >
-          {isExporting ? "Exporting…" : "Export CSV"}
-        </button>
+        <div className="ml-auto flex flex-wrap gap-2.5">
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={isExporting}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#DAD0C2] bg-white px-[18px] py-[11px] font-body text-[12px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-60"
+          >
+            {isExporting ? "Exporting…" : "Export CSV"}
+          </button>
+        </div>
       </div>
 
       {page.search && (

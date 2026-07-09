@@ -15,6 +15,8 @@ type Props = {
   /** Label on the dismiss button. Defaults to "Keep it". */
   dismissLabel?: string
   isPending: boolean
+  /** Disable the confirm button (e.g. an import preview with row errors). */
+  confirmDisabled?: boolean
   error: string | null
   onConfirm: () => void
   onClose: () => void
@@ -35,6 +37,7 @@ export function ConfirmDialog({
   pendingLabel,
   dismissLabel = "Keep it",
   isPending,
+  confirmDisabled = false,
   error,
   onConfirm,
   onClose,
@@ -84,7 +87,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={isPending}
+            disabled={isPending || confirmDisabled}
             className="rounded-lg bg-[#C0392F] px-6 py-[11px] font-body text-[12px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {isPending ? pendingLabel : confirmLabel}
