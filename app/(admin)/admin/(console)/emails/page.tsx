@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { EmailsView } from "@/components/admin/emails/EmailsView"
 import { emailCopyToFormValues } from "@/lib/admin/email-copy"
 import { ADMIN_PAGE_META } from "@/lib/admin/nav"
-import { getStoreInfo, getStoreSettings } from "@/lib/db/settings"
+import { getRawEmailCopy, getStoreInfo } from "@/lib/db/settings"
 import { adminAlertTo, isEmailEnabled } from "@/lib/email/send"
 import { ROUTES } from "@/lib/routes"
 import { SITE_URL } from "@/lib/site-url"
@@ -18,10 +18,10 @@ export const metadata: Metadata = {
  * through `updateEmailCopy`; test sends through `sendTestEmail`.
  */
 export default async function AdminEmailsPage() {
-  const [settings, info] = await Promise.all([getStoreSettings(), getStoreInfo()])
+  const [rawEmailCopy, info] = await Promise.all([getRawEmailCopy(), getStoreInfo()])
   return (
     <EmailsView
-      initial={emailCopyToFormValues(settings.emailCopy)}
+      initial={emailCopyToFormValues(rawEmailCopy)}
       storeInfo={info}
       baseUrl={SITE_URL}
       isEmailConfigured={isEmailEnabled()}

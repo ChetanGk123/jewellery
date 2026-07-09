@@ -59,8 +59,6 @@ export type StoreSettings = {
   gstin: string | null
   /** Editable brand/contact blob fields (6.15) — raw, empty when unset. */
   storeInfo: StoreInfoFields
-  /** Raw saved email-verbiage overrides (7.3) — the Emails form seed; resolve via `getEmailCopy`. */
-  emailCopy: unknown
   banner: BannerSetting
   promo: PromoSetting
   /** Shipping & Payments (3.11) — the source of truth for the cart/checkout/place_order. */
@@ -165,7 +163,7 @@ export const getStoreSettings = cache(
       const { data, error } = await publicClient
         .from("setting")
         .select(
-          "store_name, support_email, phone, gstin, store_info, email_copy, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
+          "store_name, support_email, phone, gstin, store_info, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
         )
         .maybeSingle()
 
@@ -179,7 +177,6 @@ export const getStoreSettings = cache(
         phone: data?.phone ?? null,
         gstin: data?.gstin ?? null,
         storeInfo: readStoreInfoFields(data?.store_info),
-        emailCopy: data?.email_copy ?? {},
         banner: mergeBanner(data?.banner),
         promo: mergePromo(data?.homepage_promo),
         freeShipThresholdPaise:
@@ -225,11 +222,29 @@ export const getStoreInfo = cache(
 )
 
 /**
+ * The RAW saved `email_copy` blob — the admin Emails form seed (empty fields =
+ * unset). Deliberately NOT part of `getStoreSettings`: that read feeds every
+ * storefront page, and it must keep working when this code ships before
+ * migration 0042 lands. Tolerant of the column not existing yet (returns {},
+ * so the form shows all defaults); uncached — an admin-only read that should
+ * always reflect the latest save.
+ */
+export async function getRawEmailCopy(): Promise<unknown> {
+  const { data, error } = await publicClient.from("setting").select("email_copy").maybeSingle()
+  if (error) {
+    console.error("getRawEmailCopy failed (email_copy column missing? apply 0042):", error.message)
+    return {}
+  }
+  return data?.email_copy ?? {}
+}
+
+/**
  * The resolved email verbiage (TASKS 7.3): the operator's saved `email_copy`
  * overrides merged over the code defaults. Cached like `getStoreInfo` (same
  * `settings` tag, expired by the admin save) and `React.cache`d within a
- * render. Never throws — on a read error the emails fall back to the const
- * defaults, since a copy hiccup must never block a send.
+ * render. Never throws — on a read error (including the 0042 column not yet
+ * applied) the emails fall back to the const defaults, since a copy hiccup
+ * must never block a send.
  */
 export const getEmailCopy = cache(
   unstable_cache(
