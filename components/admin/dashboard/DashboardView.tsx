@@ -1,10 +1,17 @@
 import Link from "next/link"
+import { pendingAge } from "@/lib/admin/order-aging"
+import { reviewStars } from "@/lib/admin/review"
+import type { TopCustomerRow } from "@/lib/admin/top-customers"
 import type {
+  AgeingPendingRow,
   DashboardData,
   DashboardKpis,
+  LatestMessageRow,
+  LatestReviewRow,
   LowStockRow,
   RecentOrderRow,
   RevenueBar,
+  StatusCountRow,
   TopSellerRow,
 } from "@/lib/db/admin-dashboard"
 import { ROUTES } from "@/lib/routes"
@@ -29,14 +36,20 @@ export function DashboardView({ data }: { data: DashboardData }) {
     <div className="flex flex-col gap-6">
       <KpiRow kpis={data.kpis} />
 
+      <StatusBoard rows={data.statusBoard} />
+
       <div className="grid grid-cols-1 items-start gap-[18px] lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-[18px]">
           <RevenueChart bars={data.revenue7d} totalPaise={totalRevenue7d} />
           <RecentOrders orders={data.recentOrders} />
+          <AgeingPending rows={data.ageingPending} />
+          <TopCustomers rows={data.topCustomers} />
         </div>
         <div className="flex flex-col gap-[18px]">
           <LowStockAlerts rows={data.lowStock} />
           <TopSellers rows={data.topSellers} />
+          <LatestReviews rows={data.latestReviews} />
+          <LatestMessages rows={data.latestMessages} />
         </div>
       </div>
     </div>
@@ -311,6 +324,200 @@ function LowStockAlerts({ rows }: { rows: LowStockRow[] }) {
               </div>
             )
           })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ----------------------------- Status board ------------------------------ */
+
+/**
+ * Order-pipeline breakdown (6.14): one tile per status, each deep-linking to
+ * the Orders queue pre-filtered. Counts come from the capped scan — exact
+ * until the store outgrows it.
+ */
+function StatusBoard({ rows }: { rows: StatusCountRow[] }) {
+  if (rows.length === 0) return null
+  return (
+    <div className="grid grid-cols-2 gap-[18px] sm:grid-cols-3 xl:grid-cols-6">
+      {rows.map((s) => (
+        <Link
+          key={s.status}
+          href={`${ROUTES.adminOrders}?status=${encodeURIComponent(s.status)}`}
+          className={`${CARD} flex flex-col gap-2 p-4 transition-colors hover:bg-[#FBF8F2]`}
+        >
+          <span
+            className="self-start rounded-full px-[9px] py-1 text-[10.5px] font-semibold"
+            style={{ color: s.chip.color, background: s.chip.bg }}
+          >
+            {s.chip.label}
+          </span>
+          <span className="text-[24px] font-semibold leading-none text-[#2A1F1A]">{s.count}</span>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+/* ----------------------------- Ageing pending ---------------------------- */
+
+/**
+ * Pending orders past the 12h rung, oldest first (6.14; chips from 5.18's
+ * `pendingAge`). Server-rendered once per request, so `Date.now()` here can't
+ * cause a hydration mismatch.
+ */
+function AgeingPending({ rows }: { rows: AgeingPendingRow[] }) {
+  const now = Date.now()
+  return (
+    <div className={`${CARD} overflow-hidden`}>
+      <div className="flex items-center justify-between border-b border-[#EFE9DE] px-[22px] py-[18px]">
+        <span className="text-[15px] font-semibold text-[#2A1F1A]">Overdue Pending Orders</span>
+        <Link
+          href={`${ROUTES.adminOrders}?status=Pending`}
+          className="text-[12px] font-medium text-maroon-700 hover:underline"
+        >
+          View pending →
+        </Link>
+      </div>
+      {rows.length === 0 ? (
+        <p className="px-[22px] py-8 text-center text-[13px] text-[#A99C90]">
+          Nothing overdue — every pending order is under 12 hours old.
+        </p>
+      ) : (
+        rows.map((o) => {
+          const age = pendingAge(o.createdAt, now)
+          return (
+            <div
+              key={o.orderNo}
+              className="flex items-center gap-3.5 border-b border-[#F3EEE4] px-[22px] py-3.5 last:border-b-0"
+            >
+              <span className="w-[120px] shrink-0 text-[13px] font-semibold text-maroon-700">
+                {o.orderNo}
+              </span>
+              <span className="flex-1 truncate text-[13px] text-[#2A1F1A]">{o.customer}</span>
+              <span className="w-[80px] shrink-0 text-right text-[13px] font-semibold text-[#2A1F1A]">
+                {formatPaise(o.totalPaise)}
+              </span>
+              {age && (
+                <span
+                  className="w-[56px] shrink-0 rounded-full py-[5px] text-center text-[11px] font-semibold"
+                  style={
+                    age.tone === "red"
+                      ? { color: "#C0392F", background: "#FBE9E7" }
+                      : { color: "#B7791F", background: "#FBF1DD" }
+                  }
+                >
+                  {age.label}
+                </span>
+              )}
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
+/* ----------------------------- Top customers ----------------------------- */
+
+function TopCustomers({ rows }: { rows: TopCustomerRow[] }) {
+  return (
+    <div className={`${CARD} overflow-hidden`}>
+      <div className="border-b border-[#EFE9DE] px-[22px] py-[18px]">
+        <span className="text-[15px] font-semibold text-[#2A1F1A]">Top Customers by Revenue</span>
+      </div>
+      {rows.length === 0 ? (
+        <p className="px-[22px] py-8 text-center text-[13px] text-[#A99C90]">No customers yet.</p>
+      ) : (
+        rows.map((c) => (
+          <div
+            key={c.phone}
+            className="flex items-center gap-3.5 border-b border-[#F3EEE4] px-[22px] py-3.5 last:border-b-0"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-medium text-[#2A1F1A]">{c.name}</div>
+              <div className="mt-[3px] text-[11px] text-[#A99C90]">{c.phone}</div>
+            </div>
+            <span className="shrink-0 text-[12px] text-[#8A7E74]">
+              {c.orders} order{c.orders === 1 ? "" : "s"}
+            </span>
+            <span className="w-[90px] shrink-0 text-right text-[13px] font-semibold text-maroon-700">
+              {formatPaise(c.revenuePaise)}
+            </span>
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+
+/* ---------------------------- Latest engagement -------------------------- */
+
+function LatestReviews({ rows }: { rows: LatestReviewRow[] }) {
+  return (
+    <div className={`${CARD} p-5`}>
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-[15px] font-semibold text-[#2A1F1A]">Reviews to Moderate</span>
+        <Link
+          href={ROUTES.adminReviews}
+          className="text-[12px] font-medium text-maroon-700 hover:underline"
+        >
+          Moderate →
+        </Link>
+      </div>
+      {rows.length === 0 ? (
+        <p className="py-4 text-center text-[13px] text-[#A99C90]">No reviews awaiting approval.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {rows.map((r) => (
+            <div key={r.id} className="flex flex-col gap-0.5">
+              <span
+                aria-label={`${r.rating} out of 5 stars`}
+                className="text-[12px] tracking-[2px] text-gold-500"
+              >
+                {reviewStars(r.rating)}
+              </span>
+              <span className="truncate text-[13px] font-medium text-[#2A1F1A]">
+                {r.title || r.productName}
+              </span>
+              <span className="text-[11px] text-[#A99C90]">
+                {r.author} · {r.productName} · {r.dateLabel}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LatestMessages({ rows }: { rows: LatestMessageRow[] }) {
+  return (
+    <div className={`${CARD} p-5`}>
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-[15px] font-semibold text-[#2A1F1A]">New Messages</span>
+        <Link
+          href={ROUTES.adminMessages}
+          className="text-[12px] font-medium text-maroon-700 hover:underline"
+        >
+          Open queue →
+        </Link>
+      </div>
+      {rows.length === 0 ? (
+        <p className="py-4 text-center text-[13px] text-[#A99C90]">No new enquiries.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {rows.map((m) => (
+            <div key={m.id} className="flex flex-col gap-0.5">
+              <span className="truncate text-[13px] font-medium text-[#2A1F1A]">
+                {m.subject || "No subject"}
+              </span>
+              <span className="text-[11px] text-[#A99C90]">
+                {m.ticketNo} · {m.name} · {m.dateLabel}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
