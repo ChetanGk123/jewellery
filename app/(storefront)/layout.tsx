@@ -1,6 +1,6 @@
 import { Header } from "@/components/storefront/layout/Header"
 import { Footer } from "@/components/storefront/layout/Footer"
-import { getStoreSettings } from "@/lib/db/settings"
+import { getStoreInfo, getStoreSettings } from "@/lib/db/settings"
 
 /**
  * Storefront chrome. Scoped to the `(storefront)` route group so the customer
@@ -10,13 +10,15 @@ import { getStoreSettings } from "@/lib/db/settings"
 export default async function StorefrontLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const settings = await getStoreSettings()
+  // Both cached (settings tag) + deduped per render, so fetching in parallel
+  // here and passing down keeps Header/Footer prop-driven (6.15).
+  const [settings, info] = await Promise.all([getStoreSettings(), getStoreInfo()])
 
   return (
     <>
-      <Header banner={settings.banner} />
+      <Header banner={settings.banner} info={info} />
       {children}
-      <Footer />
+      <Footer info={info} />
     </>
   )
 }

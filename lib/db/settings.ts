@@ -1,6 +1,7 @@
 import "server-only"
 import { unstable_cache } from "next/cache"
 import { cache } from "react"
+import { resolveStoreInfo, type ResolvedStoreInfo } from "@/lib/store-info"
 import { CACHE_TAGS, CATALOG_REVALIDATE_SECONDS } from "./cache"
 import { publicClient } from "./public"
 
@@ -29,12 +30,34 @@ export type PromoSetting = {
   button: string
 }
 
+/**
+ * The raw, editable `store_info` blob fields flattened for the Settings form
+ * (6.15). All strings, empty when unset — the form shows const defaults as
+ * placeholders, and `getStoreInfo()` (not this) does the const merge for the
+ * storefront. `wordmark`/`socials` live in the blob but aren't edited here yet,
+ * so they're preserved by the RPC's shallow merge and omitted from this shape.
+ */
+export type StoreInfoFields = {
+  descriptor: string
+  tagline: string
+  whatsapp: string
+  addressLine: string
+  addressCity: string
+  addressState: string
+  addressNote: string
+  hoursShort: string
+  hoursLong: string
+  hoursNote: string
+}
+
 export type StoreSettings = {
   storeName: string
   /** Contact + tax details (Store Information card, 3.11); may be unset. */
   supportEmail: string | null
   phone: string | null
   gstin: string | null
+  /** Editable brand/contact blob fields (6.15) — raw, empty when unset. */
+  storeInfo: StoreInfoFields
   banner: BannerSetting
   promo: PromoSetting
   /** Shipping & Payments (3.11) — the source of truth for the cart/checkout/place_order. */
@@ -107,6 +130,26 @@ function mergePromo(raw: unknown): PromoSetting {
   }
 }
 
+/** Flatten the raw `store_info` blob into the Settings form fields (6.15). */
+function readStoreInfoFields(raw: unknown): StoreInfoFields {
+  const blob = asRecord(raw)
+  const address = asRecord(blob.address)
+  const hours = asRecord(blob.hours)
+  const str = (record: Record<string, unknown>, key: string) => readString(record, key) ?? ""
+  return {
+    descriptor: str(blob, "descriptor"),
+    tagline: str(blob, "tagline"),
+    whatsapp: str(blob, "whatsappE164"),
+    addressLine: str(address, "line"),
+    addressCity: str(address, "city"),
+    addressState: str(address, "state"),
+    addressNote: str(address, "note"),
+    hoursShort: str(hours, "short"),
+    hoursLong: str(hours, "long"),
+    hoursNote: str(hours, "note"),
+  }
+}
+
 /**
  * The store's public settings (banner, homepage promo, free-ship threshold).
  * Cached across requests (tag `settings`, expired by the admin settings save)
@@ -119,7 +162,7 @@ export const getStoreSettings = cache(
       const { data, error } = await publicClient
         .from("setting")
         .select(
-          "store_name, support_email, phone, gstin, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
+          "store_name, support_email, phone, gstin, store_info, banner, homepage_promo, free_ship_threshold_paise, flat_rate_paise, cod_enabled, razorpay_live",
         )
         .maybeSingle()
 
@@ -132,6 +175,7 @@ export const getStoreSettings = cache(
         supportEmail: data?.support_email ?? null,
         phone: data?.phone ?? null,
         gstin: data?.gstin ?? null,
+        storeInfo: readStoreInfoFields(data?.store_info),
         banner: mergeBanner(data?.banner),
         promo: mergePromo(data?.homepage_promo),
         freeShipThresholdPaise:
@@ -142,6 +186,36 @@ export const getStoreSettings = cache(
       }
     },
     ["getStoreSettings"],
+    { tags: [CACHE_TAGS.settings], revalidate: CATALOG_REVALIDATE_SECONDS },
+  ),
+)
+
+/**
+ * The store's resolved identity/contact (TASKS 6.15) — the DB-backed successor
+ * to reading the `STORE_INFO` const directly. Merges the editable scalar
+ * columns + the `store_info` jsonb blob over the const (which stays as the
+ * fallback + seed), re-deriving `tel:`/`mailto:`/`wa.me` links. Cached like
+ * `getStoreSettings` (same `settings` tag, expired on the admin save) and
+ * `React.cache`d within a render. Never throws to callers — on a read error it
+ * falls back to the pure const so the storefront chrome always renders.
+ */
+export const getStoreInfo = cache(
+  unstable_cache(
+    async (): Promise<ResolvedStoreInfo> => {
+      const { data } = await publicClient
+        .from("setting")
+        .select("store_name, support_email, phone, gstin, store_info")
+        .maybeSingle()
+
+      return resolveStoreInfo({
+        storeName: data?.store_name,
+        supportEmail: data?.support_email,
+        phone: data?.phone,
+        gstin: data?.gstin,
+        storeInfo: data?.store_info,
+      })
+    },
+    ["getStoreInfo"],
     { tags: [CACHE_TAGS.settings], revalidate: CATALOG_REVALIDATE_SECONDS },
   ),
 )

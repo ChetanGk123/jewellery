@@ -10,7 +10,7 @@
  */
 
 import { z } from "zod"
-import type { BannerSetting, PromoSetting, StoreSettings } from "@/lib/db/settings"
+import type { BannerSetting, PromoSetting, StoreInfoFields, StoreSettings } from "@/lib/db/settings"
 import type { Json } from "@/lib/db/types"
 
 const optionalText = (max: number) => z.string().trim().max(max)
@@ -23,6 +23,18 @@ export const settingsFormSchema = z.object({
   ),
   phone: optionalText(40),
   gstin: optionalText(20),
+  storeInfo: z.object({
+    descriptor: optionalText(120),
+    tagline: optionalText(300),
+    whatsapp: optionalText(20),
+    addressLine: optionalText(160),
+    addressCity: optionalText(80),
+    addressState: optionalText(80),
+    addressNote: optionalText(120),
+    hoursShort: optionalText(120),
+    hoursLong: optionalText(160),
+    hoursNote: optionalText(200),
+  }),
   freeShipThresholdRupees: z
     .number()
     .int("Whole rupees only.")
@@ -59,11 +71,28 @@ export function settingsToFormValues(s: StoreSettings): SettingsFormValues {
     supportEmail: s.supportEmail ?? "",
     phone: s.phone ?? "",
     gstin: s.gstin ?? "",
+    storeInfo: storeInfoValues(s.storeInfo),
     freeShipThresholdRupees: Math.round(s.freeShipThresholdPaise / RUPEE),
     flatRateRupees: Math.round(s.flatRatePaise / RUPEE),
     codEnabled: s.codEnabled,
     banner: bannerValues(s.banner),
     promo: promoValues(s.promo),
+  }
+}
+
+/** The blob fields are already flat strings — pass straight through (6.15). */
+function storeInfoValues(s: StoreInfoFields): SettingsFormValues["storeInfo"] {
+  return {
+    descriptor: s.descriptor,
+    tagline: s.tagline,
+    whatsapp: s.whatsapp,
+    addressLine: s.addressLine,
+    addressCity: s.addressCity,
+    addressState: s.addressState,
+    addressNote: s.addressNote,
+    hoursShort: s.hoursShort,
+    hoursLong: s.hoursLong,
+    hoursNote: s.hoursNote,
   }
 }
 
@@ -96,6 +125,24 @@ export function formValuesToPayload(v: SettingsFormValues): Json {
     support_email: v.supportEmail.trim(),
     phone: v.phone.trim(),
     gstin: v.gstin.trim(),
+    // 6.15 — shallow-merged server-side, so wordmark/socials are preserved.
+    // Nested address/hours are sent whole (the || merge replaces them wholesale).
+    store_info: {
+      descriptor: v.storeInfo.descriptor.trim(),
+      tagline: v.storeInfo.tagline.trim(),
+      whatsappE164: v.storeInfo.whatsapp.replace(/\D/g, ""),
+      address: {
+        line: v.storeInfo.addressLine.trim(),
+        city: v.storeInfo.addressCity.trim(),
+        state: v.storeInfo.addressState.trim(),
+        note: v.storeInfo.addressNote.trim(),
+      },
+      hours: {
+        short: v.storeInfo.hoursShort.trim(),
+        long: v.storeInfo.hoursLong.trim(),
+        note: v.storeInfo.hoursNote.trim(),
+      },
+    },
     free_ship_threshold_paise: Math.round(v.freeShipThresholdRupees * RUPEE),
     flat_rate_paise: Math.round(v.flatRateRupees * RUPEE),
     cod_enabled: v.codEnabled,

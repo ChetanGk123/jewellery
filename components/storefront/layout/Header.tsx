@@ -3,7 +3,7 @@ import type { BannerSetting } from "@/lib/db/settings"
 import { getCurrentUser } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
 import { PRIMARY_NAV } from "@/lib/navigation"
-import { STORE_INFO } from "@/lib/store-info"
+import type { ResolvedStoreInfo } from "@/lib/store-info"
 import { CartBadge } from "./CartBadge"
 import { MobileNavDrawer } from "./MobileNavDrawer"
 
@@ -16,7 +16,7 @@ import { MobileNavDrawer } from "./MobileNavDrawer"
  * session-aware ("Sign In" ↔ "Account") — every route already renders
  * per-request (strict CSP nonce), so reading the session here costs nothing.
  */
-export async function Header({ banner }: { banner: BannerSetting }) {
+export async function Header({ banner, info }: { banner: BannerSetting; info: ResolvedStoreInfo }) {
   const showBanner = banner.enabled && Boolean(banner.msg1)
   const user = await getCurrentUser()
   const accountHref = user ? ROUTES.account : ROUTES.signIn
@@ -62,14 +62,15 @@ export async function Header({ banner }: { banner: BannerSetting }) {
             links={PRIMARY_NAV}
             accountHref={accountHref}
             accountLabel={accountLabel}
+            wordmark={info.wordmark}
           />
 
           <Link href={ROUTES.home} className="flex flex-none flex-col leading-none">
             <span className="font-display text-[clamp(20px,5.5vw,26px)] leading-none tracking-[0.14em] text-maroon-700">
-              {STORE_INFO.wordmark}
+              {info.wordmark}
             </span>
             <span className="mt-[5px] text-[9.5px] uppercase leading-none tracking-[0.36em] text-gold-600">
-              {STORE_INFO.descriptor}
+              {info.descriptor}
             </span>
           </Link>
 

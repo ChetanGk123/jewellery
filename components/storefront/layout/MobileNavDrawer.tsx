@@ -4,12 +4,12 @@ import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
 import type { NavLink } from "@/lib/navigation"
-import { STORE_INFO } from "@/lib/store-info"
-
 type Props = {
   links: NavLink[]
   accountHref: string
   accountLabel: string
+  /** Resolved store wordmark (6.15) — passed from the server Header. */
+  wordmark: string
 }
 
 /**
@@ -18,7 +18,7 @@ type Props = {
  * chrome. Replaces the primary nav strip on mobile, which wrapped into four
  * rows and pushed the hero below the fold (TASKS 4.7).
  */
-export function MobileNavDrawer({ links, accountHref, accountLabel }: Props) {
+export function MobileNavDrawer({ links, accountHref, accountLabel, wordmark }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
@@ -69,7 +69,7 @@ export function MobileNavDrawer({ links, accountHref, accountLabel }: Props) {
             >
               <div className="mb-5 flex items-center justify-between">
                 <span className="font-display text-[20px] tracking-[0.14em] text-maroon-700">
-                  {STORE_INFO.wordmark}
+                  {wordmark}
                 </span>
                 <button
                   type="button"

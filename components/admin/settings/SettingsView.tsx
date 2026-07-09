@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { updateStoreSettings } from "@/app/(admin)/admin/(console)/settings/actions"
 import type { SettingsFormValues } from "@/lib/admin/settings"
+import { STORE_INFO } from "@/lib/store-info"
 
 type Props = { initial: SettingsFormValues }
 
@@ -37,6 +38,10 @@ export function SettingsView({ initial }: Props) {
   const setPromo = (patch: Partial<SettingsFormValues["promo"]>) => {
     setSaved(false)
     setValues((prev) => ({ ...prev, promo: { ...prev.promo, ...patch } }))
+  }
+  const setStoreInfo = (patch: Partial<SettingsFormValues["storeInfo"]>) => {
+    setSaved(false)
+    setValues((prev) => ({ ...prev, storeInfo: { ...prev.storeInfo, ...patch } }))
   }
 
   const save = () => {
@@ -89,6 +94,109 @@ export function SettingsView({ initial }: Props) {
               />
             </label>
           </div>
+        </div>
+
+        {/* Brand & Contact (6.15) — feeds the storefront footer/header, contact
+            page, WhatsApp links and emails via getStoreInfo(). Blank fields fall
+            back to the built-in defaults shown as placeholders. */}
+        <div className={`${CARD} flex flex-col gap-4`}>
+          <span className={HEADING}>Brand &amp; Contact</span>
+          <p className="-mt-2 font-body text-[12px] leading-relaxed text-[#A99C90]">
+            Shown across the storefront. Leave a field blank to use the default (shown in grey).
+          </p>
+          <label className={LABEL}>
+            Descriptor
+            <input
+              className={INPUT}
+              value={values.storeInfo.descriptor}
+              placeholder={STORE_INFO.descriptor}
+              onChange={(e) => setStoreInfo({ descriptor: e.target.value })}
+            />
+          </label>
+          <label className={LABEL}>
+            Tagline
+            <textarea
+              className={`${INPUT} min-h-[64px] resize-y`}
+              value={values.storeInfo.tagline}
+              placeholder={STORE_INFO.tagline}
+              onChange={(e) => setStoreInfo({ tagline: e.target.value })}
+            />
+          </label>
+          <label className={LABEL}>
+            WhatsApp number <span className="font-normal text-[#A99C90]">(with country code)</span>
+            <input
+              className={INPUT}
+              inputMode="numeric"
+              value={values.storeInfo.whatsapp}
+              placeholder={STORE_INFO.whatsapp.number}
+              onChange={(e) => setStoreInfo({ whatsapp: e.target.value })}
+            />
+          </label>
+          <label className={LABEL}>
+            Address line
+            <input
+              className={INPUT}
+              value={values.storeInfo.addressLine}
+              placeholder={STORE_INFO.address.line}
+              onChange={(e) => setStoreInfo({ addressLine: e.target.value })}
+            />
+          </label>
+          <div className="flex gap-3">
+            <label className={`${LABEL} flex-1`}>
+              City
+              <input
+                className={INPUT}
+                value={values.storeInfo.addressCity}
+                placeholder={STORE_INFO.address.city}
+                onChange={(e) => setStoreInfo({ addressCity: e.target.value })}
+              />
+            </label>
+            <label className={`${LABEL} flex-1`}>
+              State
+              <input
+                className={INPUT}
+                value={values.storeInfo.addressState}
+                placeholder={STORE_INFO.address.state}
+                onChange={(e) => setStoreInfo({ addressState: e.target.value })}
+              />
+            </label>
+          </div>
+          <label className={LABEL}>
+            Visiting note
+            <input
+              className={INPUT}
+              value={values.storeInfo.addressNote}
+              placeholder={STORE_INFO.address.note}
+              onChange={(e) => setStoreInfo({ addressNote: e.target.value })}
+            />
+          </label>
+          <label className={LABEL}>
+            Opening hours <span className="font-normal text-[#A99C90]">(short)</span>
+            <input
+              className={INPUT}
+              value={values.storeInfo.hoursShort}
+              placeholder={STORE_INFO.hours.short}
+              onChange={(e) => setStoreInfo({ hoursShort: e.target.value })}
+            />
+          </label>
+          <label className={LABEL}>
+            Opening hours <span className="font-normal text-[#A99C90]">(full)</span>
+            <input
+              className={INPUT}
+              value={values.storeInfo.hoursLong}
+              placeholder={STORE_INFO.hours.long}
+              onChange={(e) => setStoreInfo({ hoursLong: e.target.value })}
+            />
+          </label>
+          <label className={LABEL}>
+            Hours note
+            <input
+              className={INPUT}
+              value={values.storeInfo.hoursNote}
+              placeholder={STORE_INFO.hours.note}
+              onChange={(e) => setStoreInfo({ hoursNote: e.target.value })}
+            />
+          </label>
         </div>
 
         {/* Shipping & Payments */}

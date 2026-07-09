@@ -508,6 +508,7 @@ export type Database = {
           id: boolean
           phone: string | null
           razorpay_live: boolean
+          store_info: Json
           store_name: string
           support_email: string | null
           updated_at: string
@@ -522,6 +523,7 @@ export type Database = {
           id?: boolean
           phone?: string | null
           razorpay_live?: boolean
+          store_info?: Json
           store_name?: string
           support_email?: string | null
           updated_at?: string
@@ -536,6 +538,7 @@ export type Database = {
           id?: boolean
           phone?: string | null
           razorpay_live?: boolean
+          store_info?: Json
           store_name?: string
           support_email?: string | null
           updated_at?: string

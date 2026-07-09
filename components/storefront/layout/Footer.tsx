@@ -5,7 +5,7 @@ import { InstagramIcon } from "@/components/ui/InstagramIcon"
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon"
 import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation"
 import { ROUTES } from "@/lib/routes"
-import { STORE_INFO, type SocialLink } from "@/lib/store-info"
+import type { ResolvedStoreInfo, SocialLink } from "@/lib/store-info"
 
 const socialBadgeClass =
   "flex h-[34px] w-[34px] items-center justify-center rounded-full border border-gold-300/40 text-sm text-gold-300 transition-colors hover:bg-gold-300/10"
@@ -15,19 +15,17 @@ const socialBadgeClass =
  * deep-maroon panel with a brand blurb + socials, Shop/Help columns, a
  * newsletter signup (UI-only for now), and a payments/GST strip.
  */
-export function Footer() {
+export function Footer({ info }: { info: ResolvedStoreInfo }) {
   return (
     <footer className="mt-auto bg-maroon-950 text-[#D9C2B8]">
       <div className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-10 px-6 pt-14 pb-[30px]">
         <div className="flex min-w-[240px] max-w-[320px] flex-1 flex-col gap-[14px]">
           <span className="font-display text-2xl leading-none tracking-[0.14em] text-gold-300">
-            {STORE_INFO.wordmark}
+            {info.wordmark}
           </span>
-          <p className="m-0 text-[13px] font-light leading-[1.7] text-[#C3A89D]">
-            {STORE_INFO.tagline}
-          </p>
+          <p className="m-0 text-[13px] font-light leading-[1.7] text-[#C3A89D]">{info.tagline}</p>
           <div className="mt-1.5 flex gap-3">
-            {STORE_INFO.socials.map((social) =>
+            {info.socials.map((social) =>
               social.href ? (
                 <a
                   key={social.label}
@@ -66,7 +64,7 @@ export function Footer() {
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-6 py-[18px]">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
             <span className="text-[11.5px] font-light leading-none text-[#9C8278]">
-              © {new Date().getFullYear()} {STORE_INFO.name} · GST registered · Made in India
+              © {new Date().getFullYear()} {info.name} · GST registered · Made in India
             </span>
             <nav aria-label="Legal">
               <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] font-light leading-none text-[#9C8278]">
