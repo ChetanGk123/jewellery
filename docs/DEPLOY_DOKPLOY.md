@@ -33,7 +33,11 @@ committed compose/Dockerfile.
 - A running **Dokploy** host (Docker + Traefik) with a public IP.
 - This repo pushed to a Git remote Dokploy can reach (GitHub).
 - A **Supabase project** (managed cloud, or self-hosted per the companion doc)
-  with **all migrations `0001`–`0027` applied** and seed data loaded.
+  with **all migrations applied** (`supabase/migrations/0000a`–`0040`, in
+  filename order) and **`supabase/seed.sql` run once** (creates the `setting`
+  singleton — without it every Settings save fails with
+  `SETTINGS_ROW_MISSING`; the file also documents the first-admin bootstrap
+  and the `app_secret` insert).
 - A **domain** with DNS you control, pointed at the Dokploy host.
 - Optional: a **Resend** account + verified sending domain (for order/status
   emails — the app degrades to a no-op without it).
@@ -229,13 +233,16 @@ instead — see the companion doc §5.)
   re-inline it — a runtime restart alone won't pick it up.
 - **Schema changes**: apply new `supabase/migrations/*.sql` to the Supabase
   project (managed: dashboard/CLI; self-host: `psql`/CLI) **before or with** the
-  app deploy that depends on them.
+  app deploy that depends on them. `supabase/seed.sql` is one-time (idempotent —
+  safe to re-run, but never needed after the first deploy).
 
 ---
 
 ## 9. Pre-launch checklist
 
-- [ ] Migrations `0001`–`0027` applied to the target Supabase project
+- [ ] Migrations `0000a`–`0040` applied to the target Supabase project
+- [ ] `supabase/seed.sql` run once (settings singleton; see its comments for the
+      first-admin bootstrap + `app_secret` steps)
 - [ ] Build-time `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` set and reaching the build
 - [ ] Runtime `NEXT_PUBLIC_SITE_URL` = real HTTPS origin
 - [ ] Domain added → service `web`, port `3000`, HTTPS on
