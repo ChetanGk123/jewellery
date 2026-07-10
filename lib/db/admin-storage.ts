@@ -17,7 +17,7 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB
 
 export async function uploadAdminImage(
   formData: FormData,
-  pathPrefix: "products" | "categories",
+  pathPrefix: "products" | "categories" | "branding",
 ): Promise<UploadResult> {
   const file = formData.get("file")
   if (!(file instanceof File) || file.size === 0) {
@@ -50,9 +50,10 @@ type AdminClient = Awaited<ReturnType<typeof createServerClient>>
 
 /**
  * A removed image may still be in use elsewhere — another product's gallery or
- * primary image (bulk imports can share URLs), or a category photo. When any
- * check errors we report "referenced" so the GC keeps the file: a leaked
- * object is recoverable, a deleted one is not.
+ * primary image (bulk imports can share URLs), a category photo, or the
+ * settings-managed homepage hero (9.4). When any check errors we report
+ * "referenced" so the GC keeps the file: a leaked object is recoverable, a
+ * deleted one is not.
  */
 async function isImageReferenced(supabase: AdminClient, url: string): Promise<boolean> {
   const checks = await Promise.all([
@@ -63,6 +64,7 @@ async function isImageReferenced(supabase: AdminClient, url: string): Promise<bo
       .contains("gallery", JSON.stringify([{ url }]))
       .limit(1),
     supabase.from("category").select("id").eq("image_url", url).limit(1),
+    supabase.from("setting").select("id").eq("homepage_hero->>image_url", url).limit(1),
   ])
   if (checks.some((r) => r.error)) return true
   return checks.some((r) => (r.data?.length ?? 0) > 0)
@@ -102,8 +104,8 @@ export async function removeUnreferencedAdminImages(urls: string[]): Promise<voi
 export type SweepResult =
   { ok: true; scanned: number; removed: number; freedBytes: number } | { ok: false; error: string }
 
-/** The two prefixes uploadAdminImage writes under. */
-const IMAGE_FOLDERS = ["products", "categories"] as const
+/** The prefixes uploadAdminImage writes under. */
+const IMAGE_FOLDERS = ["products", "categories", "branding"] as const
 const LIST_PAGE_SIZE = 1000
 const DB_PAGE_SIZE = 1000
 const REMOVE_CHUNK_SIZE = 100
@@ -111,8 +113,8 @@ const REMOVE_CHUNK_SIZE = 100
 /**
  * Ground-truth storage GC, run from the Settings page under the clicking
  * admin's session (Storage deletes are is_admin()-gated by 0010 — no service
- * key needed). Lists the whole bucket, collects every image URL any product or
- * category holds, and removes objects that appear in neither — the historical
+ * key needed). Lists the whole bucket, collects every image URL any product,
+ * category or the homepage hero holds, and removes the rest — the historical
  * orphans, cancelled modal uploads, and bulk-import replacements the
  * write-time GC can't see. Deletes EVERY unreferenced object immediately — no
  * grace window (operator decision 2026-07-09; see lib/admin/storage-sweep.ts).
@@ -172,7 +174,11 @@ async function listFolderImages(
   }
 }
 
-/** Every bucket path referenced by any product (gallery + primary) or category. */
+/**
+ * Every bucket path referenced by any product (gallery + primary), category,
+ * or the settings-managed homepage hero (9.4 — without the setting read the
+ * first sweep after a hero upload would delete it).
+ */
 async function collectReferencedPaths(supabase: AdminClient): Promise<Set<string>> {
   const referenced = new Set<string>()
   const add = (url: unknown) => {
@@ -207,6 +213,14 @@ async function collectReferencedPaths(supabase: AdminClient): Promise<Set<string
     for (const row of data ?? []) add(row.image_url)
     if ((data?.length ?? 0) < DB_PAGE_SIZE) break
   }
+
+  // Singleton row; erroring aborts the sweep (conservative — nothing deleted).
+  const { data: setting, error } = await supabase
+    .from("setting")
+    .select("homepage_hero")
+    .maybeSingle()
+  if (error) throw new Error(`read settings failed: ${error.message}`)
+  add((setting?.homepage_hero as { image_url?: unknown } | null)?.image_url)
 
   return referenced
 }

@@ -1,20 +1,25 @@
+import Image from "next/image"
 import Link from "next/link"
 import { ROUTES } from "@/lib/routes"
 
 type HeroProps = {
   /** Category the primary CTA promotes — the storefront's first live category. */
   ctaCategory: { name: string; slug: string } | null
+  /** Settings-managed hero photo (9.6); null keeps the placeholder card. */
+  imageUrl: string | null
 }
 
 /**
  * Home hero — matched to the storefront prototype: a deep-maroon gradient panel
  * with the "Bridal Edit" eyebrow, a serif headline (gold italic accent), two
- * CTAs, and a framed "your photo here" placeholder card on the right. The
- * prototype's hardcoded "Shop Bridal Sets" CTA pointed at a category that
- * doesn't exist in the live catalogue, so the primary CTA now promotes the
- * first real category (falling back to the shop when there are none).
+ * CTAs, and a framed photo card on the right. The card shows the operator's
+ * photo from Settings → Homepage Hero when one is set, else the prototype's
+ * "your photo here" placeholder. The prototype's hardcoded "Shop Bridal Sets"
+ * CTA pointed at a category that doesn't exist in the live catalogue, so the
+ * primary CTA now promotes the first real category (falling back to the shop
+ * when there are none).
  */
-export function Hero({ ctaCategory }: HeroProps) {
+export function Hero({ ctaCategory, imageUrl }: HeroProps) {
   const ctaHref = ctaCategory ? ROUTES.category(ctaCategory.slug) : ROUTES.shop
   const ctaLabel = ctaCategory ? `Shop ${ctaCategory.name}` : "Shop the Collection"
   return (
@@ -50,32 +55,47 @@ export function Hero({ ctaCategory }: HeroProps) {
           </div>
         </div>
 
-        <div className="relative flex aspect-[4/5] w-[340px] max-w-full flex-col items-center justify-center rounded-md bg-[linear-gradient(150deg,#F3EEE0,#E3D6BA_55%,#D2BE90)] shadow-[0_30px_60px_rgba(0,0,0,0.3)]">
+        <div className="relative flex aspect-[4/5] w-[340px] max-w-full flex-col items-center justify-center overflow-hidden rounded-md bg-[linear-gradient(150deg,#F3EEE0,#E3D6BA_55%,#D2BE90)] shadow-[0_30px_60px_rgba(0,0,0,0.3)]">
+          {imageUrl && (
+            // The home page's LCP when set — load eagerly at high priority.
+            <Image
+              src={imageUrl}
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 768px) 340px, 90vw"
+              className="object-cover"
+            />
+          )}
           <div className="absolute inset-3.5 border border-gold-600/40" aria-hidden />
-          <svg
-            viewBox="0 0 120 120"
-            width="104"
-            height="104"
-            fill="none"
-            stroke="#9C7526"
-            strokeWidth="1.2"
-            className="opacity-85"
-            aria-hidden
-          >
-            <circle cx="60" cy="60" r="44" />
-            <circle cx="60" cy="60" r="32" className="opacity-50" />
-            <path d="M60 24 L66 54 L60 60 L54 54 Z" fill="#9C7526" stroke="none" />
-            <path d="M60 96 L66 66 L60 60 L54 66 Z" fill="#9C7526" stroke="none" />
-            <path d="M24 60 L54 54 L60 60 L54 66 Z" fill="#9C7526" stroke="none" />
-            <path d="M96 60 L66 54 L60 60 L66 66 Z" fill="#9C7526" stroke="none" />
-            <circle cx="60" cy="60" r="3.6" fill="#9C7526" stroke="none" />
-          </svg>
-          <div className="mt-[18px] font-display text-[13px] leading-none tracking-[0.34em] text-[#8A6620]">
-            RJ JEWELLERS
-          </div>
-          <div className="mt-[9px] text-[11px] uppercase leading-none tracking-[0.12em] text-[#A88A55]">
-            Your photo here
-          </div>
+          {!imageUrl && (
+            <>
+              <svg
+                viewBox="0 0 120 120"
+                width="104"
+                height="104"
+                fill="none"
+                stroke="#9C7526"
+                strokeWidth="1.2"
+                className="opacity-85"
+                aria-hidden
+              >
+                <circle cx="60" cy="60" r="44" />
+                <circle cx="60" cy="60" r="32" className="opacity-50" />
+                <path d="M60 24 L66 54 L60 60 L54 54 Z" fill="#9C7526" stroke="none" />
+                <path d="M60 96 L66 66 L60 60 L54 66 Z" fill="#9C7526" stroke="none" />
+                <path d="M24 60 L54 54 L60 60 L54 66 Z" fill="#9C7526" stroke="none" />
+                <path d="M96 60 L66 54 L60 60 L66 66 Z" fill="#9C7526" stroke="none" />
+                <circle cx="60" cy="60" r="3.6" fill="#9C7526" stroke="none" />
+              </svg>
+              <div className="mt-[18px] font-display text-[13px] leading-none tracking-[0.34em] text-[#8A6620]">
+                RJ JEWELLERS
+              </div>
+              <div className="mt-[9px] text-[11px] uppercase leading-none tracking-[0.12em] text-[#A88A55]">
+                Your photo here
+              </div>
+            </>
+          )}
         </div>
       </div>
     </section>

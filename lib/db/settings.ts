@@ -2,6 +2,7 @@ import "server-only"
 import { unstable_cache } from "next/cache"
 import { cache } from "react"
 import { DEFAULT_EMAIL_COPY, type EmailCopy, resolveEmailCopy } from "@/lib/email/copy"
+import { DEFAULT_HERO_SETTINGS, type HeroSettings, resolveHeroSettings } from "@/lib/homepage-hero"
 import { DEFAULT_RETURN_SETTINGS, resolveReturnSettings, type ReturnSettings } from "@/lib/returns"
 import { resolveStoreInfo, type ResolvedStoreInfo } from "@/lib/store-info"
 import { CACHE_TAGS, CATALOG_REVALIDATE_SECONDS } from "./cache"
@@ -271,6 +272,37 @@ export const getReturnSettings = cache(
       }
     },
     ["getReturnSettings"],
+    { tags: [CACHE_TAGS.settings], revalidate: CATALOG_REVALIDATE_SECONDS },
+  ),
+)
+
+/**
+ * The homepage hero's operator-managed fields (TASKS 9.3) — today just the
+ * uploaded photo URL. Deliberately NOT part of `getStoreSettings` (the
+ * 0042/email_copy lesson: that select feeds every storefront page and must
+ * survive code shipping before migration 0044). Cached like the other
+ * settings reads (same `settings` tag, expired by the admin save); never
+ * throws — a broken read falls back to the placeholder card.
+ */
+export const getHeroSettings = cache(
+  unstable_cache(
+    async (): Promise<HeroSettings> => {
+      try {
+        const { data, error } = await publicClient
+          .from("setting")
+          .select("homepage_hero")
+          .maybeSingle()
+        if (error) {
+          console.error("getHeroSettings failed (homepage_hero column missing? apply 0044):", error.message)
+          return DEFAULT_HERO_SETTINGS
+        }
+        return resolveHeroSettings(data?.homepage_hero)
+      } catch (error: unknown) {
+        console.error("getHeroSettings failed, using defaults", error)
+        return DEFAULT_HERO_SETTINGS
+      }
+    },
+    ["getHeroSettings"],
     { tags: [CACHE_TAGS.settings], revalidate: CATALOG_REVALIDATE_SECONDS },
   ),
 )

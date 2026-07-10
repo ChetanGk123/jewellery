@@ -1,7 +1,10 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { updateStoreSettings } from "@/app/(admin)/admin/(console)/settings/actions"
+import { useRef, useState, useTransition } from "react"
+import {
+  updateStoreSettings,
+  uploadHeroImage,
+} from "@/app/(admin)/admin/(console)/settings/actions"
 import type { SettingsFormValues } from "@/lib/admin/settings"
 import { SHIPPING_PAYER_LABELS, type ShippingPayer } from "@/lib/returns"
 import { STORE_INFO } from "@/lib/store-info"
@@ -32,6 +35,7 @@ const NAV_SECTIONS = [
   { href: "#shipping-payments", label: "Shipping & Payments", color: "#3E8552" },
   { href: "#returns", label: "Returns", color: "#B4863A" },
   { href: "#announcement-banner", label: "Announcement Banner", color: "#5B1A2E" },
+  { href: "#homepage-hero", label: "Homepage Hero", color: "#5B1A2E" },
   { href: "#promo-block", label: "Homepage Promo Block", color: "#B4863A" },
   { href: "#notifications", label: "Notifications", color: "#5B1A2E" },
   { href: "#storage", label: "Storage", color: "#3E8552" },
@@ -55,6 +59,9 @@ export function SettingsView({ initial, vapidPublicKey, isPushConfigured }: Prop
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isUploadingHero, setIsUploadingHero] = useState(false)
+  const [heroError, setHeroError] = useState<string | null>(null)
+  const heroFileRef = useRef<HTMLInputElement>(null)
 
   const touch = () => {
     setIsDirty(true)
@@ -79,6 +86,29 @@ export function SettingsView({ initial, vapidPublicKey, isPushConfigured }: Prop
   const setReturns = (patch: Partial<SettingsFormValues["returns"]>) => {
     touch()
     setValues((prev) => ({ ...prev, returns: { ...prev.returns, ...patch } }))
+  }
+
+  const setHeroImage = (imageUrl: string) => {
+    touch()
+    setValues((prev) => ({ ...prev, hero: { ...prev.hero, imageUrl } }))
+  }
+
+  // Photo → shared admin Storage pipeline (9.5); the URL is stored on Save,
+  // like the category tile photo.
+  const onPickHeroFile = async (file: File | undefined) => {
+    if (!file) return
+    setHeroError(null)
+    setIsUploadingHero(true)
+    try {
+      const fd = new FormData()
+      fd.set("file", file)
+      const res = await uploadHeroImage(fd)
+      if (res.ok && res.url) setHeroImage(res.url)
+      else setHeroError(res.error ?? "Upload failed. Please try again.")
+    } finally {
+      setIsUploadingHero(false)
+      if (heroFileRef.current) heroFileRef.current.value = ""
+    }
   }
 
   const save = () => {
@@ -457,6 +487,78 @@ export function SettingsView({ initial, vapidPublicKey, isPushConfigured }: Prop
           </SectionCard>
 
           <SectionCard
+            id="homepage-hero"
+            iconBg="#F7E9E0"
+            icon={<ImageIcon />}
+            title="Homepage Hero"
+            subtitle="The photo in the framed card beside your home-page headline. Uploads apply on Save."
+          >
+            <div className="flex flex-wrap items-start gap-6 px-[30px] py-[26px] max-sm:px-5">
+              {/* 4:5 preview — the storefront card's aspect; the gradient +
+                  label mirror the placeholder shown when no photo is set. */}
+              <div
+                className="flex aspect-[4/5] w-[132px] shrink-0 flex-col items-center justify-center rounded-lg border border-[#E2D8C8] bg-cover bg-center"
+                style={
+                  values.hero.imageUrl
+                    ? { backgroundImage: `url(${values.hero.imageUrl})` }
+                    : { background: "linear-gradient(150deg,#F3EEE0,#E3D6BA 55%,#D2BE90)" }
+                }
+              >
+                {!values.hero.imageUrl && (
+                  <span className="px-2 text-center font-body text-[10px] uppercase tracking-[0.12em] text-[#A88A55]">
+                    Placeholder card
+                  </span>
+                )}
+              </div>
+              <div className="min-w-[240px] max-w-[520px] flex-1">
+                <p className="m-0 font-body text-[12.5px] leading-relaxed text-[#8B8177]">
+                  A portrait photo works best (4:5 — e.g. 800×1000px, under 5 MB). Without one, the
+                  storefront shows the decorative “Your photo here” placeholder card.
+                </p>
+                <div className="mt-3.5 flex items-center gap-3">
+                  <input
+                    ref={heroFileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => onPickHeroFile(e.target.files?.[0])}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => heroFileRef.current?.click()}
+                    disabled={isUploadingHero || isPending}
+                    className="rounded-lg border border-[#DAD0C2] bg-white px-4 py-2.5 font-body text-[13px] font-semibold text-[#5E4A40] transition-colors hover:bg-[#FBF8F2] disabled:opacity-60"
+                  >
+                    {isUploadingHero
+                      ? "Uploading…"
+                      : values.hero.imageUrl
+                        ? "Replace photo"
+                        : "Upload photo"}
+                  </button>
+                  {values.hero.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setHeroImage("")}
+                      disabled={isUploadingHero || isPending}
+                      className="font-body text-[13px] font-semibold text-[#C0392F] hover:underline disabled:opacity-60"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                {heroError && (
+                  <p
+                    role="alert"
+                    className="m-0 mt-3 rounded-lg border border-[#F0C8CE] bg-[#FBE9E7] px-3 py-2.5 font-body text-[12.5px] leading-snug text-[#C0392F]"
+                  >
+                    {heroError}
+                  </p>
+                )}
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard
             id="promo-block"
             iconBg="#F1E7D2"
             icon={<PanelIcon />}
@@ -768,6 +870,21 @@ function MegaphoneIcon() {
         d="M3 11v2a2 2 0 002 2h1l2 5h2l-1.5-5H15l5 3V6l-5 3H6a2 2 0 00-2 2z"
         stroke="#5B1A2E"
         strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function ImageIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" stroke="#5B1A2E" strokeWidth={1.6} />
+      <circle cx="9" cy="10" r="1.8" stroke="#5B1A2E" strokeWidth={1.5} />
+      <path
+        d="M3 17l5-4 4 3 4.5-4L21 15"
+        stroke="#5B1A2E"
+        strokeWidth={1.6}
         strokeLinejoin="round"
       />
     </svg>

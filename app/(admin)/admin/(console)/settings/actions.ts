@@ -6,7 +6,12 @@ import { requireAdmin } from "@/lib/admin/auth"
 import { CACHE_TAGS } from "@/lib/db/cache"
 import { formValuesToPayload, settingsFormSchema } from "@/lib/admin/settings"
 import { type PushSendReport, sendAdminPushNow } from "@/lib/push/send"
-import { type SweepResult, sweepUnusedAdminImages } from "@/lib/db/admin-storage"
+import {
+  type SweepResult,
+  sweepUnusedAdminImages,
+  type UploadResult,
+  uploadAdminImage,
+} from "@/lib/db/admin-storage"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
 
@@ -21,6 +26,16 @@ export type { SweepResult } from "@/lib/db/admin-storage"
 export async function sweepUnusedImages(): Promise<SweepResult> {
   await requireAdmin(ROUTES.adminSettings)
   return sweepUnusedAdminImages()
+}
+
+/**
+ * Upload the homepage hero photo (9.3) through the shared admin Storage
+ * pipeline; the returned URL is held in the Settings form and persisted onto
+ * `setting.homepage_hero` by the normal Save.
+ */
+export async function uploadHeroImage(formData: FormData): Promise<UploadResult> {
+  await requireAdmin(ROUTES.adminSettings)
+  return uploadAdminImage(formData, "branding")
 }
 
 /** The browser's push subscription, as sent by the Notifications card (6.17). */

@@ -12,6 +12,7 @@
 import { z } from "zod"
 import type { BannerSetting, PromoSetting, StoreInfoFields, StoreSettings } from "@/lib/db/settings"
 import type { Json } from "@/lib/db/types"
+import { type HeroSettings, heroSettingsToBlob } from "@/lib/homepage-hero"
 import { type ReturnSettings, returnSettingsToBlob } from "@/lib/returns"
 
 const optionalText = (max: number) => z.string().trim().max(max)
@@ -51,6 +52,11 @@ export const settingsFormSchema = z.object({
       .max(365, "A year is the most the window can be."),
     shippingPayer: z.enum(["customer", "store", "store_for_defects"]),
   }),
+  // The hero photo URL comes from the uploadHeroImage action, never typed by
+  // hand; "" means "no photo — show the placeholder card".
+  hero: z.object({
+    imageUrl: optionalText(600),
+  }),
   banner: z.object({
     enabled: z.boolean(),
     msg1: optionalText(160),
@@ -75,12 +81,14 @@ const RUPEE = 100
 
 /**
  * Seed the form from the loaded store settings (paise → rupees). The returns
- * policy arrives separately — its column is deliberately outside the shared
- * `getStoreSettings` select (see `getReturnSettings`, 8.7).
+ * policy and hero arrive separately — their columns are deliberately outside
+ * the shared `getStoreSettings` select (see `getReturnSettings` 8.7,
+ * `getHeroSettings` 9.3).
  */
 export function settingsToFormValues(
   s: StoreSettings,
   returns: ReturnSettings,
+  hero: HeroSettings,
 ): SettingsFormValues {
   return {
     storeName: s.storeName,
@@ -92,6 +100,7 @@ export function settingsToFormValues(
     flatRateRupees: Math.round(s.flatRatePaise / RUPEE),
     codEnabled: s.codEnabled,
     returns: { windowDays: returns.windowDays, shippingPayer: returns.shippingPayer },
+    hero: { imageUrl: hero.imageUrl ?? "" },
     banner: bannerValues(s.banner),
     promo: promoValues(s.promo),
   }
@@ -164,6 +173,7 @@ export function formValuesToPayload(v: SettingsFormValues): Json {
     flat_rate_paise: Math.round(v.flatRateRupees * RUPEE),
     cod_enabled: v.codEnabled,
     returns: returnSettingsToBlob(v.returns),
+    homepage_hero: heroSettingsToBlob({ imageUrl: v.hero.imageUrl.trim() || null }),
     banner: {
       enabled: v.banner.enabled,
       msg1: v.banner.msg1.trim(),

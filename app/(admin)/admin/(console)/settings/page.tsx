@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { SettingsView } from "@/components/admin/settings/SettingsView"
 import { ADMIN_PAGE_META } from "@/lib/admin/nav"
 import { settingsToFormValues } from "@/lib/admin/settings"
-import { getReturnSettings, getStoreSettings } from "@/lib/db/settings"
+import { getHeroSettings, getReturnSettings, getStoreSettings } from "@/lib/db/settings"
 import { getVapidPublicKey, isPushEnabled } from "@/lib/push/send"
 import { ROUTES } from "@/lib/routes"
 
@@ -17,10 +17,14 @@ export const metadata: Metadata = {
  * and shipping changes are live.
  */
 export default async function AdminSettingsPage() {
-  const [settings, returnSettings] = await Promise.all([getStoreSettings(), getReturnSettings()])
+  const [settings, returnSettings, heroSettings] = await Promise.all([
+    getStoreSettings(),
+    getReturnSettings(),
+    getHeroSettings(),
+  ])
   return (
     <SettingsView
-      initial={settingsToFormValues(settings, returnSettings)}
+      initial={settingsToFormValues(settings, returnSettings, heroSettings)}
       vapidPublicKey={getVapidPublicKey()}
       isPushConfigured={isPushEnabled()}
     />

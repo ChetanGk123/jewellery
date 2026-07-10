@@ -440,6 +440,38 @@ order its §10 gives (8.4 → 8.21 → 8.1+8.2 → 8.5 → 8.3).
   documented release order: **apply migrations → deploy code** (the 7.6 `email_copy` incident is the
   failure mode); e2e smoke on staging in CI before prod deploy.
 
+## Phase 9 — Settings-managed homepage hero image (user request 2026-07-10)
+
+The storefront hero's right-hand card is still the prototype's hardcoded "Your photo here"
+placeholder (`components/storefront/home/Hero.tsx`). Make it a real photo the operator uploads and
+manages from admin Settings. Blob column is `setting.homepage_hero` (`{image_url}`) so future hero
+fields (headline, CTA…) can ride the same key; **the placeholder card stays the fallback when no
+image is set.**
+
+- ✅ **9.1 — Pure logic** `lib/homepage-hero.ts` + tests: `resolveHeroSettings(raw)` (tolerant, the
+  0042 lesson) / `heroSettingsToBlob()` — the `lib/returns.ts` settings-blob pattern. 7 tests.
+- ✅ **9.2 — Migration 0044**: `setting.homepage_hero jsonb default '{}'`; restate
+  `admin_update_settings` with a whole-replace `homepage_hero` branch (like banner/homepage_promo);
+  hand-add the column to `lib/db/types.ts` (regen note in its header). **Written, NOT YET APPLIED.**
+- ✅ **9.3 — Server plumbing**: dedicated cached `getHeroSettings()` read (NOT in the shared
+  `getStoreSettings` select — 0042/email_copy lesson); `uploadAdminImage` gains a `"branding"`
+  prefix + `uploadHeroImage` server action on the Settings page.
+- ✅ **9.4 — Storage-GC safety**: the full-bucket sweep lists `branding/` AND counts
+  `setting.homepage_hero.image_url` as referenced (`collectReferencedPaths` + `isImageReferenced`) —
+  without this the first "Clean up unused images" click after upload deletes the hero. StorageCard
+  copy updated (also fixed its dialog rendering a literal `’`).
+- ✅ **9.5 — Admin UI**: "Homepage Hero" SectionCard in Settings (upload/replace/remove with
+  preview — the CategoryModal photo pattern; URL persisted by the normal Save) + sidebar nav entry;
+  schema/payload plumbing in `lib/admin/settings.ts`.
+- ✅ **9.6 — Storefront**: `Hero` accepts the image URL and renders it inside the framed card
+  (`next/image`, `priority` — it's the LCP; keep the gold inset frame); placeholder card unchanged
+  when unset; home page fetches `getHeroSettings()`.
+- ✅ **9.7 — Verify** *(complete 2026-07-10)*: 331 bun tests / tsc clean / lint at 13-error
+  baseline / build green. Pre-migration behavior confirmed live (placeholder fallback; sweep aborts
+  conservatively). **Operator applied 0044 + saved a hero photo** (`branding/131f3f87….webp`);
+  storefront hero renders it via next/image, and the sweep now succeeds and spares it ("all 3
+  stored images are in use" — the earlier orphaned test upload was already collected).
+
 ## Cross-cutting (ongoing, not a phase)
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**
 - ✅ **Testing** (0064c58, 0435e17, 8c76de5). **Unit (67 pass / 0 fail, `bun test`):** pure domain (cart, coupons, shipping, money, whatsapp, checkout schema/order mapping) plus `submitCheckout` — the authoritative write gate — with the Supabase server client mocked: honeypot drops bots before the RPC, invalid input never reaches the DB, the RPC payload provably carries no price, success/error/unexpected-shape all mapped. **E2E (Playwright, 2 pass):** `e2e/checkout.e2e.ts` runs the critical journey (shop → product → add to cart → cart → COD form → place order → confirmation with order number → cart cleared) against a **production build** on :3200, so the strict nonce CSP + per-request rendering are exercised as shipped. Config notes: system Chrome via `channel: "chrome"` (no browser download); `*.e2e.ts` naming so `bun test` ignores them; `bun run e2e`. **Data:** E2E writes a real order into live Supabase tagged `e2e-test@example.com` — clean with `delete from "order" where customer_email = 'e2e-test@example.com'` (+ `setval('order_no_seq', 1001, false)`); this run's order was cleaned. **Visual regression (16 pass):** `e2e/visual.e2e.ts` — full-page screenshots of home / shop / product / empty-cart at 320/768/1024/1440; baselines committed (`visual.e2e.ts-snapshots/`, ~7.8 MB); `toHaveScreenshot` defaults in config (animations disabled, 2% diff tolerance); verified stable across two fresh runs; regenerate with `bun run e2e -- --update-snapshots`. **Coverage (`bun test --coverage`):** 100% funcs / 99.78% lines across the tested domain + action layer (actions, cart, checkout order/schema, coupons, shipping, store-info, money, whatsapp) — exceeds the 80% target. Caveat: Bun reports only test-imported files; `lib/db` row-mappers, `stores/cart`, and components are exercised via E2E + visual regression instead (per web testing rules: visual regression > brittle markup assertions for visual components). **Deferred to deploy:** firefox/webkit projects (need `playwright install` browser downloads) and a staging/branch Supabase so E2E stops writing prod data.

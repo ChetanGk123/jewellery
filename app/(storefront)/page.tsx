@@ -5,7 +5,7 @@ import { ProductSection } from "@/components/storefront/home/ProductSection"
 import { PromoBanner } from "@/components/storefront/home/PromoBanner"
 import { StoryBlock } from "@/components/storefront/home/StoryBlock"
 import { getCategoryTiles, getFeaturedProducts, getFreshProducts } from "@/lib/db/queries"
-import { getStoreSettings } from "@/lib/db/settings"
+import { getHeroSettings, getStoreSettings } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
 
 /**
@@ -14,11 +14,12 @@ import { ROUTES } from "@/lib/routes"
  * and a closing editorial block, all wired to live Supabase data.
  */
 export default async function HomePage() {
-  const [categories, featured, fresh, settings] = await Promise.all([
+  const [categories, featured, fresh, settings, hero] = await Promise.all([
     getCategoryTiles(),
     getFeaturedProducts(8),
     getFreshProducts(8),
     getStoreSettings(),
+    getHeroSettings(),
   ])
 
   // Promote the first category that actually has products (else the first one).
@@ -26,7 +27,7 @@ export default async function HomePage() {
 
   return (
     <main className="flex-1">
-      <Hero ctaCategory={heroCategory} />
+      <Hero ctaCategory={heroCategory} imageUrl={hero.imageUrl} />
       <TrustStrip
         freeShipThresholdPaise={settings.freeShipThresholdPaise}
         codEnabled={settings.codEnabled}

@@ -1,7 +1,7 @@
 /**
  * Pure logic for the admin "Clean up unused images" sweep (the IO lives in
  * lib/db/admin-storage.ts). An object is an orphan when no product/category
- * references it — full stop. The original 24h grace window (protecting an
+ * (or the settings homepage hero) references it — full stop. The original 24h grace window (protecting an
  * upload whose Save hadn't landed yet) was removed at the operator's request
  * (2026-07-09): the sweep is a manual, confirmed action and the dialog now
  * warns to save any in-progress edit first instead.

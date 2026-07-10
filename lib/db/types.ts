@@ -706,6 +706,7 @@ export type Database = {
           flat_rate_paise: number
           free_ship_threshold_paise: number
           gstin: string | null
+          homepage_hero: Json
           homepage_promo: Json
           id: boolean
           phone: string | null
@@ -723,6 +724,7 @@ export type Database = {
           flat_rate_paise?: number
           free_ship_threshold_paise?: number
           gstin?: string | null
+          homepage_hero?: Json
           homepage_promo?: Json
           id?: boolean
           phone?: string | null
@@ -740,6 +742,7 @@ export type Database = {
           flat_rate_paise?: number
           free_ship_threshold_paise?: number
           gstin?: string | null
+          homepage_hero?: Json
           homepage_promo?: Json
           id?: boolean
           phone?: string | null
