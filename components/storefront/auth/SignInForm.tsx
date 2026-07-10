@@ -43,7 +43,7 @@ export function SignInForm({ next }: { next: string }) {
 
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-[#EFE3D0]" />
-        <span className="text-[11px] uppercase tracking-[0.14em] text-[#9C8A84]">or</span>
+        <span className="text-[11px] uppercase tracking-[0.14em] text-[#7B6B65]">or</span>
         <span className="h-px flex-1 bg-[#EFE3D0]" />
       </div>
 

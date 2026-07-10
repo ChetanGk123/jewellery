@@ -71,7 +71,7 @@ export function OrderConfirmation({ confirmation, couponDropped, emailSent }: Pr
         <Row label="Estimated delivery" value={ESTIMATED_DELIVERY} />
       </dl>
 
-      <p className="m-0 text-[12.5px] leading-snug text-[#9C8A84]">
+      <p className="m-0 text-[12.5px] leading-snug text-[#7B6B65]">
         Cash on Delivery — please keep the amount ready when your order arrives.
       </p>
 
@@ -96,7 +96,7 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between gap-[30px]">
-      <dt className="text-[13px] font-normal leading-none text-[#9C8A84]">{label}</dt>
+      <dt className="text-[13px] font-normal leading-none text-[#7B6B65]">{label}</dt>
       <dd
         className={`m-0 text-[13px] font-semibold leading-none ${
           emphasis ? "text-maroon-700" : "text-maroon-900"

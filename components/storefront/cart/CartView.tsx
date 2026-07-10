@@ -37,7 +37,7 @@ export function CartView({ freeShipThresholdPaise, flatRatePaise, coupons, enqui
 
   if (!hasHydrated) {
     return (
-      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]">
+      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#7B6B65]">
         Loading your cart…
       </div>
     )

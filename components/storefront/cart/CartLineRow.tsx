@@ -39,7 +39,7 @@ export function CartLineRow({ line, onDecrement, onIncrement, onRemove }: Props)
           {line.name}
         </span>
         {line.optionValue && (
-          <span className="text-[12px] leading-none text-[#9C8A84]">
+          <span className="text-[12px] leading-none text-[#7B6B65]">
             {line.optionLabel ? `${line.optionLabel}: ` : ""}
             {line.optionValue}
           </span>
@@ -78,7 +78,7 @@ export function CartLineRow({ line, onDecrement, onIncrement, onRemove }: Props)
         <button
           type="button"
           onClick={() => onRemove(line)}
-          className="text-[12px] leading-none text-[#A6938C] underline transition-colors hover:text-maroon-700"
+          className="text-[12px] leading-none text-[#82695F] underline transition-colors hover:text-maroon-700"
         >
           Remove
         </button>

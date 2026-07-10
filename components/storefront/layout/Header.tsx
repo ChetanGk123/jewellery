@@ -100,11 +100,7 @@ export async function Header({ banner, info }: { banner: BannerSetting; info: Re
             >
               {accountLabel}
             </Link>
-            <Link
-              href={ROUTES.cart}
-              aria-label="Cart"
-              className="group flex items-center gap-[7px]"
-            >
+            <Link href={ROUTES.cart} className="group flex items-center gap-[7px]">
               <span className="whitespace-nowrap text-[13px] text-[#5E4A44] transition-colors group-hover:text-maroon-700">
                 Cart
               </span>

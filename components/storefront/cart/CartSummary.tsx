@@ -108,7 +108,7 @@ export function CartSummary({
         Enquire on WhatsApp
       </a>
 
-      <p className="m-0 text-center text-[11.5px] leading-snug text-[#9C8A84]">
+      <p className="m-0 text-center text-[11.5px] leading-snug text-[#7B6B65]">
         Cash on Delivery available across India · secure checkout
       </p>
     </aside>

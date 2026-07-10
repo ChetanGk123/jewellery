@@ -40,7 +40,12 @@ export async function Footer({ info }: { info: ResolvedStoreInfo }) {
                   <SocialGlyph social={social} />
                 </a>
               ) : (
-                <span key={social.label} aria-label={social.label} className={socialBadgeClass}>
+                <span
+                  key={social.label}
+                  role="img"
+                  aria-label={social.label}
+                  className={socialBadgeClass}
+                >
                   <SocialGlyph social={social} />
                 </span>
               ),

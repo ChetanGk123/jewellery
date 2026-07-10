@@ -50,7 +50,7 @@ export function ProductTabs({ data }: { data: ProductTabsData }) {
               className={`border-b-2 py-3 text-[12.5px] font-medium uppercase leading-none tracking-[0.1em] transition-colors ${
                 isActive
                   ? "border-maroon-700 text-maroon-900"
-                  : "border-transparent text-[#9C8A84] hover:text-maroon-700"
+                  : "border-transparent text-[#7B6B65] hover:text-maroon-700"
               }`}
             >
               {tab.label}
@@ -92,7 +92,7 @@ export function ProductTabs({ data }: { data: ProductTabsData }) {
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex max-w-[340px] justify-between gap-4">
-      <dt className="text-[#9C8A84]">{label}</dt>
+      <dt className="text-[#7B6B65]">{label}</dt>
       <dd className="m-0 text-right">{value}</dd>
     </div>
   )

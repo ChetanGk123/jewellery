@@ -57,7 +57,7 @@ export function ProductReviews({ reviews, productId, hasPurchased, prefillName }
               )}
               <p className="m-0 mt-1 text-[12px] font-medium leading-none text-gold-600">
                 {review.name}{" "}
-                <span className="text-[#9C8A84]">· {formatReviewDate(review.created_at)}</span>
+                <span className="text-[#7B6B65]">· {formatReviewDate(review.created_at)}</span>
               </p>
             </article>
           ))}

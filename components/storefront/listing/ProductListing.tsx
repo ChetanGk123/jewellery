@@ -46,7 +46,7 @@ export function ProductListing({
   return (
     <main className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]">
       <nav aria-label="Breadcrumb" className="mb-[22px]">
-        <ol className="flex items-center gap-2 text-[12px] leading-none text-[#9C8A84]">
+        <ol className="flex items-center gap-2 text-[12px] leading-none text-[#7B6B65]">
           <li>
             <Link href={ROUTES.home} className="text-maroon-700 hover:underline">
               Home
@@ -78,6 +78,8 @@ export function ProductListing({
         />
 
         <div className="min-w-0 flex-1">
+          {/* Card titles are h3s; without this the outline jumps h1 → h3. */}
+          <h2 className="sr-only">Products</h2>
           {products.length > 0 ? (
             <>
               <div className="grid grid-cols-2 gap-[22px] sm:grid-cols-3">

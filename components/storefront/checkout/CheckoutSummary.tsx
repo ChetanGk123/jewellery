@@ -69,7 +69,7 @@ export function CheckoutSummary({
       >
         {ordersPaused ? "Orders paused" : isSubmitting ? "Placing order…" : "Place Order"}
       </button>
-      <p className="m-0 text-center text-[11.5px] leading-snug text-[#9C8A84]">
+      <p className="m-0 text-center text-[11.5px] leading-snug text-[#7B6B65]">
         {ordersPaused
           ? "We've paused online orders for a moment — please contact us to order."
           : "Cash on Delivery across India · your details are verified securely server-side."}
@@ -100,7 +100,7 @@ function SummaryLine({ line }: { line: CartLine }) {
       <div className="flex flex-1 flex-col gap-[3px]">
         <span className="text-[13px] font-medium leading-[1.3] text-maroon-900">{line.name}</span>
         {line.optionValue && (
-          <span className="text-[11px] leading-none text-[#9C8A84]">{line.optionValue}</span>
+          <span className="text-[11px] leading-none text-[#7B6B65]">{line.optionValue}</span>
         )}
       </div>
       <span className="text-[13px] font-medium leading-none text-maroon-900">

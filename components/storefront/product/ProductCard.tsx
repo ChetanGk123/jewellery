@@ -84,7 +84,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
             {formatPaise(product.price_paise)}
           </span>
           {hasSale && product.mrp_paise !== null && (
-            <span className="text-[13px] font-normal leading-none text-[#A6938C] line-through">
+            <span className="text-[13px] font-normal leading-none text-[#82695F] line-through">
               {formatPaise(product.mrp_paise)}
             </span>
           )}
@@ -96,7 +96,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
               ★
             </span>{" "}
             {product.rating.toFixed(1)}{" "}
-            <span className="text-[#A6938C]">({product.review_count})</span>
+            <span className="text-[#82695F]">({product.review_count})</span>
           </span>
           <AddToCartButton
             input={{
@@ -111,10 +111,10 @@ export function ProductCard({ product }: { product: ProductListItem }) {
               optionLabel: null,
               optionValue: null,
             }}
-            ariaLabel={isOutOfStock ? `${name} is out of stock` : `Add ${name} to cart`}
+            ariaLabel={isOutOfStock ? `Sold out — ${name}` : `Add ${name} to cart`}
             addedLabel="✓"
             disabled={isOutOfStock}
-            className="relative z-10 rounded-sm border border-gold-300 bg-[#FBF1E0] px-[13px] py-[9px] text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-gold-600 transition-colors duration-200 hover:border-maroon-700 hover:bg-maroon-700 hover:text-cream-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gold-300 disabled:hover:bg-[#FBF1E0] disabled:hover:text-gold-600"
+            className="relative z-10 rounded-sm border border-gold-300 bg-[#FBF1E0] px-[13px] py-[9px] text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-[#8C6109] transition-colors duration-200 hover:border-maroon-700 hover:bg-maroon-700 hover:text-cream-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gold-300 disabled:hover:bg-[#FBF1E0] disabled:hover:text-[#8C6109]"
           >
             {isOutOfStock ? "Sold Out" : "Add"}
           </AddToCartButton>

@@ -131,8 +131,8 @@ export function OrderDetail({ order, returnSettings, now }: Props) {
               >
                 <span className="flex-1 text-[13.5px] font-medium leading-snug text-maroon-900">
                   {item.name}
-                  {item.tone && <span className="font-normal text-[#9C8A84]"> · {item.tone}</span>}
-                  <span className="font-normal text-[#9C8A84]"> ×{item.qty}</span>
+                  {item.tone && <span className="font-normal text-[#7B6B65]"> · {item.tone}</span>}
+                  <span className="font-normal text-[#7B6B65]"> ×{item.qty}</span>
                   {/* Review invitation (6.18) — Delivered is when it's reviewable
                       (the submit_review RPC enforces the same gate). */}
                   {order.status === "Delivered" && item.productSlug && (
@@ -224,7 +224,7 @@ const STEP_STYLES: Record<
 > = {
   done: { dot: "#C9A24B", mark: "✓", markColor: "#FFFFFF", label: "#4A0E1C" },
   active: { dot: "#71182B", mark: "●", markColor: "#F3E3C7", label: "#71182B" },
-  upcoming: { dot: "#F3E9E2", mark: "", markColor: "#9C8A84", label: "#9C8A84" },
+  upcoming: { dot: "#F3E9E2", mark: "", markColor: "#7B6B65", label: "#7B6B65" },
 }
 
 /** Fulfilment stepper, restyled from `OrderDrawer`'s admin version for storefront chrome. */

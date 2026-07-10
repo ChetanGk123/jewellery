@@ -175,14 +175,14 @@ export function CheckoutForm({
               <span className="text-[14px] font-medium leading-none text-maroon-900">
                 Cash on Delivery
               </span>
-              <span className="ml-auto text-[12px] leading-none text-[#9C8A84]">
+              <span className="ml-auto text-[12px] leading-none text-[#7B6B65]">
                 Pay when it arrives
               </span>
             </div>
           ) : (
             <div className="flex items-center gap-3 rounded-sm border border-[#E7D9C2] bg-[#FBF7F0] px-4 py-[15px] opacity-60">
               <span className="h-[18px] w-[18px] rounded-full border-2 border-[#CDBBA0]" />
-              <span className="text-[14px] font-medium leading-none text-[#9C8A84]">
+              <span className="text-[14px] font-medium leading-none text-[#7B6B65]">
                 Cash on Delivery
               </span>
               <span className="ml-auto text-[12px] leading-none text-[#B79B7E]">Paused</span>
@@ -190,7 +190,7 @@ export function CheckoutForm({
           )}
           <div className="flex items-center gap-3 rounded-sm border border-[#E7D9C2] bg-[#FBF7F0] px-4 py-[15px] opacity-60">
             <span className="h-[18px] w-[18px] rounded-full border-2 border-[#CDBBA0]" />
-            <span className="text-[14px] font-medium leading-none text-[#9C8A84]">Card / UPI</span>
+            <span className="text-[14px] font-medium leading-none text-[#7B6B65]">Card / UPI</span>
             <span className="ml-auto text-[12px] leading-none text-[#B79B7E]">Coming soon</span>
           </div>
 

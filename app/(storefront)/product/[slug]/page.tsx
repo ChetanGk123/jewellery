@@ -92,7 +92,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <main className="mx-auto max-w-[1280px] flex-1 px-6 pb-[70px] pt-[26px]">
       <JsonLd data={buildProductJsonLd(product)} nonce={nonce} />
       <nav aria-label="Breadcrumb" className="mb-[26px]">
-        <ol className="flex flex-wrap items-center gap-2 text-[12px] leading-none text-[#9C8A84]">
+        <ol className="flex flex-wrap items-center gap-2 text-[12px] leading-none text-[#7B6B65]">
           <li>
             <Link href={ROUTES.home} className="text-maroon-700 hover:underline">
               Home
@@ -138,7 +138,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {formatPaise(product.price_paise)}
             </span>
             {hasSale && product.mrp_paise !== null && (
-              <span className="text-[18px] font-normal leading-none text-[#A6938C] line-through">
+              <span className="text-[18px] font-normal leading-none text-[#82695F] line-through">
                 {formatPaise(product.mrp_paise)}
               </span>
             )}

@@ -11,7 +11,7 @@ import { LEGAL_LAST_UPDATED } from "@/lib/legal-content"
 /** "Last updated {date}" caption shown under the page hero. */
 export function LegalUpdatedNote() {
   return (
-    <p className="m-0 text-[12.5px] font-light leading-none text-[#9C8A84]">
+    <p className="m-0 text-[12.5px] font-light leading-none text-[#7B6B65]">
       Last updated: {LEGAL_LAST_UPDATED}
     </p>
   )

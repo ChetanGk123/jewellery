@@ -62,7 +62,7 @@ export function CheckoutView({
 
   if (!hasHydrated) {
     return (
-      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]">
+      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#7B6B65]">
         Loading checkout…
       </div>
     )
@@ -70,7 +70,7 @@ export function CheckoutView({
 
   if (isRedirecting) {
     return (
-      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#9C8A84]">
+      <div aria-busy="true" className="min-h-[40vh] text-[14px] leading-none text-[#7B6B65]">
         Taking you to your order confirmation…
       </div>
     )

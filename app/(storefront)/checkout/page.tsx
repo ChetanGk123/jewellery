@@ -36,7 +36,7 @@ export default async function CheckoutPage() {
 
   return (
     <main className="mx-auto max-w-[1180px] flex-1 px-6 pb-20 pt-[30px]">
-      <nav aria-label="Breadcrumb" className="mb-[18px] text-[12px] leading-none text-[#9C8A84]">
+      <nav aria-label="Breadcrumb" className="mb-[18px] text-[12px] leading-none text-[#7B6B65]">
         <Link href={ROUTES.cart} className="text-maroon-700 hover:underline">
           Cart
         </Link>

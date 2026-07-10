@@ -471,6 +471,17 @@ image is set.**
   conservatively). **Operator applied 0044 + saved a hero photo** (`branding/131f3f87….webp`);
   storefront hero renders it via next/image, and the sweep now succeeds and spares it ("all 3
   stored images are in use" — the earlier orphaned test upload was already collected).
+- ✅ **9.8 — Lighthouse pass** *(2026-07-10, user request)*: **accessibility 92 → 100** on home /
+  shop / product / cart. Fixes: footer social spans get `role="img"` (aria-label was prohibited on
+  bare spans); header cart link's aria-label dropped in favour of its visible text + sr-only "items
+  in cart" on the badge; SOLD OUT button's accessible name now includes its visible text; sr-only
+  `<h2>Products</h2>` on listing pages (h1→h3 jump); contrast — muted taupe `#A6938C`→`#82695F`
+  (2.9:1→5.1:1: card MRP strike, review counts, cart Remove, PDP MRP), systematic `#9C8A84`→
+  `#7B6B65` (3.1:1→4.7:1+, ~20 storefront uses incl. breadcrumbs), ADD button gold→`#8C6109`
+  (4.46→4.9:1). **Performance: prod build measures LCP 199 ms / CLS 0.00** (dev-server 94 was dev
+  overhead — nothing to fix; hero `priority` preload working). Cart page SEO 63 is the deliberate
+  noindex. Visual-regression baselines regenerated (now include the hero photo + new colours),
+  verified stable across two runs.
 
 ## Cross-cutting (ongoing, not a phase)
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**

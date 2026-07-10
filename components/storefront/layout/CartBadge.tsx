@@ -16,6 +16,7 @@ export function CartBadge() {
   return (
     <span className="inline-block min-w-[20px] rounded-[10px] bg-maroon-700 px-[5px] text-center text-[11px] font-semibold leading-5 text-cream-200">
       {count}
+      <span className="sr-only"> items in cart</span>
     </span>
   )
 }
