@@ -2,24 +2,28 @@ import { ROUTES } from "./routes"
 
 export type NavLink = { href: string; label: string }
 
-/** Primary header menu — "All Jewellery" plus the featured category slugs. */
-export const PRIMARY_NAV: NavLink[] = [
-  { href: ROUTES.shop, label: "All Jewellery" },
-  { href: ROUTES.category("bridal-sets"), label: "Bridal Sets" },
-  { href: ROUTES.category("necklaces"), label: "Necklaces" },
-  { href: ROUTES.category("earrings"), label: "Earrings" },
-  { href: ROUTES.category("bangles-bracelets"), label: "Bangles & Bracelets" },
-  { href: ROUTES.category("maang-tikka"), label: "Maang Tikka" },
-  { href: ROUTES.category("hand-jewellery"), label: "Hand Jewellery" },
-]
+/** The category fields the nav builders need (a slice of `Category`). */
+type NavCategory = { name: string; slug: string }
 
-/** Footer "Shop" column — a shorter subset of the primary nav. */
-export const FOOTER_SHOP_LINKS: NavLink[] = [
-  { href: ROUTES.shop, label: "All Jewellery" },
-  { href: ROUTES.category("bridal-sets"), label: "Bridal Sets" },
-  { href: ROUTES.category("necklaces"), label: "Necklaces" },
-  { href: ROUTES.category("earrings"), label: "Earrings" },
-]
+/** How many categories the footer "Shop" column lists after "All Jewellery". */
+const FOOTER_SHOP_CATEGORY_COUNT = 3
+
+/**
+ * Primary header menu — "All Jewellery" plus the live categories (in the
+ * admin-managed sort order the caller fetched them in). Built from the DB
+ * rather than hardcoded so admin category changes show up in the chrome.
+ */
+export function buildPrimaryNav(categories: NavCategory[]): NavLink[] {
+  return [
+    { href: ROUTES.shop, label: "All Jewellery" },
+    ...categories.map((c) => ({ href: ROUTES.category(c.slug), label: c.name })),
+  ]
+}
+
+/** Footer "Shop" column — "All Jewellery" plus the first few categories. */
+export function buildFooterShopLinks(categories: NavCategory[]): NavLink[] {
+  return buildPrimaryNav(categories.slice(0, FOOTER_SHOP_CATEGORY_COUNT))
+}
 
 /** Footer "Help" column. */
 export const FOOTER_HELP_LINKS: NavLink[] = [

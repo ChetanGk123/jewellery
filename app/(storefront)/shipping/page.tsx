@@ -8,7 +8,14 @@ import {
   NumberedSteps,
   RatesTable,
 } from "@/components/storefront/help/HelpBlocks"
-import { RETURN_NO, RETURN_STEPS, RETURN_YES, SHIP_CARDS, SHIP_RATES } from "@/lib/help-content"
+import {
+  buildShipCards,
+  buildShipRates,
+  RETURN_NO,
+  RETURN_STEPS,
+  RETURN_YES,
+} from "@/lib/help-content"
+import { getStoreSettings } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
@@ -19,9 +26,14 @@ export const metadata: Metadata = {
 
 /**
  * Shipping & Returns (TASKS 1.7) — prototype-matched help page: delivery cards,
- * a shipping-rate table, the returns process, and eligibility lists.
+ * a shipping-rate table, the returns process, and eligibility lists. The rate
+ * rows and COD mentions come from store settings, so they always match what
+ * checkout actually charges.
  */
-export default function ShippingPage() {
+export default async function ShippingPage() {
+  const settings = await getStoreSettings()
+  const shipCards = buildShipCards(settings)
+  const shipRates = buildShipRates(settings)
   return (
     <main>
       <HelpHeader
@@ -34,13 +46,13 @@ export default function ShippingPage() {
       <div className="mx-auto flex max-w-[1000px] flex-col gap-10 px-6 pb-16 pt-[54px]">
         <HelpSection title="Delivery">
           <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
-            {SHIP_CARDS.map((card) => (
+            {shipCards.map((card) => (
               <IconCard key={card.title} {...card} />
             ))}
           </div>
         </HelpSection>
 
-        <RatesTable rows={SHIP_RATES} />
+        <RatesTable rows={shipRates} />
 
         <HelpSection title="Returns & Exchanges">
           <p className="m-0 mb-5 max-w-[680px] text-[15px] font-light leading-[1.7] text-[#5E4A44]">

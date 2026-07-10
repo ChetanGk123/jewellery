@@ -1,12 +1,22 @@
 import Link from "next/link"
 import { ROUTES } from "@/lib/routes"
 
+type HeroProps = {
+  /** Category the primary CTA promotes — the storefront's first live category. */
+  ctaCategory: { name: string; slug: string } | null
+}
+
 /**
  * Home hero — matched to the storefront prototype: a deep-maroon gradient panel
  * with the "Bridal Edit" eyebrow, a serif headline (gold italic accent), two
- * CTAs, and a framed "your photo here" placeholder card on the right.
+ * CTAs, and a framed "your photo here" placeholder card on the right. The
+ * prototype's hardcoded "Shop Bridal Sets" CTA pointed at a category that
+ * doesn't exist in the live catalogue, so the primary CTA now promotes the
+ * first real category (falling back to the shop when there are none).
  */
-export function Hero() {
+export function Hero({ ctaCategory }: HeroProps) {
+  const ctaHref = ctaCategory ? ROUTES.category(ctaCategory.slug) : ROUTES.shop
+  const ctaLabel = ctaCategory ? `Shop ${ctaCategory.name}` : "Shop the Collection"
   return (
     <section className="relative overflow-hidden bg-[linear-gradient(120deg,#4A0E1C,#71182B_55%,#5E1322)]">
       <div className="mx-auto flex max-w-[1280px] flex-col items-center gap-12 px-6 py-16 md:flex-row md:flex-wrap">
@@ -26,10 +36,10 @@ export function Hero() {
           </p>
           <div className="mt-1.5 flex flex-wrap gap-3.5">
             <Link
-              href={ROUTES.category("bridal-sets")}
+              href={ctaHref}
               className="inline-flex items-center justify-center rounded-sm bg-[linear-gradient(135deg,#E6CA7E,#C9A24B_55%,#A87A1E)] px-8 py-[15px] text-[12px] font-semibold uppercase leading-none tracking-[0.14em] text-[#3A0E18] shadow-[0_10px_26px_rgba(168,122,30,0.3)] transition-transform duration-200 hover:-translate-y-0.5"
             >
-              Shop Bridal Sets
+              {ctaLabel}
             </Link>
             <Link
               href={ROUTES.shop}

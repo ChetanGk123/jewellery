@@ -21,10 +21,16 @@ export default async function HomePage() {
     getStoreSettings(),
   ])
 
+  // Promote the first category that actually has products (else the first one).
+  const heroCategory = categories.find((c) => c.productCount > 0) ?? categories[0] ?? null
+
   return (
     <main className="flex-1">
-      <Hero />
-      <TrustStrip />
+      <Hero ctaCategory={heroCategory} />
+      <TrustStrip
+        freeShipThresholdPaise={settings.freeShipThresholdPaise}
+        codEnabled={settings.codEnabled}
+      />
       <CategoryTiles categories={categories} />
       <ProductSection
         eyebrow="Most Loved"

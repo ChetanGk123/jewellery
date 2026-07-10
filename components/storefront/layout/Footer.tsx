@@ -3,7 +3,8 @@ import { NewsletterForm } from "./NewsletterForm"
 import { FacebookIcon } from "@/components/ui/FacebookIcon"
 import { InstagramIcon } from "@/components/ui/InstagramIcon"
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon"
-import { FOOTER_SHOP_LINKS, FOOTER_HELP_LINKS } from "@/lib/navigation"
+import { buildFooterShopLinks, FOOTER_HELP_LINKS } from "@/lib/navigation"
+import { getCategories } from "@/lib/db/queries"
 import { ROUTES } from "@/lib/routes"
 import type { ResolvedStoreInfo, SocialLink } from "@/lib/store-info"
 
@@ -15,7 +16,8 @@ const socialBadgeClass =
  * deep-maroon panel with a brand blurb + socials, Shop/Help columns, a
  * newsletter signup (UI-only for now), and a payments/GST strip.
  */
-export function Footer({ info }: { info: ResolvedStoreInfo }) {
+export async function Footer({ info }: { info: ResolvedStoreInfo }) {
+  const shopLinks = buildFooterShopLinks(await getCategories())
   return (
     <footer className="mt-auto bg-maroon-950 text-[#D9C2B8]">
       <div className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-10 px-6 pt-14 pb-[30px]">
@@ -46,7 +48,7 @@ export function Footer({ info }: { info: ResolvedStoreInfo }) {
           </div>
         </div>
 
-        <FooterColumn title="Shop" links={FOOTER_SHOP_LINKS} />
+        <FooterColumn title="Shop" links={shopLinks} />
         <FooterColumn title="Help" links={FOOTER_HELP_LINKS} />
 
         <div className="flex min-w-[200px] flex-col gap-3">

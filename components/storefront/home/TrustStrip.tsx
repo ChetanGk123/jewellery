@@ -1,17 +1,33 @@
-/** Trust items shown under the hero — copy matched to the storefront prototype. */
-const TRUST_ITEMS = [
-  { icon: "✈", title: "Free Shipping", sub: "On all orders over ₹999" },
-  { icon: "₹", title: "Cash on Delivery", sub: "Pay when it arrives" },
-  { icon: "↺", title: "7-Day Returns", sub: "Easy & hassle-free" },
-  { icon: "✨", title: "Skin-Friendly", sub: "Anti-tarnish plating" },
-] as const
+import { formatPaise } from "@/lib/utils/money"
 
-/** Four reassurance points in a cream strip below the hero. */
-export function TrustStrip() {
+type TrustStripProps = {
+  /** Free-shipping threshold from store settings, so the copy matches checkout. */
+  freeShipThresholdPaise: number
+  /** Whether COD is currently offered — hides the COD reassurance when off. */
+  codEnabled: boolean
+}
+
+/**
+ * Four reassurance points in a cream strip below the hero — copy matched to
+ * the storefront prototype, with the free-ship amount and COD availability
+ * taken from store settings rather than hardcoded.
+ */
+export function TrustStrip({ freeShipThresholdPaise, codEnabled }: TrustStripProps) {
+  const items = [
+    {
+      icon: "✈",
+      title: "Free Shipping",
+      sub: `On all orders over ${formatPaise(freeShipThresholdPaise)}`,
+    },
+    ...(codEnabled ? [{ icon: "₹", title: "Cash on Delivery", sub: "Pay when it arrives" }] : []),
+    { icon: "↺", title: "7-Day Returns", sub: "Easy & hassle-free" },
+    { icon: "✨", title: "Skin-Friendly", sub: "Anti-tarnish plating" },
+  ]
+
   return (
     <section className="border-b border-[#EFE3D0] bg-cream-50">
       <ul className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-4 px-6 py-[22px]">
-        {TRUST_ITEMS.map((item) => (
+        {items.map((item) => (
           <li key={item.title} className="flex min-w-[200px] flex-1 items-center gap-[11px]">
             <span className="text-[22px] leading-none text-gold-400" aria-hidden>
               {item.icon}

@@ -1,8 +1,9 @@
 import Link from "next/link"
 import type { BannerSetting } from "@/lib/db/settings"
 import { getCurrentUser } from "@/lib/db/server"
+import { getCategories } from "@/lib/db/queries"
 import { ROUTES } from "@/lib/routes"
-import { PRIMARY_NAV } from "@/lib/navigation"
+import { buildPrimaryNav } from "@/lib/navigation"
 import type { ResolvedStoreInfo } from "@/lib/store-info"
 import { CartBadge } from "./CartBadge"
 import { MobileNavDrawer } from "./MobileNavDrawer"
@@ -18,9 +19,10 @@ import { MobileNavDrawer } from "./MobileNavDrawer"
  */
 export async function Header({ banner, info }: { banner: BannerSetting; info: ResolvedStoreInfo }) {
   const showBanner = banner.enabled && Boolean(banner.msg1)
-  const user = await getCurrentUser()
+  const [user, categories] = await Promise.all([getCurrentUser(), getCategories()])
   const accountHref = user ? ROUTES.account : ROUTES.signIn
   const accountLabel = user ? "Account" : "Sign In"
+  const primaryNav = buildPrimaryNav(categories)
 
   return (
     <header>
@@ -59,7 +61,7 @@ export async function Header({ banner, info }: { banner: BannerSetting; info: Re
       <div className="sticky top-0 z-40 border-b border-[#E7D9C2] bg-cream-100/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-[22px] gap-y-3 px-6 py-3.5">
           <MobileNavDrawer
-            links={PRIMARY_NAV}
+            links={primaryNav}
             accountHref={accountHref}
             accountLabel={accountLabel}
             wordmark={info.wordmark}
@@ -116,7 +118,7 @@ export async function Header({ banner, info }: { banner: BannerSetting; info: Re
           className="hidden border-t border-[#EFE3D0] bg-cream-50/60 md:block"
         >
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-center gap-x-[26px] gap-y-1 px-6">
-            {PRIMARY_NAV.map((link) => (
+            {primaryNav.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

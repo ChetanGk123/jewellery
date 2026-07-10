@@ -7,43 +7,69 @@
  * The business's own contact details (phone, email, WhatsApp, address, hours)
  * are settings-driven (6.15): `contactChannels`/`supportHours` take the
  * resolved store info from `getStoreInfo()`, so operator edits in Settings
- * show here without touching this file.
+ * show here without touching this file. Shipping rates and COD mentions are
+ * likewise settings-driven: `buildShipCards`/`buildShipRates`/`buildFaqItems`
+ * take the store settings so the copy always matches what checkout charges
+ * (the prototype's hardcoded ₹999/₹79/₹49 rows drifted from the real config).
  */
 
+import { formatPaise } from "@/lib/utils/money"
 import type { ResolvedStoreInfo } from "@/lib/store-info"
+
+/** The slice of `StoreSettings` the shipping/FAQ copy depends on. */
+export type ShippingSettings = {
+  freeShipThresholdPaise: number
+  flatRatePaise: number
+  codEnabled: boolean
+}
 
 export type IconItem = { icon: string; title: string; body: string }
 export type NumberedItem = { n: string; title: string; body: string }
 export type RateRow = { label: string; value: string; highlight?: boolean }
 
-export const SHIP_CARDS: IconItem[] = [
-  {
-    icon: "⏱",
-    title: "Dispatch time",
-    body: "Orders are carefully packed and dispatched within 2–4 working days.",
-  },
-  {
-    icon: "✈",
-    title: "Delivery window",
-    body: "Delivered in 4–7 days across India via Shiprocket, with tracking on every order.",
-  },
-  {
-    icon: "₹",
-    title: "Cash on Delivery",
-    body: "COD available across India on most pincodes — pay when your order arrives.",
-  },
-  {
-    icon: "⚑",
-    title: "Order tracking",
-    body: "A tracking link is sent by SMS & email the moment your parcel ships.",
-  },
-]
+const COD_CARD: IconItem = {
+  icon: "₹",
+  title: "Cash on Delivery",
+  body: "COD available across India on most pincodes — pay when your order arrives.",
+}
 
-export const SHIP_RATES: RateRow[] = [
-  { label: "Orders of ₹999 and above", value: "FREE", highlight: true },
-  { label: "Orders below ₹999", value: "₹79 flat" },
-  { label: "Cash on Delivery handling", value: "₹49" },
-]
+/** Delivery cards for the Shipping page; the COD card only when COD is on. */
+export function buildShipCards({ codEnabled }: ShippingSettings): IconItem[] {
+  return [
+    {
+      icon: "⏱",
+      title: "Dispatch time",
+      body: "Orders are carefully packed and dispatched within 2–4 working days.",
+    },
+    {
+      icon: "✈",
+      title: "Delivery window",
+      body: "Delivered in 4–7 days across India via Shiprocket, with tracking on every order.",
+    },
+    ...(codEnabled ? [COD_CARD] : []),
+    {
+      icon: "⚑",
+      title: "Order tracking",
+      body: "A tracking link is sent by SMS & email the moment your parcel ships.",
+    },
+  ]
+}
+
+/**
+ * Shipping-rate rows from the live settings — the same threshold + flat rate
+ * `shippingPaise` charges at checkout. COD carries no handling fee (checkout
+ * never adds one), so the row simply reassures rather than quoting a charge.
+ */
+export function buildShipRates(settings: ShippingSettings): RateRow[] {
+  const threshold = formatPaise(settings.freeShipThresholdPaise)
+  return [
+    { label: `Orders of ${threshold} and above`, value: "FREE", highlight: true },
+    { label: `Orders below ${threshold}`, value: `${formatPaise(settings.flatRatePaise)} flat` },
+    ...(settings.codEnabled
+      ? [{ label: "Cash on Delivery handling", value: "No extra charge" }]
+      : []),
+  ]
+}
 
 export const RETURN_STEPS: NumberedItem[] = [
   {
@@ -188,32 +214,37 @@ export function supportHours(info: ResolvedStoreInfo): {
 
 export type FaqItem = { q: string; a: string }
 
-export const FAQ_ITEMS: FaqItem[] = [
-  {
-    q: "Is this real gold or diamond jewellery?",
-    a: "No — every piece is artificial (imitation) bridal jewellery with an anti-tarnish gold-tone plating and Kundan, Polki, pearl or CZ stones. It gives the look of heritage bridal gold at a fraction of the cost.",
-  },
-  {
-    q: "How long does delivery take?",
-    a: "Orders are dispatched within 2–4 working days and delivered in 4–7 days across India via Shiprocket, with tracking on every order.",
-  },
-  {
-    q: "Do you offer Cash on Delivery?",
-    a: "Yes. COD is available across India on most pincodes — you pay when your order arrives. A small ₹49 handling fee applies to COD orders.",
-  },
-  {
-    q: "Can I return or exchange an item?",
-    a: "You have 7 days from delivery to request a return or exchange on unworn items in their original packaging with tags intact. Nose pins, ear studs and made-to-order pieces are not returnable for hygiene reasons.",
-  },
-  {
-    q: "Will the plating tarnish over time?",
-    a: "Every JR piece carries an anti-tarnish plating. Kept dry, wiped after wear and stored in its pouch, your jewellery will stay radiant through every celebration — see our Care Guide.",
-  },
-  {
-    q: "Do you make custom or made-to-order bridal sets?",
-    a: "Yes — message us on WhatsApp with your requirement and event date, and our team will help you plan a custom bridal set.",
-  },
-]
+/** FAQ list with the delivery/COD answers reflecting the live settings. */
+export function buildFaqItems({ codEnabled, freeShipThresholdPaise }: ShippingSettings): FaqItem[] {
+  return [
+    {
+      q: "Is this real gold or diamond jewellery?",
+      a: "No — every piece is artificial (imitation) bridal jewellery with an anti-tarnish gold-tone plating and Kundan, Polki, pearl or CZ stones. It gives the look of heritage bridal gold at a fraction of the cost.",
+    },
+    {
+      q: "How long does delivery take?",
+      a: `Orders are dispatched within 2–4 working days and delivered in 4–7 days across India via Shiprocket, with tracking on every order. Shipping is free on orders of ${formatPaise(freeShipThresholdPaise)} and above.`,
+    },
+    {
+      q: "Do you offer Cash on Delivery?",
+      a: codEnabled
+        ? "Yes. COD is available across India on most pincodes — you pay when your order arrives, with no extra handling fee."
+        : "Cash on Delivery is currently unavailable. Keep an eye on this page — we'll switch it back on as soon as we can.",
+    },
+    {
+      q: "Can I return or exchange an item?",
+      a: "You have 7 days from delivery to request a return or exchange on unworn items in their original packaging with tags intact. Nose pins, ear studs and made-to-order pieces are not returnable for hygiene reasons.",
+    },
+    {
+      q: "Will the plating tarnish over time?",
+      a: "Every JR piece carries an anti-tarnish plating. Kept dry, wiped after wear and stored in its pouch, your jewellery will stay radiant through every celebration — see our Care Guide.",
+    },
+    {
+      q: "Do you make custom or made-to-order bridal sets?",
+      a: "Yes — message us on WhatsApp with your requirement and event date, and our team will help you plan a custom bridal set.",
+    },
+  ]
+}
 
 export const ABOUT_INTRO =
   "RJ Jewellers began with a simple belief — that every bride deserves to feel like royalty, without the weight of a gold budget. From our studio in Jaipur, we craft artificial bridal jewellery that carries the soul of traditional Kundan, Polki and temple work, reimagined for the modern celebration."

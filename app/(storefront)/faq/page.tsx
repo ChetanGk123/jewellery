@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { HelpHeader } from "@/components/storefront/help/HelpHeader"
-import { FAQ_ITEMS } from "@/lib/help-content"
+import { buildFaqItems } from "@/lib/help-content"
+import { getStoreSettings } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
@@ -15,7 +16,8 @@ export const metadata: Metadata = {
  * the shared help-page visual language. Native <details>/<summary> disclosures
  * keep it accessible and keyboard-friendly without client JS.
  */
-export default function FaqPage() {
+export default async function FaqPage() {
+  const faqItems = buildFaqItems(await getStoreSettings())
   return (
     <main>
       <HelpHeader
@@ -26,7 +28,7 @@ export default function FaqPage() {
       />
 
       <div className="mx-auto flex max-w-[820px] flex-col gap-3 px-6 pb-16 pt-[54px]">
-        {FAQ_ITEMS.map((item) => (
+        {faqItems.map((item) => (
           <details
             key={item.q}
             className="group rounded-md border border-[#E7D9C2] bg-cream-50 px-6 py-5 [&_summary::-webkit-details-marker]:hidden"
