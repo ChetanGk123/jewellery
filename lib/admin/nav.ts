@@ -8,12 +8,13 @@ import { ROUTES } from "@/lib/routes"
  */
 
 /** Live sidebar count badges (from `getAdminNavCounts`). */
-export type AdminBadgeKey = "orders" | "reviews" | "messages"
+export type AdminBadgeKey = "orders" | "returns" | "reviews" | "messages"
 
 /** Icon slots — resolved to SVGs in `AdminNavIcons`. */
 export type AdminIconKey =
   | "dashboard"
   | "orders"
+  | "returns"
   | "products"
   | "analytics"
   | "categories"
@@ -36,6 +37,7 @@ export type AdminNavItem = {
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: ROUTES.admin, label: "Dashboard", icon: "dashboard" },
   { href: ROUTES.adminOrders, label: "Orders", icon: "orders", badge: "orders" },
+  { href: ROUTES.adminReturns, label: "Returns", icon: "returns", badge: "returns" },
   { href: ROUTES.adminProducts, label: "Products", icon: "products" },
   { href: ROUTES.adminAnalytics, label: "Analytics", icon: "analytics" },
   { href: ROUTES.adminCategories, label: "Categories", icon: "categories" },
@@ -70,6 +72,10 @@ export const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
   [ROUTES.adminOrders]: {
     title: "Orders",
     subtitle: "Process and fulfil customer orders",
+  },
+  [ROUTES.adminReturns]: {
+    title: "Returns",
+    subtitle: "Review return requests and record refunds",
   },
   [ROUTES.adminProducts]: {
     title: "Products",

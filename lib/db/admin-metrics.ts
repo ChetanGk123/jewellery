@@ -5,13 +5,15 @@ import { createServerClient } from "./server"
 export type AdminNavCounts = {
   /** Orders in `Pending` status (not yet processed). */
   orders: number
+  /** Return requests in `Requested` status (awaiting a decision, 8.7). */
+  returns: number
   /** Reviews awaiting moderation. */
   reviews: number
   /** Contact tickets in `New` status (not yet started). */
   messages: number
 }
 
-const ZERO_COUNTS: AdminNavCounts = { orders: 0, reviews: 0, messages: 0 }
+const ZERO_COUNTS: AdminNavCounts = { orders: 0, returns: 0, reviews: 0, messages: 0 }
 
 /**
  * Live counts for the sidebar badges. Reads through the admin's own cookie
@@ -24,8 +26,12 @@ const ZERO_COUNTS: AdminNavCounts = { orders: 0, reviews: 0, messages: 0 }
 export async function getAdminNavCounts(): Promise<AdminNavCounts> {
   try {
     const supabase = await createServerClient()
-    const [orders, reviews, messages] = await Promise.all([
+    const [orders, returns, reviews, messages] = await Promise.all([
       supabase.from("order").select("*", { count: "exact", head: true }).eq("status", "Pending"),
+      supabase
+        .from("return_request")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "Requested"),
       supabase.from("review").select("*", { count: "exact", head: true }).eq("status", "pending"),
       supabase
         .from("contact_message")
@@ -35,6 +41,7 @@ export async function getAdminNavCounts(): Promise<AdminNavCounts> {
 
     return {
       orders: orders.count ?? 0,
+      returns: returns.count ?? 0,
       reviews: reviews.count ?? 0,
       messages: messages.count ?? 0,
     }

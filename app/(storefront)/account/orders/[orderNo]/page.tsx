@@ -4,6 +4,7 @@ import { OrderDetail } from "@/components/storefront/order/OrderDetail"
 import { ORDER_NO_RE } from "@/lib/checkout/order"
 import { getMyOrderDetail } from "@/lib/db/orders"
 import { getCurrentUser } from "@/lib/db/server"
+import { getReturnSettings } from "@/lib/db/settings"
 import { ROUTES } from "@/lib/routes"
 
 export const metadata: Metadata = {
@@ -33,8 +34,16 @@ export default async function AccountOrderDetailPage({ params }: OrderDetailPage
 
   if (!ORDER_NO_RE.test(decoded)) notFound()
 
-  const order = await getMyOrderDetail(decoded)
+  const [order, returnSettings] = await Promise.all([
+    getMyOrderDetail(decoded),
+    getReturnSettings(),
+  ])
   if (!order) notFound()
 
-  return <OrderDetail order={order} />
+  // Server page: rendered once per request, so "now" is stable — the purity
+  // rule is aimed at re-rendering client components.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now()
+
+  return <OrderDetail order={order} returnSettings={returnSettings} now={now} />
 }

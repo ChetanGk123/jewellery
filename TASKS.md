@@ -328,11 +328,60 @@ order its §10 gives (8.4 → 8.21 → 8.1+8.2 → 8.5 → 8.3).
   (intra-state) / IGST (inter-state by `state`) split on the 5.12 invoice, sequential invoice numbers
   (new column or derived), HSN codes per product (schema addition). The current invoice deliberately
   shows only a tax-inclusive total — that placeholder was flagged at 5.12.
-- ⬜ **8.7 — Returns & COD reconciliation.** Product decisions: return window, who pays return shipping,
-  exchange vs refund-by-UPI. Build: customer "Request return" on Delivered orders (reason + photos?);
-  admin return states (Requested → Approved → Received → Refunded/Exchanged) — extend the order status
-  machine or a sibling `return_request` table; refund/adjustment recording so COD cash reconciles
-  (the demand-gated 5.18 item); notification emails ride the Phase 7 copy layer.
+- ✅ **8.7 — Returns & COD reconciliation** *(2026-07-10)*. **Decisions taken 2026-07-10 (operator):** return window is
+  **settings-driven** (`returns.window_days`, default 7; 0 disables returns); return-shipping payer is
+  **settings-driven for flexibility** (`returns.shipping_payer`: customer / store / store-for-defects —
+  drives customer-facing copy in v1, no reverse-pickup integration); settlement is **refund-by-UPI OR
+  exchange** (customer picks at request; UPI ID captured then, admin records paid amount + UTR);
+  **photos required** (1–3) on every request. Returns are a sibling `return_request` table (one per
+  order, v1) — the order status machine stays untouched (Delivered stays terminal).
+  - ✅ **8.7a — Schema + RPCs** (migration 0043): `order.delivered_at` (stamped by
+    `admin_set_order_status` on → Delivered; backfill existing Delivered rows from `created_at`);
+    `setting.returns` jsonb; `return_request` table (order_id unique FK, user_id, reason, resolution
+    refund/exchange, upi_id, photos text[], status Requested→Approved→Received→Refunded/Exchanged +
+    Rejected-from-Requested, refund_amount_paise, refund_reference, admin_note, timestamps) + RLS
+    (customer reads own rows; all writes via RPCs); private `returns` storage bucket (owner-folder
+    insert, owner+admin read); `customer_request_return` (owns order + Delivered + inside window + no
+    existing request + photos 1–3 + UPI required iff refund); `admin_set_return_status` (legal
+    transitions only; Refunded requires amount+reference when resolution=refund and marks
+    `order.payment_status='refunded'`). No automatic stock restore — operator restocks sellable
+    returns by hand.
+  - ✅ **8.7b — Pure logic** `lib/returns.ts` + tests: return-status flow/chips/transitions,
+    `isReturnEligible(deliveredAt, windowDays, now)`, request-form zod schema, tolerant
+    `returns` settings resolution (dedicated read, NOT in the shared `getStoreSettings` select —
+    the 0042/email_copy lesson).
+  - ✅ **8.7c — Customer flow**: "Request return" on Delivered account order detail (reason,
+    refund/exchange choice + UPI ID, required 1–3 photo uploads to the `returns` bucket) → server
+    action → RPC; return-status card (chip + refund details once paid) on the order page.
+  - ✅ **8.7d — Admin**: Returns queue view (sidebar item + Requested-count badge), request detail
+    (reason/photos/UPI), transition actions incl. the record-refund step (amount + UTR); orders CSV
+    export gains return-status / refund columns so COD cash reconciles (closes the 5.18 demand-gated
+    item).
+  - ✅ **8.7e — Emails** on the Phase 7 copy layer: returnRequested (customer + admin alert),
+    returnApproved (ship-back instructions reflecting the shipping-payer setting), returnRejected,
+    returnCompleted (refunded w/ reference | exchanged) — copy defaults + tokens + Emails console
+    previews + queued sends at each admin transition.
+  - ✅ **8.7f — Settings**: admin Settings card "Returns" (window days, shipping payer) riding the
+    existing settings form/RPC; refund-policy page copy stays static (revisit if the operator wants
+    it settings-driven).
+
+  **Shipped 2026-07-10.** Migration 0043 applied to jr-jewellers (backfill stamped the 1 existing
+  Delivered order; types regenerated — NOTE: `lib/db/types.ts` now documents the hand-fixed
+  nullability on a few RPC args in its header, re-apply after regenerating). Bucket is named
+  `return-photos`. **Live-verified end-to-end in the browser** (chrome-devtools, e2e user, order
+  JR-260710-1005-UCVM): request form on Delivered inside the window (deadline label correct:
+  delivered 9 Jul + 7d → "until 17 Jul"), required-photo upload landed in the private bucket under
+  the caller's own folder, RPC accepted → status card "Requested"; admin queue (sidebar badge 1 →
+  cleared on approve) walked Requested → Approved → Received → Record refund (₹3,299 prefill +
+  UTR, button gated until UTR present) → row moved to Closed, `order.payment_status='refunded'`
+  confirmed in SQL, customer card showed "₹3,299 refunded · UPI reference"; Settings Returns card
+  save round-trip (blob `{window_days, shipping_payer}` written, then reset to 7). Test return +
+  payment_status reset afterwards (one orphan photo left in the bucket — admin-prunable). Orders
+  CSV gains payment_status / return_status / refund_inr / refund_reference. tsc clean; **324
+  tests** (23 lib/returns + 12 return emails new); lint at its pre-existing 13-error baseline;
+  build green. *Return emails ride 8.1: onboarding@resend.dev only delivers to the account owner.
+  No automatic stock restore on returns (deliberate — operator restocks by hand). The admin note is
+  shown to the customer only on a rejection.*
 
 **C. Customer-facing feature gaps (by value)**
 - ⬜ **8.8 — Header search.** Storefront header gets a search box (expandable icon on mobile) that

@@ -2,6 +2,7 @@ import "server-only"
 import { unstable_cache } from "next/cache"
 import { cache } from "react"
 import { DEFAULT_EMAIL_COPY, type EmailCopy, resolveEmailCopy } from "@/lib/email/copy"
+import { DEFAULT_RETURN_SETTINGS, resolveReturnSettings, type ReturnSettings } from "@/lib/returns"
 import { resolveStoreInfo, type ResolvedStoreInfo } from "@/lib/store-info"
 import { CACHE_TAGS, CATALOG_REVALIDATE_SECONDS } from "./cache"
 import { publicClient } from "./public"
@@ -246,6 +247,34 @@ export async function getRawEmailCopy(): Promise<unknown> {
  * applied) the emails fall back to the const defaults, since a copy hiccup
  * must never block a send.
  */
+/**
+ * The store's returns policy (TASKS 8.7): window days + shipping payer from
+ * the `setting.returns` blob, resolved over the code defaults. Deliberately
+ * NOT part of `getStoreSettings` (the 0042/email_copy lesson — that select
+ * feeds every storefront page and must survive code shipping before the 0043
+ * migration). Cached like `getEmailCopy` (same `settings` tag, expired by the
+ * admin save); never throws — a broken read falls back to the defaults.
+ */
+export const getReturnSettings = cache(
+  unstable_cache(
+    async (): Promise<ReturnSettings> => {
+      try {
+        const { data, error } = await publicClient.from("setting").select("returns").maybeSingle()
+        if (error) {
+          console.error("getReturnSettings failed (returns column missing? apply 0043):", error.message)
+          return DEFAULT_RETURN_SETTINGS
+        }
+        return resolveReturnSettings(data?.returns)
+      } catch (error: unknown) {
+        console.error("getReturnSettings failed, using defaults", error)
+        return DEFAULT_RETURN_SETTINGS
+      }
+    },
+    ["getReturnSettings"],
+    { tags: [CACHE_TAGS.settings], revalidate: CATALOG_REVALIDATE_SECONDS },
+  ),
+)
+
 export const getEmailCopy = cache(
   unstable_cache(
     async (): Promise<EmailCopy> => {

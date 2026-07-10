@@ -172,6 +172,10 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
           "discount_inr",
           "shipping_inr",
           "total_inr",
+          "payment_status",
+          "return_status",
+          "refund_inr",
+          "refund_reference",
         ]),
         ...all.map((o) =>
           csvRow([
@@ -190,6 +194,10 @@ export function OrdersView({ page }: { page: AdminOrdersPage }) {
             inr(o.discountPaise),
             inr(o.shippingPaise),
             inr(o.totalPaise),
+            o.paymentStatus,
+            o.returnStatus,
+            o.refundPaise === null ? "" : inr(o.refundPaise),
+            o.refundReference,
           ]),
         ),
       ]

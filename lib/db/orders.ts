@@ -66,11 +66,26 @@ export type MyOrderItem = {
   productSlug: string | null
 }
 
+/** The customer-visible slice of this order's return request (TASKS 8.7). */
+export type MyReturnRequest = {
+  status: string
+  resolution: string
+  upiId: string | null
+  refundAmountPaise: number | null
+  refundReference: string | null
+  /** Operator note — surfaced to the customer only on a rejection. */
+  adminNote: string | null
+  createdAt: string
+  resolvedAt: string | null
+}
+
 /** Full detail for one of the signed-in customer's own orders (TASKS 4.14). */
 export type MyOrderDetail = {
   orderNo: string
   status: string
   createdAt: string
+  /** When the order reached Delivered — anchors the return window (8.7). */
+  deliveredAt: string | null
   customerName: string
   customerPhone: string
   customerEmail: string
@@ -86,6 +101,8 @@ export type MyOrderDetail = {
   awb: string | null
   /** Courier tracking page — when set, the AWB renders as a link (6.4c). */
   trackingUrl: string | null
+  /** The order's return request, once one exists (one per order, 8.7). */
+  returnRequest: MyReturnRequest | null
   items: MyOrderItem[]
 }
 
@@ -101,7 +118,7 @@ export async function getMyOrderDetail(orderNo: string): Promise<MyOrderDetail |
   const { data, error } = await supabase
     .from("order")
     .select(
-      "order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, subtotal_paise, discount_paise, shipping_paise, total_paise, awb, tracking_url, order_item(name, tone, qty, unit_price_paise, line_total_paise, product(slug))",
+      "order_no, status, created_at, delivered_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, subtotal_paise, discount_paise, shipping_paise, total_paise, awb, tracking_url, return_request(status, resolution, upi_id, refund_amount_paise, refund_reference, admin_note, created_at, resolved_at), order_item(name, tone, qty, unit_price_paise, line_total_paise, product(slug))",
     )
     .eq("order_no", orderNo)
     .maybeSingle()
@@ -115,6 +132,7 @@ export async function getMyOrderDetail(orderNo: string): Promise<MyOrderDetail |
     orderNo: data.order_no,
     status: data.status,
     createdAt: data.created_at,
+    deliveredAt: data.delivered_at,
     customerName: data.customer_name,
     customerPhone: data.customer_phone,
     customerEmail: data.customer_email,
@@ -128,6 +146,18 @@ export async function getMyOrderDetail(orderNo: string): Promise<MyOrderDetail |
     totalPaise: data.total_paise,
     awb: data.awb,
     trackingUrl: data.tracking_url,
+    returnRequest: data.return_request
+      ? {
+          status: data.return_request.status,
+          resolution: data.return_request.resolution,
+          upiId: data.return_request.upi_id,
+          refundAmountPaise: data.return_request.refund_amount_paise,
+          refundReference: data.return_request.refund_reference,
+          adminNote: data.return_request.admin_note,
+          createdAt: data.return_request.created_at,
+          resolvedAt: data.return_request.resolved_at,
+        }
+      : null,
     items: data.order_item.map((item) => ({
       name: item.name,
       tone: item.tone,

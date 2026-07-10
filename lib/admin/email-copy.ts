@@ -35,12 +35,27 @@ const statusKindSchema = z.object({
   button: line,
 })
 
+/** The return-flow kinds share one field shape (8.7e — no total label). */
+const returnKindSchema = z.object({
+  subject: line,
+  heading: line,
+  intro: paragraph,
+  note: paragraph,
+  button: line,
+})
+
 export const emailCopyFormSchema = z.object({
   orderConfirmation: orderConfirmationSchema,
   orderShipped: statusKindSchema,
   orderDelivered: statusKindSchema,
   orderCancelled: statusKindSchema,
+  returnRequested: returnKindSchema,
+  returnApproved: returnKindSchema,
+  returnRejected: returnKindSchema,
+  returnRefunded: returnKindSchema,
+  returnExchanged: returnKindSchema,
   adminAlert: z.object({ subject: line, heading: line, button: line }),
+  returnAdminAlert: z.object({ subject: line, heading: line, button: line }),
   abandonedCart: z.object({
     subject: line,
     heading: line,
@@ -87,7 +102,13 @@ export function emailCopyToFormValues(raw: unknown): EmailCopyFormValues {
     orderShipped: groupValues(EMAIL_COPY_DEFAULTS.orderShipped, record.orderShipped),
     orderDelivered: groupValues(EMAIL_COPY_DEFAULTS.orderDelivered, record.orderDelivered),
     orderCancelled: groupValues(EMAIL_COPY_DEFAULTS.orderCancelled, record.orderCancelled),
+    returnRequested: groupValues(EMAIL_COPY_DEFAULTS.returnRequested, record.returnRequested),
+    returnApproved: groupValues(EMAIL_COPY_DEFAULTS.returnApproved, record.returnApproved),
+    returnRejected: groupValues(EMAIL_COPY_DEFAULTS.returnRejected, record.returnRejected),
+    returnRefunded: groupValues(EMAIL_COPY_DEFAULTS.returnRefunded, record.returnRefunded),
+    returnExchanged: groupValues(EMAIL_COPY_DEFAULTS.returnExchanged, record.returnExchanged),
     adminAlert: groupValues(EMAIL_COPY_DEFAULTS.adminAlert, record.adminAlert),
+    returnAdminAlert: groupValues(EMAIL_COPY_DEFAULTS.returnAdminAlert, record.returnAdminAlert),
     abandonedCart: groupValues(EMAIL_COPY_DEFAULTS.abandonedCart, record.abandonedCart),
     subscriberWelcome: groupValues(EMAIL_COPY_DEFAULTS.subscriberWelcome, record.subscriberWelcome),
     dailyDigest: groupValues(EMAIL_COPY_DEFAULTS.dailyDigest, record.dailyDigest),

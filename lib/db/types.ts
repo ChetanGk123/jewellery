@@ -1,6 +1,10 @@
 // Generated from the live Supabase schema (project naolegptozpaiojozzcy).
 // Regenerate after migrations via the Supabase `generate_typescript_types` tool / CLI.
-// Do not hand-edit.
+// Do not hand-edit — EXCEPT the nullability of a few RPC args the generator
+// can't infer (Postgres function args are all nullable): after regenerating,
+// re-apply `p_id: string | null` on admin_upsert_{category,coupon,product},
+// `p_title: string | null` on submit_review, and
+// `p_user_agent?: string | null` on admin_save_push_subscription.
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -12,24 +16,108 @@ export type Database = {
   }
   public: {
     Tables: {
-      cart_snapshot: {
+      admin_audit_log: {
         Row: {
-          user_id: string
-          items: Json
-          updated_at: string
-          reminded_at: string | null
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          meta: Json
+          summary: string | null
         }
         Insert: {
-          user_id: string
-          items?: Json
-          updated_at?: string
-          reminded_at?: string | null
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          meta?: Json
+          summary?: string | null
         }
         Update: {
-          user_id?: string
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          meta?: Json
+          summary?: string | null
+        }
+        Relationships: []
+      }
+      admin_role_audit: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          id: string
+          target_email: string | null
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          target_email?: string | null
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          target_email?: string | null
+          target_id?: string | null
+        }
+        Relationships: []
+      }
+      app_secret: {
+        Row: {
+          created_at: string
+          name: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      cart_snapshot: {
+        Row: {
+          items: Json
+          reminded_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
           items?: Json
-          updated_at?: string
           reminded_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          items?: Json
+          reminded_at?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -193,6 +281,7 @@ export type Database = {
           customer_email: string
           customer_name: string
           customer_phone: string
+          delivered_at: string | null
           discount_paise: number
           id: string
           order_no: string
@@ -217,6 +306,7 @@ export type Database = {
           customer_email: string
           customer_name: string
           customer_phone: string
+          delivered_at?: string | null
           discount_paise?: number
           id?: string
           order_no: string
@@ -241,6 +331,7 @@ export type Database = {
           customer_email?: string
           customer_name?: string
           customer_phone?: string
+          delivered_at?: string | null
           discount_paise?: number
           id?: string
           order_no?: string
@@ -477,6 +568,92 @@ export type Database = {
           },
         ]
       }
+      push_subscription: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      return_request: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          id: string
+          order_id: string
+          photos: string[]
+          reason: string
+          refund_amount_paise: number | null
+          refund_reference: string | null
+          resolution: string
+          resolved_at: string | null
+          status: string
+          updated_at: string
+          upi_id: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          photos: string[]
+          reason: string
+          refund_amount_paise?: number | null
+          refund_reference?: string | null
+          resolution: string
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          upi_id?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          photos?: string[]
+          reason?: string
+          refund_amount_paise?: number | null
+          refund_reference?: string | null
+          resolution?: string
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          upi_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_request_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "order"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review: {
         Row: {
           body: string | null
@@ -533,6 +710,7 @@ export type Database = {
           id: boolean
           phone: string | null
           razorpay_live: boolean
+          returns: Json
           store_info: Json
           store_name: string
           support_email: string | null
@@ -549,6 +727,7 @@ export type Database = {
           id?: boolean
           phone?: string | null
           razorpay_live?: boolean
+          returns?: Json
           store_info?: Json
           store_name?: string
           support_email?: string | null
@@ -565,6 +744,7 @@ export type Database = {
           id?: boolean
           phone?: string | null
           razorpay_live?: boolean
+          returns?: Json
           store_info?: Json
           store_name?: string
           support_email?: string | null
@@ -593,172 +773,66 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_role_audit: {
-        Row: {
-          action: string
-          actor_email: string | null
-          actor_id: string | null
-          created_at: string
-          id: string
-          target_email: string | null
-          target_id: string | null
-        }
-        Insert: {
-          action: string
-          actor_email?: string | null
-          actor_id?: string | null
-          created_at?: string
-          id?: string
-          target_email?: string | null
-          target_id?: string | null
-        }
-        Update: {
-          action?: string
-          actor_email?: string | null
-          actor_id?: string | null
-          created_at?: string
-          id?: string
-          target_email?: string | null
-          target_id?: string | null
-        }
-        Relationships: []
-      }
-      admin_audit_log: {
-        Row: {
-          action: string
-          actor_email: string | null
-          actor_id: string | null
-          created_at: string
-          entity_id: string | null
-          entity_type: string
-          id: string
-          meta: Json
-          summary: string | null
-        }
-        Insert: {
-          action: string
-          actor_email?: string | null
-          actor_id?: string | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type: string
-          id?: string
-          meta?: Json
-          summary?: string | null
-        }
-        Update: {
-          action?: string
-          actor_email?: string | null
-          actor_id?: string | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string
-          id?: string
-          meta?: Json
-          summary?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       admin_add_order_note: {
-        Args: { p_order_no: string; p_note: string }
+        Args: { p_note: string; p_order_no: string }
         Returns: Json
       }
-      admin_bulk_upsert_categories: {
-        Args: { p_rows: Json }
-        Returns: Json
-      }
-      admin_bulk_upsert_coupons: {
-        Args: { p_rows: Json }
-        Returns: Json
-      }
-      admin_bulk_upsert_products: {
-        Args: { p_rows: Json }
-        Returns: Json
-      }
-      get_abandoned_carts: {
-        Args: { p_secret: string }
-        Returns: Json
-      }
-      get_daily_digest: {
-        Args: { p_secret: string }
-        Returns: Json
-      }
-      mark_carts_reminded: {
-        Args: { p_secret: string; p_user_ids: string[] }
-        Returns: undefined
-      }
-      sync_cart: {
-        Args: { p_items: Json }
-        Returns: undefined
-      }
-      get_push_subscriptions: {
-        Args: { p_secret: string }
-        Returns: Json
-      }
-      prune_push_subscriptions: {
-        Args: { p_secret: string; p_endpoints: string[] }
-        Returns: number
-      }
-      admin_save_push_subscription: {
-        Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string | null }
-        Returns: undefined
-      }
+      admin_bulk_upsert_categories: { Args: { p_rows: Json }; Returns: Json }
+      admin_bulk_upsert_coupons: { Args: { p_rows: Json }; Returns: Json }
+      admin_bulk_upsert_products: { Args: { p_rows: Json }; Returns: Json }
+      admin_delete_category: { Args: { p_id: string }; Returns: undefined }
+      admin_delete_coupon: { Args: { p_id: string }; Returns: undefined }
       admin_delete_push_subscription: {
         Args: { p_endpoint: string }
         Returns: undefined
       }
-      admin_delete_category: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
-      admin_delete_coupon: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
+      admin_grant_role: { Args: { p_email: string }; Returns: string }
       admin_list_admins: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
-          id: string
           email: string
           granted_at: string
+          id: string
           is_self: boolean
         }[]
       }
-      admin_grant_role: {
-        Args: { p_email: string }
+      admin_remove_subscriber: { Args: { p_id: string }; Returns: string }
+      admin_review_contact: { Args: { p_review_id: string }; Returns: Json }
+      admin_revoke_role: { Args: { p_user_id: string }; Returns: string }
+      admin_save_push_subscription: {
+        Args: {
+          p_auth: string
+          p_endpoint: string
+          p_p256dh: string
+          p_user_agent?: string | null
+        }
+        Returns: undefined
+      }
+      admin_set_message_status: {
+        Args: { p_id: string; p_note?: string; p_status: string }
         Returns: string
       }
-      admin_revoke_role: {
-        Args: { p_user_id: string }
+      admin_set_order_awb: {
+        Args: { p_awb: string; p_order_id: string; p_tracking_url?: string }
         Returns: string
       }
       admin_set_order_status: {
         Args: { p_order_id: string; p_status: string }
         Returns: string
       }
-      admin_set_order_awb: {
-        Args: { p_order_id: string; p_awb: string; p_tracking_url?: string | null }
-        Returns: string
-      }
-      admin_remove_subscriber: {
-        Args: { p_id: string }
-        Returns: string
-      }
-      admin_update_settings: {
-        Args: { p_payload: Json }
-        Returns: Json
-      }
-      admin_review_contact: {
-        Args: { p_review_id: string }
-        Returns: Json
-      }
-      admin_set_message_status: {
-        Args: { p_id: string; p_status: string; p_note?: string }
+      admin_set_return_status: {
+        Args: {
+          p_admin_note?: string
+          p_refund_amount_paise?: number
+          p_refund_reference?: string
+          p_return_id: string
+          p_status: string
+        }
         Returns: string
       }
       admin_set_review_status: {
@@ -769,10 +843,48 @@ export type Database = {
         Args: { p_active: boolean; p_id: string }
         Returns: undefined
       }
-      customer_cancel_order: {
-        Args: { p_order_no: string }
+      admin_update_settings: { Args: { p_payload: Json }; Returns: Json }
+      admin_upsert_category: {
+        Args: { p_id: string | null; p_payload: Json }
         Returns: string
       }
+      admin_upsert_coupon: {
+        Args: { p_id: string | null; p_payload: Json }
+        Returns: string
+      }
+      admin_upsert_product: {
+        Args: { p_id: string | null; p_payload: Json }
+        Returns: string
+      }
+      customer_cancel_order: { Args: { p_order_no: string }; Returns: string }
+      customer_request_return: {
+        Args: {
+          p_order_no: string
+          p_photos?: string[]
+          p_reason: string
+          p_resolution: string
+          p_upi_id?: string
+        }
+        Returns: string
+      }
+      get_abandoned_carts: { Args: { p_secret: string }; Returns: Json }
+      get_daily_digest: { Args: { p_secret: string }; Returns: Json }
+      get_order_confirmation: { Args: { p_order_no: string }; Returns: Json }
+      get_push_subscriptions: { Args: { p_secret: string }; Returns: Json }
+      is_admin: { Args: never; Returns: boolean }
+      mark_carts_reminded: {
+        Args: { p_secret: string; p_user_ids: string[] }
+        Returns: undefined
+      }
+      place_order: {
+        Args: { p_coupon?: string; p_customer: Json; p_items: Json }
+        Returns: Json
+      }
+      prune_push_subscriptions: {
+        Args: { p_endpoints: string[]; p_secret: string }
+        Returns: number
+      }
+      submit_contact_message: { Args: { p_payload: Json }; Returns: Json }
       submit_review: {
         Args: {
           p_body: string
@@ -783,31 +895,11 @@ export type Database = {
         }
         Returns: Json
       }
-      admin_upsert_coupon: {
-        Args: { p_id: string | null; p_payload: Json }
-        Returns: string
-      }
-      admin_upsert_category: {
-        Args: { p_id: string | null; p_payload: Json }
-        Returns: string
-      }
-      admin_upsert_product: {
-        Args: { p_id: string | null; p_payload: Json }
-        Returns: string
-      }
-      get_order_confirmation: { Args: { p_order_no: string }; Returns: Json }
-      place_order: {
-        Args: { p_coupon?: string; p_customer: Json; p_items: Json }
-        Returns: Json
-      }
-      submit_contact_message: {
-        Args: { p_payload: Json }
-        Returns: Json
-      }
       subscribe_email: {
         Args: { p_email: string; p_source?: string }
         Returns: Json
       }
+      sync_cart: { Args: { p_items: Json }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
@@ -826,12 +918,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -841,8 +933,10 @@ export type Tables<
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -851,12 +945,13 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -875,12 +970,13 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -899,12 +995,13 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -915,12 +1012,13 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

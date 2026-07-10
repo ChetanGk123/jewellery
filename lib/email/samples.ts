@@ -12,6 +12,12 @@ import type { EmailCopy, EmailTemplateId } from "./copy"
 import { buildDailyDigestEmail } from "./daily-digest"
 import { buildOrderConfirmationEmail, type EmailMessage } from "./order-confirmation"
 import { buildOrderStatusEmail, type OrderStatusEmailKind, orderStatusCopyFor } from "./order-status"
+import {
+  buildReturnAdminEmail,
+  buildReturnStatusEmail,
+  type ReturnEmailKind,
+  returnStatusCopyFor,
+} from "./return-status"
 import { buildSubscriberWelcomeEmail } from "./subscriber-welcome"
 import { ROUTES } from "@/lib/routes"
 import type { ResolvedStoreInfo } from "@/lib/store-info"
@@ -61,12 +67,61 @@ function buildStatusSample(kind: OrderStatusEmailKind, ctx: SampleEmailContext):
   )
 }
 
+/**
+ * The return kinds share the order fixture; each preview shows its
+ * kind-specific extras (ship-to + payer note, refund record, rejection note).
+ */
+function buildReturnSample(kind: ReturnEmailKind, ctx: SampleEmailContext): EmailMessage {
+  const { info, copy, baseUrl } = ctx
+  return buildReturnStatusEmail(
+    {
+      kind,
+      orderNo: ORDER_NO,
+      customerName: CUSTOMER,
+      orderUrl: `${baseUrl}${ROUTES.accountOrder(ORDER_NO)}`,
+      resolution: "refund",
+      shippingNote:
+        kind === "Approved"
+          ? "Return shipping is arranged and paid by you — courier the item to our store address."
+          : undefined,
+      refundAmountPaise: kind === "Refunded" ? TOTAL_PAISE : undefined,
+      refundReference: kind === "Refunded" ? "415712345678" : undefined,
+      operatorNote:
+        kind === "Rejected" ? "The return window for this order had already closed." : undefined,
+    },
+    info,
+    returnStatusCopyFor(copy, kind),
+  )
+}
+
 /** Render one template with its sample data. */
 export function buildSampleEmail(id: EmailTemplateId, ctx: SampleEmailContext): EmailMessage {
   const { info, copy, baseUrl } = ctx
   const orderUrl = `${baseUrl}${ROUTES.order(ORDER_NO)}`
 
   switch (id) {
+    case "returnRequested":
+      return buildReturnSample("Requested", ctx)
+    case "returnApproved":
+      return buildReturnSample("Approved", ctx)
+    case "returnRejected":
+      return buildReturnSample("Rejected", ctx)
+    case "returnRefunded":
+      return buildReturnSample("Refunded", ctx)
+    case "returnExchanged":
+      return buildReturnSample("Exchanged", ctx)
+    case "returnAdminAlert":
+      return buildReturnAdminEmail(
+        {
+          orderNo: ORDER_NO,
+          customerName: CUSTOMER,
+          resolution: "refund",
+          reason: "The clasp arrived broken.",
+          adminUrl: `${baseUrl}${ROUTES.adminReturns}`,
+        },
+        info,
+        copy.returnAdminAlert,
+      )
     case "orderShipped":
       return buildStatusSample("Shipped", ctx)
     case "orderDelivered":

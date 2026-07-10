@@ -1,13 +1,25 @@
 import Link from "next/link"
 import type { MyOrderDetail } from "@/lib/db/orders"
 import { buildStepper, statusChip, type OrderStep, type StepState } from "@/lib/admin/order-status"
+import {
+  isReturnEligible,
+  returnDeadline,
+  type ReturnSettings,
+  SHIPPING_PAYER_CUSTOMER_COPY,
+} from "@/lib/returns"
 import { ROUTES } from "@/lib/routes"
 import { formatPaise } from "@/lib/utils/money"
 import { CancelOrderButton } from "./CancelOrderButton"
 import { CopyAwbButton } from "./CopyAwbButton"
+import { RequestReturnForm } from "./RequestReturnForm"
+import { ReturnStatusCard } from "./ReturnStatusCard"
 
 type Props = {
   order: MyOrderDetail
+  /** The store's returns policy (window + shipping payer), from settings. */
+  returnSettings: ReturnSettings
+  /** Request time (epoch ms) — passed in so the render stays pure. */
+  now: number
 }
 
 /**
@@ -18,7 +30,7 @@ type Props = {
  * it in the storefront's maroon/gold/cream chrome rather than the admin
  * console's palette.
  */
-export function OrderDetail({ order }: Props) {
+export function OrderDetail({ order, returnSettings, now }: Props) {
   const chip = statusChip(order.status)
   const steps = buildStepper(order.status)
   const placedOn = new Date(order.createdAt).toLocaleDateString("en-IN", {
@@ -26,6 +38,23 @@ export function OrderDetail({ order }: Props) {
     month: "short",
     year: "numeric",
   })
+
+  // Returns (8.7c): offer the request only on Delivered orders that have no
+  // request yet and are still inside the settings window — the RPC re-checks.
+  const shippingNote = SHIPPING_PAYER_CUSTOMER_COPY[returnSettings.shippingPayer]
+  const deadline = returnDeadline(order.deliveredAt, returnSettings.windowDays)
+  const canRequestReturn =
+    order.status === "Delivered" &&
+    !order.returnRequest &&
+    isReturnEligible(order.deliveredAt, returnSettings.windowDays, now)
+  const deadlineLabel =
+    deadline !== null
+      ? new Date(deadline).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : ""
 
   return (
     <main className="mx-auto w-full max-w-[760px] flex-1 px-6 py-12">
@@ -150,6 +179,18 @@ export function OrderDetail({ order }: Props) {
             {order.addressLine}, {order.city}, {order.state} — {order.pincode}
           </span>
         </Card>
+
+        {order.returnRequest && (
+          <ReturnStatusCard returnRequest={order.returnRequest} shippingNote={shippingNote} />
+        )}
+
+        {canRequestReturn && (
+          <RequestReturnForm
+            orderNo={order.orderNo}
+            deadlineLabel={deadlineLabel}
+            shippingNote={shippingNote}
+          />
+        )}
 
         {order.status === "Pending" && <CancelOrderButton orderNo={order.orderNo} />}
       </div>

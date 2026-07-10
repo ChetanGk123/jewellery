@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { updateStoreSettings } from "@/app/(admin)/admin/(console)/settings/actions"
 import type { SettingsFormValues } from "@/lib/admin/settings"
+import { SHIPPING_PAYER_LABELS, type ShippingPayer } from "@/lib/returns"
 import { STORE_INFO } from "@/lib/store-info"
 import { NotificationsCard } from "./NotificationsCard"
 import { SectionCard } from "./SectionCard"
@@ -21,11 +22,15 @@ const INPUT =
 const LABEL_TEXT = "mb-[7px] block font-body text-[13px] font-semibold text-[#4A4038]"
 const HINT = "font-normal text-[#B4A99A]"
 
+/** The Returns card's payer select, in display order. */
+const SHIPPING_PAYER_OPTIONS: ShippingPayer[] = ["customer", "store", "store_for_defects"]
+
 /** Sidebar anchors — one per section card, dot-coded like the design. */
 const NAV_SECTIONS = [
   { href: "#store-info", label: "Store Information", color: "#5B1A2E" },
   { href: "#brand-contact", label: "Brand & Contact", color: "#B4863A" },
   { href: "#shipping-payments", label: "Shipping & Payments", color: "#3E8552" },
+  { href: "#returns", label: "Returns", color: "#B4863A" },
   { href: "#announcement-banner", label: "Announcement Banner", color: "#5B1A2E" },
   { href: "#promo-block", label: "Homepage Promo Block", color: "#B4863A" },
   { href: "#notifications", label: "Notifications", color: "#5B1A2E" },
@@ -70,6 +75,10 @@ export function SettingsView({ initial, vapidPublicKey, isPushConfigured }: Prop
   const setStoreInfo = (patch: Partial<SettingsFormValues["storeInfo"]>) => {
     touch()
     setValues((prev) => ({ ...prev, storeInfo: { ...prev.storeInfo, ...patch } }))
+  }
+  const setReturns = (patch: Partial<SettingsFormValues["returns"]>) => {
+    touch()
+    setValues((prev) => ({ ...prev, returns: { ...prev.returns, ...patch } }))
   }
 
   const save = () => {
@@ -307,6 +316,50 @@ export function SettingsView({ initial, vapidPublicKey, isPushConfigured }: Prop
                 checked={false}
                 disabled
               />
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            id="returns"
+            iconBg="#FBF1DD"
+            icon={<ReturnIcon />}
+            title="Returns"
+            subtitle="The self-serve return window and who bears the return shipping"
+          >
+            <div className="grid gap-x-6 gap-y-5 px-[30px] pb-[26px] pt-[26px] max-sm:px-5 sm:grid-cols-2">
+              <Field label="Return window after delivery (days)" hint="0 turns returns off">
+                <input
+                  className={INPUT}
+                  inputMode="numeric"
+                  value={String(values.returns.windowDays)}
+                  onChange={(e) =>
+                    setReturns({ windowDays: Math.min(365, toRupees(e.target.value)) })
+                  }
+                />
+              </Field>
+              <Field label="Return shipping is paid by">
+                <select
+                  className={INPUT}
+                  value={values.returns.shippingPayer}
+                  onChange={(e) =>
+                    setReturns({
+                      shippingPayer: e.target
+                        .value as SettingsFormValues["returns"]["shippingPayer"],
+                    })
+                  }
+                >
+                  {SHIPPING_PAYER_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {SHIPPING_PAYER_LABELS[option]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <p className="col-span-full m-0 font-body text-[12.5px] leading-relaxed text-[#8B8177]">
+                Customers see “Request return” on Delivered orders inside this window. Refunds are
+                manual UPI payouts you record on the Returns page; the choice here only changes the
+                shipping note shown to customers.
+              </p>
             </div>
           </SectionCard>
 
@@ -687,6 +740,23 @@ function TruckIcon() {
       <path d="M16 10h3l3 3.5V17h-6" stroke="#3E8552" strokeWidth={1.7} strokeLinejoin="round" />
       <circle cx="7" cy="19" r="1.6" stroke="#3E8552" strokeWidth={1.5} />
       <circle cx="17.5" cy="19" r="1.6" stroke="#3E8552" strokeWidth={1.5} />
+    </svg>
+  )
+}
+
+function ReturnIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#B4863A"
+      strokeWidth={1.7}
+      aria-hidden="true"
+    >
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h9.5a6.5 6.5 0 0 1 0 13H8" />
     </svg>
   )
 }

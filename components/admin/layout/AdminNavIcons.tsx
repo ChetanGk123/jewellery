@@ -21,6 +21,12 @@ const ICON_PATHS: Record<AdminIconKey, ReactNode> = {
       <path d="M9 7a3 3 0 0 1 6 0" />
     </>
   ),
+  returns: (
+    <>
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h9.5a6.5 6.5 0 0 1 0 13H8" />
+    </>
+  ),
   products: (
     <>
       <path d="M3 8.5 12 4l9 4.5v7L12 20l-9-4.5v-7Z" />

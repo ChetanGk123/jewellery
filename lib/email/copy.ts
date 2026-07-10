@@ -44,6 +44,15 @@ export type AdminAlertCopy = {
   button: string
 }
 
+/** The five return-flow notifications share one field shape (8.7e). */
+export type ReturnStatusKindCopy = {
+  subject: string
+  heading: string
+  intro: string
+  note: string
+  button: string
+}
+
 export type AbandonedCartCopy = {
   subject: string
   heading: string
@@ -70,7 +79,13 @@ export type EmailCopy = {
   orderShipped: OrderStatusKindCopy
   orderDelivered: OrderStatusKindCopy
   orderCancelled: OrderStatusKindCopy
+  returnRequested: ReturnStatusKindCopy
+  returnApproved: ReturnStatusKindCopy
+  returnRejected: ReturnStatusKindCopy
+  returnRefunded: ReturnStatusKindCopy
+  returnExchanged: ReturnStatusKindCopy
   adminAlert: AdminAlertCopy
+  returnAdminAlert: AdminAlertCopy
   abandonedCart: AbandonedCartCopy
   subscriberWelcome: SubscriberWelcomeCopy
   dailyDigest: DailyDigestCopy
@@ -116,10 +131,54 @@ export const EMAIL_COPY_DEFAULTS: EmailCopy = {
     note: "Changed your mind? Your favourites are waiting — browse the collection anytime.",
     button: "View your order",
   },
+  returnRequested: {
+    subject: "Return request received — {orderNo} · {storeName}",
+    heading: "We've received your return request",
+    intro:
+      "Namaste {name}, your return request for order {orderNo} is with us. We'll review it and get back to you within 1–2 days.",
+    note: "Please keep the piece safe with its original packaging until the return is approved.",
+    button: "View your order",
+  },
+  returnApproved: {
+    subject: "Return approved — {orderNo} · {storeName}",
+    heading: "Your return is approved",
+    intro:
+      "Namaste {name}, good news — your return for order {orderNo} is approved. Pack the piece securely with all its original packaging.",
+    note: "Once you've couriered it, share the receipt with us on WhatsApp so we can watch for the parcel.",
+    button: "View your order",
+  },
+  returnRejected: {
+    subject: "About your return request — {orderNo} · {storeName}",
+    heading: "We couldn't accept this return",
+    intro:
+      "Namaste {name}, we've reviewed your return request for order {orderNo} and couldn't approve it this time.",
+    note: "If you think this is a mistake, reply to this email or WhatsApp us — we're happy to take another look.",
+    button: "View your order",
+  },
+  returnRefunded: {
+    subject: "Refund paid — {orderNo} · {storeName}",
+    heading: "Your refund is on its way",
+    intro: "Namaste {name}, we've paid the refund for your return on order {orderNo} to your UPI ID.",
+    note: "UPI transfers usually appear instantly, but can take a few hours depending on your bank.",
+    button: "View your order",
+  },
+  returnExchanged: {
+    subject: "Exchange confirmed — {orderNo} · {storeName}",
+    heading: "Your exchange is confirmed",
+    intro:
+      "Namaste {name}, your exchange for order {orderNo} is confirmed — the replacement piece is being prepared and will reach you soon.",
+    note: "We'll share the tracking details once the replacement ships.",
+    button: "View your order",
+  },
   adminAlert: {
     subject: "New COD order {orderNo} — {total}",
     heading: "New order placed",
     button: "Open order queue",
+  },
+  returnAdminAlert: {
+    subject: "Return requested — {orderNo} ({resolution})",
+    heading: "New return request",
+    button: "Open returns queue",
   },
   abandonedCart: {
     subject: "Your cart is waiting — {storeName}",
@@ -156,7 +215,13 @@ export const COPY_TOKENS: { [T in EmailTemplateId]: Partial<Record<keyof EmailCo
     orderShipped: { subject: ["orderNo", "storeName"], intro: ["orderNo"] },
     orderDelivered: { subject: ["orderNo", "storeName"], intro: ["orderNo"] },
     orderCancelled: { subject: ["orderNo", "storeName"], intro: ["orderNo"] },
+    returnRequested: { subject: ["orderNo", "storeName"], intro: ["name", "orderNo"] },
+    returnApproved: { subject: ["orderNo", "storeName"], intro: ["name", "orderNo"] },
+    returnRejected: { subject: ["orderNo", "storeName"], intro: ["name", "orderNo"] },
+    returnRefunded: { subject: ["orderNo", "storeName"], intro: ["name", "orderNo"] },
+    returnExchanged: { subject: ["orderNo", "storeName"], intro: ["name", "orderNo"] },
     adminAlert: { subject: ["orderNo", "total"] },
+    returnAdminAlert: { subject: ["orderNo", "resolution"] },
     abandonedCart: { subject: ["storeName"] },
     subscriberWelcome: { subject: ["storeName"], body: ["storeName"] },
     dailyDigest: { subject: ["day", "orders", "revenue"], heading: ["day"] },
@@ -197,7 +262,13 @@ export function resolveEmailCopy(raw: unknown): EmailCopy {
     orderShipped: mergeGroup(EMAIL_COPY_DEFAULTS.orderShipped, record.orderShipped),
     orderDelivered: mergeGroup(EMAIL_COPY_DEFAULTS.orderDelivered, record.orderDelivered),
     orderCancelled: mergeGroup(EMAIL_COPY_DEFAULTS.orderCancelled, record.orderCancelled),
+    returnRequested: mergeGroup(EMAIL_COPY_DEFAULTS.returnRequested, record.returnRequested),
+    returnApproved: mergeGroup(EMAIL_COPY_DEFAULTS.returnApproved, record.returnApproved),
+    returnRejected: mergeGroup(EMAIL_COPY_DEFAULTS.returnRejected, record.returnRejected),
+    returnRefunded: mergeGroup(EMAIL_COPY_DEFAULTS.returnRefunded, record.returnRefunded),
+    returnExchanged: mergeGroup(EMAIL_COPY_DEFAULTS.returnExchanged, record.returnExchanged),
     adminAlert: mergeGroup(EMAIL_COPY_DEFAULTS.adminAlert, record.adminAlert),
+    returnAdminAlert: mergeGroup(EMAIL_COPY_DEFAULTS.returnAdminAlert, record.returnAdminAlert),
     abandonedCart: mergeGroup(EMAIL_COPY_DEFAULTS.abandonedCart, record.abandonedCart),
     subscriberWelcome: mergeGroup(EMAIL_COPY_DEFAULTS.subscriberWelcome, record.subscriberWelcome),
     dailyDigest: mergeGroup(EMAIL_COPY_DEFAULTS.dailyDigest, record.dailyDigest),

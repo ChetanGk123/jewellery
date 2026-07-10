@@ -327,6 +327,14 @@ export type ExportOrderRow = {
   discountPaise: number
   shippingPaise: number
   totalPaise: number
+  /** COD reconciliation (8.7d): pending / paid / refunded. */
+  paymentStatus: string
+  /** The order's return request state, empty when none exists. */
+  returnStatus: string
+  /** What was actually paid back on a refunded return (null otherwise). */
+  refundPaise: number | null
+  /** The UPI transaction reference (UTR) of that refund. */
+  refundReference: string
 }
 
 /** Same cap as the subscribers export — far above current volume. */
@@ -343,7 +351,7 @@ export async function getAllOrdersForExport(): Promise<ExportOrderRow[]> {
     const { data } = await supabase
       .from("order")
       .select(
-        "order_no, created_at, status, payment_method, customer_name, customer_phone, customer_email, city, state, pincode, coupon_code, subtotal_paise, discount_paise, shipping_paise, total_paise",
+        "order_no, created_at, status, payment_method, payment_status, customer_name, customer_phone, customer_email, city, state, pincode, coupon_code, subtotal_paise, discount_paise, shipping_paise, total_paise, return_request(status, refund_amount_paise, refund_reference)",
       )
       .order("created_at", { ascending: false })
       .limit(EXPORT_ORDERS_CAP)
@@ -365,6 +373,10 @@ export async function getAllOrdersForExport(): Promise<ExportOrderRow[]> {
       discountPaise: o.discount_paise,
       shippingPaise: o.shipping_paise,
       totalPaise: o.total_paise,
+      paymentStatus: o.payment_status,
+      returnStatus: o.return_request?.status ?? "",
+      refundPaise: o.return_request?.refund_amount_paise ?? null,
+      refundReference: o.return_request?.refund_reference ?? "",
     }))
   } catch (err) {
     console.error("[admin-read] orders export failed:", err)

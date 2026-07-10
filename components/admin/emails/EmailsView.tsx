@@ -44,6 +44,15 @@ const STATUS_FIELDS: FieldDef[] = [
   BUTTON,
 ]
 
+/** The return-flow templates share one field shape (8.7e — no total label). */
+const RETURN_FIELDS: FieldDef[] = [
+  SUBJECT,
+  HEADING,
+  { key: "intro", label: "Intro paragraph", multiline: true },
+  { key: "note", label: "Note box", multiline: true },
+  BUTTON,
+]
+
 type TemplateDef = {
   id: EmailTemplateId
   label: string
@@ -107,12 +116,53 @@ const TEMPLATE_GROUPS: Array<{ group: string; templates: TemplateDef[] }> = [
     ],
   },
   {
+    group: "Returns",
+    templates: [
+      {
+        id: "returnRequested",
+        label: "Return requested",
+        description: "Sent the moment a customer requests a return",
+        fields: RETURN_FIELDS,
+      },
+      {
+        id: "returnApproved",
+        label: "Return approved",
+        description: "Sent when you approve, with ship-back instructions",
+        fields: RETURN_FIELDS,
+      },
+      {
+        id: "returnRejected",
+        label: "Return rejected",
+        description: "Sent when you reject a return request",
+        fields: RETURN_FIELDS,
+      },
+      {
+        id: "returnRefunded",
+        label: "Refund paid",
+        description: "Sent when you record the UPI refund",
+        fields: RETURN_FIELDS,
+      },
+      {
+        id: "returnExchanged",
+        label: "Exchange confirmed",
+        description: "Sent when you settle a return as an exchange",
+        fields: RETURN_FIELDS,
+      },
+    ],
+  },
+  {
     group: "Internal",
     templates: [
       {
         id: "adminAlert",
         label: "New-order alert",
         description: "Pushed to your inbox when an order lands",
+        fields: [SUBJECT, HEADING, BUTTON],
+      },
+      {
+        id: "returnAdminAlert",
+        label: "New-return alert",
+        description: "Pushed to your inbox when a return is requested",
         fields: [SUBJECT, HEADING, BUTTON],
       },
       {

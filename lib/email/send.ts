@@ -10,6 +10,12 @@ import {
   type OrderConfirmationEmailInput,
 } from "./order-confirmation"
 import { buildOrderStatusEmail, orderStatusCopyFor, type OrderStatusEmailKind } from "./order-status"
+import {
+  buildReturnAdminEmail,
+  buildReturnStatusEmail,
+  type ReturnEmailKind,
+  returnStatusCopyFor,
+} from "./return-status"
 import { buildSampleEmail } from "./samples"
 import { buildSubscriberWelcomeEmail } from "./subscriber-welcome"
 import { getEmailCopy, getStoreInfo } from "@/lib/db/settings"
@@ -161,6 +167,65 @@ export async function queueOrderStatusEmail(input: QueueOrderStatusInput): Promi
       },
       info,
       orderStatusCopyFor(emailCopy, input.kind),
+    ),
+    fromAddress(info),
+  )
+}
+
+export type QueueReturnStatusInput = {
+  to: string
+  kind: ReturnEmailKind
+  orderNo: string
+  customerName: string
+  resolution: string
+  /** Approved: the who-pays-shipping note from the returns settings. */
+  shippingNote?: string
+  /** Refunded: the payout record. */
+  refundAmountPaise?: number | null
+  refundReference?: string | null
+  /** Rejected: the operator's note. */
+  operatorNote?: string | null
+}
+
+/**
+ * Queue a return-flow notification to the customer (TASKS 8.7e). Links to the
+ * signed-in account order page (returns live there); a no-op without a
+ * provider, best-effort like every queued send.
+ */
+export async function queueReturnStatusEmail(input: QueueReturnStatusInput): Promise<void> {
+  if (!isEmailEnabled()) return
+
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
+  const { to, ...fields } = input
+  queue(
+    to,
+    buildReturnStatusEmail(
+      { ...fields, orderUrl: `${SITE_URL}${ROUTES.accountOrder(input.orderNo)}` },
+      info,
+      returnStatusCopyFor(emailCopy, input.kind),
+    ),
+    fromAddress(info),
+  )
+}
+
+export type QueueReturnAdminInput = {
+  orderNo: string
+  customerName: string
+  resolution: string
+  reason: string
+}
+
+/** Queue the internal new-return alert to the store inbox (TASKS 8.7e). */
+export async function queueReturnAdminEmail(input: QueueReturnAdminInput): Promise<void> {
+  if (!isEmailEnabled()) return
+
+  const [info, emailCopy] = await Promise.all([getStoreInfo(), getEmailCopy()])
+  queue(
+    adminAlertTo(info),
+    buildReturnAdminEmail(
+      { ...input, adminUrl: `${SITE_URL}${ROUTES.adminReturns}` },
+      info,
+      emailCopy.returnAdminAlert,
     ),
     fromAddress(info),
   )

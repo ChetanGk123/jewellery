@@ -12,6 +12,7 @@
 import { z } from "zod"
 import type { BannerSetting, PromoSetting, StoreInfoFields, StoreSettings } from "@/lib/db/settings"
 import type { Json } from "@/lib/db/types"
+import { type ReturnSettings, returnSettingsToBlob } from "@/lib/returns"
 
 const optionalText = (max: number) => z.string().trim().max(max)
 
@@ -42,6 +43,14 @@ export const settingsFormSchema = z.object({
     .max(10_000_000),
   flatRateRupees: z.number().int("Whole rupees only.").min(0, "Can't be negative.").max(1_000_000),
   codEnabled: z.boolean(),
+  returns: z.object({
+    windowDays: z
+      .number()
+      .int("Whole days only.")
+      .min(0, "Can't be negative.")
+      .max(365, "A year is the most the window can be."),
+    shippingPayer: z.enum(["customer", "store", "store_for_defects"]),
+  }),
   banner: z.object({
     enabled: z.boolean(),
     msg1: optionalText(160),
@@ -64,8 +73,15 @@ export type SettingsFormValues = z.infer<typeof settingsFormSchema>
 
 const RUPEE = 100
 
-/** Seed the form from the loaded store settings (paise → rupees). */
-export function settingsToFormValues(s: StoreSettings): SettingsFormValues {
+/**
+ * Seed the form from the loaded store settings (paise → rupees). The returns
+ * policy arrives separately — its column is deliberately outside the shared
+ * `getStoreSettings` select (see `getReturnSettings`, 8.7).
+ */
+export function settingsToFormValues(
+  s: StoreSettings,
+  returns: ReturnSettings,
+): SettingsFormValues {
   return {
     storeName: s.storeName,
     supportEmail: s.supportEmail ?? "",
@@ -75,6 +91,7 @@ export function settingsToFormValues(s: StoreSettings): SettingsFormValues {
     freeShipThresholdRupees: Math.round(s.freeShipThresholdPaise / RUPEE),
     flatRateRupees: Math.round(s.flatRatePaise / RUPEE),
     codEnabled: s.codEnabled,
+    returns: { windowDays: returns.windowDays, shippingPayer: returns.shippingPayer },
     banner: bannerValues(s.banner),
     promo: promoValues(s.promo),
   }
@@ -146,6 +163,7 @@ export function formValuesToPayload(v: SettingsFormValues): Json {
     free_ship_threshold_paise: Math.round(v.freeShipThresholdRupees * RUPEE),
     flat_rate_paise: Math.round(v.flatRateRupees * RUPEE),
     cod_enabled: v.codEnabled,
+    returns: returnSettingsToBlob(v.returns),
     banner: {
       enabled: v.banner.enabled,
       msg1: v.banner.msg1.trim(),

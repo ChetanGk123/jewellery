@@ -53,6 +53,7 @@ export const ROUTES = {
    */
   adminOrderPrint: (orderNo: string, doc: PrintDoc = "invoice") =>
     `/admin/orders/${encodeURIComponent(orderNo)}/print${doc === "invoice" ? "" : `?doc=${doc}`}`,
+  adminReturns: "/admin/returns",
   adminProducts: "/admin/products",
   adminAnalytics: "/admin/analytics",
   adminCategories: "/admin/categories",
