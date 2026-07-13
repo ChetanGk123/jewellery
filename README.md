@@ -1,3 +1,5 @@
+![JR Jewellers — a complete storefront and admin console for modern bridal jewellery, built with Next.js, Tailwind and Supabase](screenshots/hero-banner.png)
+
 # RJ Jewellers
 
 E-commerce for an Indian artificial/bridal jewellery store: a customer storefront
@@ -31,6 +33,24 @@ price breakdown), shipped/delivered/cancelled notifications, new-order admin
 alert, abandoned-cart reminder, subscriber welcome, close-of-day digest. All
 templates are pure builders with operator-editable copy (`/admin/emails`),
 degrade to no-ops when no provider key is set, and never block checkout.
+
+## Screenshots
+
+Captured from the design prototypes in [`refereces/`](refereces/) that both
+surfaces mirror. The full set — every page, desktop and mobile — is in
+[`screenshots/`](screenshots/).
+
+| Storefront — product page | Storefront — COD checkout |
+|---|---|
+| ![Product page with plating-tone options, price in ₹ and add to cart](screenshots/previews/storefront-product-desktop.png) | ![Checkout with delivery address form, coupon field and COD payment](screenshots/previews/storefront-checkout-desktop.png) |
+
+| Admin — dashboard | Admin — orders |
+|---|---|
+| ![Admin dashboard with KPIs, revenue chart, recent orders and low-stock alerts](screenshots/previews/admin-dashboard-desktop.png) | ![Admin orders list with statuses and totals](screenshots/previews/admin-orders-desktop.png) |
+
+| Storefront on mobile | Admin on mobile |
+|---|---|
+| ![Storefront home on mobile](screenshots/previews/storefront-home-mobile.png) | ![Admin dashboard on mobile](screenshots/previews/admin-dashboard-mobile.png) |
 
 ## Getting started
 

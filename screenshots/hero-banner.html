@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1200px; height:630px; overflow:hidden; }
+  body {
+    position:relative;
+    background:
+      radial-gradient(900px 600px at 82% 10%, #F7EEDD 0%, rgba(247,238,221,0) 60%),
+      linear-gradient(160deg, #FFFDF8 0%, #FBF6EE 55%, #F6EDDD 100%);
+    font-family:'Jost',sans-serif;
+    color:#2A0A12;
+  }
+  /* decorative thin gold rings */
+  .ring { position:absolute; border-radius:50%; border:1.5px solid rgba(201,162,75,.38); }
+  .ring.r1 { width:520px; height:520px; left:-160px; bottom:-260px; }
+  .ring.r2 { width:340px; height:340px; left:300px; top:-200px; border-color:rgba(201,162,75,.28); }
+  .ring.r3 { width:180px; height:180px; left:395px; bottom:70px; border-color:rgba(201,162,75,.30); }
+
+  /* ---------------- left column ---------------- */
+  .left {
+    position:absolute; left:58px; top:52px; width:435px; z-index:40;
+  }
+  .logo-row { display:flex; align-items:center; gap:14px; }
+  .logo-mark {
+    width:46px; height:46px; background:#2A0A12; color:#E6CA7E;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cormorant Garamond',serif; font-size:26px;
+  }
+  .logo-name { font-family:'Marcellus',serif; font-size:27px; letter-spacing:3.5px; color:#2A0A12; line-height:1; }
+  .logo-sub { font-size:9.5px; letter-spacing:3.2px; color:#A87A1E; font-weight:500; margin-top:5px; }
+
+  h1 {
+    margin-top:44px;
+    font-family:'Cormorant Garamond',serif; font-weight:600;
+    font-size:39px; line-height:1.18; color:#2A0A12;
+  }
+  h1 em { font-style:italic; color:#A87A1E; }
+
+  .stack { display:flex; align-items:center; gap:10px; margin-top:26px; }
+  .stack .chip {
+    font-size:12.5px; font-weight:500; letter-spacing:1.2px;
+    border:1px solid rgba(42,10,18,.22); padding:6px 13px; border-radius:2px;
+    background:rgba(255,253,248,.7);
+  }
+  .stack .plus { color:#A87A1E; font-size:15px; font-weight:600; }
+
+  ul { list-style:none; margin-top:30px; display:flex; flex-direction:column; gap:15px; }
+  li { display:flex; gap:12px; font-size:15.5px; font-weight:300; line-height:1.45; color:#3d2229; }
+  li b { font-weight:500; color:#2A0A12; }
+  li::before { content:'◆'; color:#C9A24B; font-size:9px; line-height:2.4; }
+
+  .byline { position:absolute; left:58px; bottom:40px; font-size:13px; letter-spacing:1.5px; color:#8a6f52; z-index:40; }
+  .byline b { color:#2A0A12; font-weight:600; }
+
+  /* ---------------- collage ---------------- */
+  .collage {
+    position:absolute; left:545px; top:-150px; width:1100px; height:1000px;
+    transform:rotate(-10deg); z-index:10;
+  }
+  .shot {
+    position:absolute; overflow:hidden; border-radius:7px;
+    border:1px solid rgba(42,10,18,.10);
+    background:#fff;
+    box-shadow:0 2px 6px rgba(42,10,18,.06), 0 22px 44px -12px rgba(42,10,18,.28);
+  }
+  .shot img { width:100%; display:block; }
+  .shot.phone { border-radius:14px; box-shadow:0 2px 6px rgba(42,10,18,.08), 0 26px 48px -14px rgba(42,10,18,.34); }
+</style>
+</head>
+<body>
+  <div class="ring r1"></div>
+  <div class="ring r2"></div>
+  <div class="ring r3"></div>
+
+  <div class="left">
+    <div class="logo-row">
+      <div class="logo-mark">◆</div>
+      <div>
+        <div class="logo-name">JR JEWELLERS</div>
+        <div class="logo-sub">ARTIFICIAL BRIDAL JEWELLERY</div>
+      </div>
+    </div>
+
+    <h1>A complete storefront &amp; admin console for <em>modern bridal jewellery.</em></h1>
+
+    <div class="stack">
+      <span class="chip">Next.js</span><span class="plus">+</span>
+      <span class="chip">Tailwind</span><span class="plus">+</span>
+      <span class="chip">Supabase</span>
+    </div>
+
+    <ul>
+      <li><span><b>Luxe storefront</b> with cart, checkout &amp; Cash&nbsp;on&nbsp;Delivery in ₹.</span></li>
+      <li><span><b>Admin console</b> for orders, products, coupons &amp; analytics.</span></li>
+      <li><span><b>Responsive, mobile-first</b> design across every page.</span></li>
+      <li><span><b>Kundan-inspired</b> design system in maroon, gold &amp; cream.</span></li>
+    </ul>
+  </div>
+
+  <div class="byline">by <b>JR Jewellers</b> · Made in India</div>
+
+  <div class="collage">
+    <!-- row 1 -->
+    <div class="shot" style="left:15px; top:15px;  width:360px; height:240px; z-index:2;"><img src="admin-orders-desktop.png"></div>
+    <div class="shot" style="left:395px; top:-25px; width:430px; height:295px; z-index:3;"><img src="storefront-home-desktop.png"></div>
+    <div class="shot phone" style="left:845px; top:25px; width:150px; height:315px; z-index:4;"><img src="storefront-home-mobile.png"></div>
+
+    <!-- row 2 (hero row) -->
+    <div class="shot" style="left:70px;  top:275px; width:450px; height:300px; z-index:6;"><img src="admin-dashboard-desktop.png"></div>
+    <div class="shot" style="left:540px; top:300px; width:405px; height:275px; z-index:5;"><img src="admin-analytics-desktop.png"></div>
+    <div class="shot phone" style="left:965px; top:365px; width:150px; height:315px; z-index:6;"><img src="admin-dashboard-mobile.png"></div>
+
+    <!-- row 3 -->
+    <div class="shot" style="left:30px; top:595px; width:400px; height:265px; z-index:4;"><img src="storefront-product-desktop.png"></div>
+    <div class="shot" style="left:450px; top:598px; width:380px; height:260px; z-index:3;"><img src="storefront-category-desktop.png"></div>
+    <div class="shot" style="left:850px; top:700px; width:370px; height:250px; z-index:2;"><img src="storefront-checkout-desktop.png"></div>
+  </div>
+</body>
+</html>
