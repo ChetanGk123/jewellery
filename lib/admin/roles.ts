@@ -5,7 +5,8 @@
  * that only the service role can set, so a customer can't grant it to
  * themselves). `isAdmin` is a PURE inspection of that claim with no I/O, so it's
  * safe to call anywhere — the Edge proxy, server components, or client forms
- * (after sign-in). See `supabase/migrations/0005_admin_role.sql` for granting.
+ * (after sign-in). See the bootstrap grant at the end of
+ * `supabase/migrations/0001_initial_schema.sql` for granting.
  *
  * Accepts anything carrying `app_metadata`: a full Supabase `User` (from
  * `getUser()`) or the verified JWT claims from `getClaims()` — the proxy uses

@@ -1,6 +1,6 @@
 /**
  * Order status chip metadata — the fulfilment states from the `order` table
- * (`0001_create_orders.sql`) mapped to a label + admin chip colours. Shared by
+ * (`supabase/migrations/0001_initial_schema.sql`) mapped to a label + admin chip colours. Shared by
  * the dashboard, the orders list, and the order drawer so a status always looks
  * the same across the console.
  */
