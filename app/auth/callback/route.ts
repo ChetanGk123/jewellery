@@ -35,6 +35,17 @@ function isEmailOtpType(value: string): value is EmailOtpType {
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
+  // TEMP DEBUG (remove after diagnosing the 0.0.0.0:3000 redirect issue):
+  // shows exactly what host this handler thinks it's on, so we can tell
+  // whether the wrong host comes from GoTrue's redirect or from here.
+  console.log("[auth/callback debug]", {
+    requestUrl: request.url,
+    urlOrigin: url.origin,
+    host: request.headers.get("host"),
+    xForwardedHost: request.headers.get("x-forwarded-host"),
+    xForwardedProto: request.headers.get("x-forwarded-proto"),
+    xForwardedFor: request.headers.get("x-forwarded-for"),
+  })
   const next = safeNext(url.searchParams.get("next"))
   const tokenHash = url.searchParams.get("token_hash")
   const type = url.searchParams.get("type")
