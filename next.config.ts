@@ -42,6 +42,13 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "jewellery-db.chetanlab.org",
+        pathname: "/storage/v1/object/public/**",
+      },
+      // Managed Supabase Cloud project — remove once fully cut over to the
+      // self-hosted stack above (docs/SELF_HOSTED_SUPABASE.md).
+      {
+        protocol: "https",
         hostname: "naolegptozpaiojozzcy.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },

@@ -2,9 +2,12 @@
 
 A step-by-step runbook for pointing this app at a **self-hosted** Supabase stack
 instead of the managed cloud project (`naolegptozpaiojozzcy`). Tailored to this
-repo: it accounts for the specific migrations, auth flows, storage bucket, and
-email templates the app depends on, and assumes you deploy on **Dokploy**
-(Docker Compose) like the app itself.
+repo: it accounts for the specific schema, auth flows, storage bucket, and
+email templates the app depends on, and assumes you deploy the
+[`supabase-homelab` Dokploy blueprint](https://github.com/ChetanGk123/dokploy-templates/tree/main/blueprints/supabase-homelab)
+(a pre-wired fork of the official Supabase compose bundle, Kong pinned to
+`dokploy-network` so Traefik routing survives restarts) on the same Dokploy
+host as the app.
 
 > **Do you actually need this?** No — the app runs fine against managed
 > Supabase while the Next.js app is hosted on Dokploy. Self-host only for data
@@ -35,174 +38,198 @@ else is internal.
 
 ## 1. Prerequisites
 
-- A host with Docker + Docker Compose v2 (your Dokploy host works).
-- A domain/subdomain for the Supabase gateway, e.g. `supabase.yourdomain.com`,
-  with DNS pointing at the host.
-- An SMTP provider for auth/transactional email (Resend, SES, Postmark…).
-  Self-hosted Supabase ships **no email sender** — nothing emails until this is
-  set.
-- `openssl` (secret generation) and `psql` (applying SQL), or use Studio's SQL
-  editor.
+- Dokploy `>= 0.22.5` on the host that will run the blueprint (your app's host
+  works).
+- A domain/subdomain for the Supabase gateway (the blueprint's `main_domain`,
+  e.g. `jewellery-db.chetanlab.org`), with DNS pointing at the host.
+- An SMTP provider for auth/transactional email (Resend, SES, Postmark…). The
+  blueprint ships with placeholder SMTP values — nothing emails until this is
+  set (§5.2).
+- `psql` for applying the schema (§4), or use Studio's SQL editor instead —
+  no `openssl`/manual secret generation needed, Dokploy generates those on
+  import (§2–3).
 
 ---
 
 ## 2. Stand up the stack
 
-### Option A — Dokploy template (recommended)
+Import the [`supabase-homelab`](https://github.com/ChetanGk123/dokploy-templates/tree/main/blueprints/supabase-homelab)
+blueprint (requires Dokploy `>= 0.22.5`):
 
-Dokploy ships a Supabase template that wires the whole compose bundle for you:
+1. Dokploy → **Create → Template**, point it at that blueprint.
+2. Before importing, edit `main_domain` in `template.toml` if you don't want
+   the default `<project>-db.chetanlab.org` pattern — Dokploy's template
+   engine has no project-name helper, so this has to be baked in up front. It
+   feeds `SUPABASE_HOST`, `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, and
+   `ADDITIONAL_REDIRECT_URLS` automatically.
+3. Point a DNS record at your Dokploy host for that domain.
+4. Deploy and wait for every container (`db`, `kong`, `auth`, `rest`,
+   `storage`, `realtime`, `studio`, `meta`, `functions`, …) to go healthy —
+   the first boot takes a few minutes while Postgres initializes.
 
-1. Dokploy → **Create → Template → Supabase**.
-2. Fill the generated env (secrets — see §3).
-3. Add a **Domain** → point it at the **Kong** service, port `8000`.
-4. Deploy.
-
-### Option B — Official compose
-
-```bash
-git clone --depth 1 https://github.com/supabase/supabase
-cd supabase/docker
-cp .env.example .env
-# edit .env (see §3), then:
-docker compose up -d
-```
-
-Put Kong (`:8000`) behind your reverse proxy / Traefik with TLS, exactly the way
-the app container is routed on Dokploy.
+Dokploy **auto-generates every secret** for you on import
+(`POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`,
+`DASHBOARD_PASSWORD`, …) — no manual `openssl`/JWT-crafting needed. Review them
+in the service's **Environment** tab after deploy.
 
 ---
 
 ## 3. Secrets and core config
 
-Generate these **before first boot** and keep them stable (changing `JWT_SECRET`
-later invalidates every issued key and session):
+Everything in this section is **already generated** by the blueprint import
+(§2) — this is just what to look at and what to change.
 
-```bash
-# strong random values
-openssl rand -base64 48   # POSTGRES_PASSWORD
-openssl rand -base64 48   # JWT_SECRET (>= 32 chars)
-```
-
-Then derive the API keys **from** `JWT_SECRET` — they are JWTs whose payload is
-`{"role":"anon"}` / `{"role":"service_role"}` signed with that secret. Use the
-generator in the Supabase self-hosting docs (Settings → API key generator) to
-produce a matching `ANON_KEY` and `SERVICE_ROLE_KEY`.
-
-Minimum `.env` for the Supabase stack:
+In the deployed service's **Environment** tab:
 
 ```dotenv
-POSTGRES_PASSWORD=...            # from openssl
-JWT_SECRET=...                   # from openssl, >=32 chars
-ANON_KEY=eyJ...                  # signed with JWT_SECRET, role=anon
-SERVICE_ROLE_KEY=eyJ...          # signed with JWT_SECRET, role=service_role
+POSTGRES_PASSWORD=...            # auto-generated
+JWT_SECRET=...                   # auto-generated
+ANON_KEY=eyJ...                  # auto-generated, signed with JWT_SECRET, role=anon
+SERVICE_ROLE_KEY=eyJ...          # auto-generated, signed with JWT_SECRET, role=service_role
 
-SITE_URL=https://app.yourdomain.com          # the STOREFRONT app origin
-API_EXTERNAL_URL=https://supabase.yourdomain.com
-SUPABASE_PUBLIC_URL=https://supabase.yourdomain.com
+SITE_URL=http://localhost:3000                        # ← change to the APP's real origin
+ADDITIONAL_REDIRECT_URLS=https://<main_domain>/*,http://localhost:3000/*
+API_EXTERNAL_URL=https://<main_domain>                # set from main_domain automatically
+SUPABASE_PUBLIC_URL=https://<main_domain>              # set from main_domain automatically
 
-DASHBOARD_USERNAME=admin         # Studio basic-auth
-DASHBOARD_PASSWORD=...           # Studio basic-auth
+DASHBOARD_USERNAME=supabase      # Studio basic-auth (behind Kong, port 8000)
+DASHBOARD_PASSWORD=...           # auto-generated
 ```
 
-> **Key format note.** Managed Supabase gave you the new
-> `sb_publishable_...` / `sb_secret_...` keys. Self-host classically issues the
-> legacy `eyJ...` JWT `anon` / `service_role` keys. `@supabase/ssr` (used here)
-> works with **either** — you just plug whatever your stack issues into the
-> app's env (§6). The env var is *named* `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-> but its value is simply "the anon key".
+`SITE_URL` ships pointing at `http://localhost:3000` — **this must become the
+app's real domain**, and `ADDITIONAL_REDIRECT_URLS` must include the app's
+`/auth/callback` origin (see §5.1), or magic-link/OAuth/recovery emails send
+links back to `localhost`.
+
+> **Key format note.** Managed Supabase gives you the newer
+> `sb_publishable_...` / `sb_secret_...` keys. This blueprint issues the
+> classic `eyJ...` JWT `anon` / `service_role` keys (`ANON_KEY` /
+> `SERVICE_ROLE_KEY`) by default — it *can* also front the new key format via
+> `SUPABASE_PUBLISHABLE_KEY`/`SUPABASE_SECRET_KEY` (its Kong entrypoint checks
+> for them), but those aren't set unless you add them yourself. `@supabase/ssr`
+> (used here) works with **either** — just plug whatever your stack issues
+> into the app's env (§6). The app's env var is *named*
+> `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` but its value is simply "the anon key".
 
 ---
 
-## 4. Apply this repo's schema (migrations 0001 → 0027)
+## 4. Apply this repo's schema
 
-**All of `supabase/migrations/*.sql` must be applied, in filename order.** They
-define the tables, RLS policies, and every `SECURITY DEFINER` RPC — skipping or
-reordering any of them breaks checkout, admin writes, the 5.8 audit triggers, or
-the 5.9 coupon delete.
+**`supabase/migrations/0001_initial_schema.sql` is the entire schema** — every
+table, RLS policy, and `SECURITY DEFINER` RPC the app depends on, squashed into
+one file representing the current end state (superseding the old
+`0000a`–`0044` history). Apply it once, then `supabase/seed.sql` (seeds the
+required `setting` singleton row — `admin_update_settings` is an `UPDATE`, not
+an `UPSERT`, so the app's Settings page can't self-heal a missing row).
 
-### With the Supabase CLI (preferred)
-
-```bash
-# from the repo root
-export SUPABASE_DB_URL="postgresql://postgres:<POSTGRES_PASSWORD>@supabase.yourdomain.com:5432/postgres"
-supabase db push --db-url "$SUPABASE_DB_URL"
-```
-
-### With psql (no CLI)
+### With psql (simplest — no CLI setup needed)
 
 ```bash
-for f in supabase/migrations/0*.sql; do
-  echo ">> $f"
-  psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f" || break
-done
+export SUPABASE_DB_URL="postgresql://postgres:<POSTGRES_PASSWORD>@<main_domain>:5432/postgres"
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/0001_initial_schema.sql
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/seed.sql
 ```
+
+(The blueprint doesn't expose Postgres on a public port by default — either
+open `POSTGRES_PORT` on the `db` service temporarily, tunnel through the
+Dokploy host, or use Studio's SQL Editor / Terminal instead.)
 
 ### With Studio
 
-Open Studio → **SQL Editor**, then paste and run each migration file **in order,
-0001 first**. Stop on the first error.
+Open Studio (`https://<main_domain>`, basic-auth from §3) → **SQL Editor**,
+paste `0001_initial_schema.sql`, run it, then do the same for `seed.sql`.
 
-Migration checklist (what each critical one gives you):
+### With the Supabase CLI
 
-- `0001–0003` orders + `place_order` RPC + confirmation
-- `0004` customer auth (`customer_profile`, `order.user_id`, owner RLS)
-- `0005–0006` admin role + `is_admin()` + admin read policies
-- `0007–0018` admin order status, products, media, storage bucket, categories,
-  coupons, reviews, contact, subscribers, settings
-- `0019–0025` stock enforcement, customer cancel, review-requires-purchase,
-  team management, session revoke, COD toggle
-- `0026` **admin audit log** (triggers) · `0027` **coupon delete**
+```bash
+supabase db push --db-url "$SUPABASE_DB_URL"
+```
 
-After applying, seed reference data (categories/products) however you normally
-do — via Studio, a seed SQL file, or the admin console once the app is up.
+After applying, seed catalog data (categories/products) however you normally
+do — via Studio, a seed script, or the admin console once the app is up. Grant
+your own account admin per the bootstrap `UPDATE` at the bottom of
+`0001_initial_schema.sql` (edit the email first), or run it again by hand for
+a different account.
+
+### Don't forget: the `app_secret` row
+
+`app_secret` is created empty by the schema — it holds no rows until you add
+one. The daily-digest (5.17) and Web Push (6.17) cron RPCs
+(`get_daily_digest`, `get_push_subscriptions`, `prune_push_subscriptions`,
+`get_abandoned_carts`, `mark_carts_reminded`) all compare their `p_secret`
+argument against this row and fail closed (`NOT_CONFIGURED`/`FORBIDDEN`)
+without it. In the same Studio/psql session as the schema apply above, run:
+
+```sql
+insert into app_secret (name, value) values ('cron', '<same value as CRON_SECRET>');
+```
+
+Use the same value you set for `CRON_SECRET` in the app's env (§6). This is
+per-database — the old managed project's `app_secret` row does **not** carry
+over, so this step is easy to forget on a fresh self-hosted instance and the
+symptom (cron endpoints silently failing) doesn't show up until the first
+scheduled run.
 
 ---
 
 ## 5. Configure Auth (GoTrue)
 
-On self-host these are **environment variables on the auth container**, not
-dashboard toggles.
+This blueprint exposes GoTrue's settings as **bare top-level env vars** on the
+service (Dokploy's compose maps them to the `GOTRUE_*` names internally) — set
+these in the same **Environment** tab as §3, not a separate auth container.
 
 ### 5.1 URLs (must match the app)
 
 ```dotenv
-GOTRUE_SITE_URL=https://app.yourdomain.com
-GOTRUE_URI_ALLOW_LIST=https://app.yourdomain.com/auth/callback,https://app.yourdomain.com/account/reset-password
+SITE_URL=https://app.yourdomain.com
+ADDITIONAL_REDIRECT_URLS=https://app.yourdomain.com/*,https://<main_domain>/*
 ```
 
-These replace the managed project's "Site URL / Redirect allowlist". The app's
-`/auth/callback` (2.8/2.8b) must be allow-listed or magic-link / OAuth / recovery
-all dead-end.
+`SITE_URL` ships as `http://localhost:3000` by default (§3) — change it to the
+**app's** origin, not the Supabase domain. The app's `/auth/callback` (and
+`/account/reset-password`) must resolve under an allow-listed origin or
+magic-link / OAuth / recovery all dead-end. `ADDITIONAL_REDIRECT_URLS` supports
+wildcards (`/*`), so listing the app's origin once is enough.
 
 ### 5.2 SMTP (required for any email)
 
 ```dotenv
-GOTRUE_SMTP_HOST=smtp.resend.com
-GOTRUE_SMTP_PORT=465
-GOTRUE_SMTP_USER=resend
-GOTRUE_SMTP_PASS=<smtp-password>
-GOTRUE_SMTP_ADMIN_EMAIL=care@rjjewellers.in
-GOTRUE_SMTP_SENDER_NAME=RJ Jewellers
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=465
+SMTP_USER=resend
+SMTP_PASS=<smtp-password>
+SMTP_ADMIN_EMAIL=care@rjjewellers.in
+SMTP_SENDER_NAME=RJ Jewellers
 ```
 
+The blueprint ships with placeholder SMTP values (`supabase-mail`,
+`fake_mail_user`/`fake_mail_password`) — **nothing sends until these are real**.
 Without this, sign-up confirmation and email OTP silently fail.
 
 ### 5.3 Google OAuth (2.8)
 
 ```dotenv
-GOTRUE_EXTERNAL_GOOGLE_ENABLED=true
-GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID=...
-GOTRUE_EXTERNAL_GOOGLE_SECRET=...
-GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI=https://supabase.yourdomain.com/auth/v1/callback
+ENABLE_GOOGLE_SIGNUP=true
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=https://<main_domain>/auth/v1/callback   # pre-filled by the blueprint
 ```
 
-Add that redirect URI to the Google Cloud OAuth client's authorised list too.
+Register `GOOGLE_REDIRECT_URI`'s value as an authorised redirect URI in the
+[Google Cloud Console](https://console.cloud.google.com/apis/credentials),
+then redeploy the service. GitHub/Apple follow the same
+`ENABLE_*_SIGNUP`/`*_CLIENT_ID`/`*_CLIENT_SECRET` pattern — see the blueprint's
+own `instructions.md` for the exact steps (Apple additionally needs a rotating
+JWT client secret).
 
 ### 5.4 Email templates — ⚠️ different from managed
 
 `supabase/templates/apply.sh` (2.8c) posts to the **hosted Management API** and
-**will not work** against self-host. Instead, mount the four HTML templates and
-point GoTrue at them:
+**will not work** against self-host. The blueprint doesn't mount custom
+templates by default (GoTrue's plain built-in templates are used), so to reuse
+this repo's branded templates you need to add them yourself: mount
+`supabase/templates/*.html` into the `auth` container via a compose volume
+(edit the deployed `docker-compose.yml` for this service in Dokploy) and add:
 
 ```dotenv
 GOTRUE_MAILER_TEMPLATES_MAGIC_LINK=/etc/gotrue/templates/magic-link.html
@@ -211,9 +238,9 @@ GOTRUE_MAILER_TEMPLATES_RECOVERY=/etc/gotrue/templates/reset-password.html
 GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE=/etc/gotrue/templates/email-change.html
 ```
 
-Mount `supabase/templates/*.html` into the auth container at that path via a
-compose volume. The templates already link through `/auth/callback?...` with
-`{{ .TokenHash }}`, so they work as-is once mounted.
+The templates already link through `/auth/callback?...` with `{{ .TokenHash }}`,
+so they work as-is once mounted — this is the one piece the blueprint doesn't
+give you for free.
 
 > Confirm the **Email OTP length** matches the app. 2.8c relaxed the client
 > regex to `^\d{6,10}$`, so 6- or 8-digit codes both pass — set
@@ -223,16 +250,39 @@ compose volume. The templates already link through `/auth/callback?...` with
 
 ## 6. Point the app at your stack
 
+### 6.1 Code change: allow the new image host
+
+`next.config.ts` hardcodes `images.remotePatterns` to
+`naolegptozpaiojozzcy.supabase.co` — `next/image` refuses to optimize images
+from any host not on that list, so product/category images will 400 until you
+swap it:
+
+```ts
+images: {
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "<main_domain>",              // your blueprint's domain
+      pathname: "/storage/v1/object/public/**",
+    },
+  ],
+},
+```
+
+Commit this and redeploy the app.
+
+### 6.2 Env vars
+
 Set these in the **app's** Dokploy Environment panel (not the Supabase stack's):
 
 ```dotenv
 # build-time (Next inlines NEXT_PUBLIC_* into the browser bundle)
-NEXT_PUBLIC_SUPABASE_URL=https://supabase.yourdomain.com
+NEXT_PUBLIC_SUPABASE_URL=https://<main_domain>
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your ANON_KEY>
 
 # runtime
 NEXT_PUBLIC_SITE_URL=https://app.yourdomain.com
-SUPABASE_SECRET_KEY=<your SERVICE_ROLE_KEY>    # only if a path needs it
+SUPABASE_SECRET_KEY=<your SERVICE_ROLE_KEY>    # required — the admin console (lib/db/admin.ts) throws without it
 RESEND_API_KEY=...                              # app-level order emails (4.6/5.2)
 EMAIL_FROM=care@rjjewellers.in
 ADMIN_ALERT_EMAIL=...
@@ -244,16 +294,19 @@ Notes:
 - The app talks only to `NEXT_PUBLIC_SUPABASE_URL` (Kong). No other Supabase
   host is ever referenced.
 - Redeploy the app after changing build-time vars so they re-inline.
+- Mirror the same two `NEXT_PUBLIC_*` + `SUPABASE_SECRET_KEY` values into your
+  local `.env.local` if you want to develop against the self-hosted stack too.
 
 ---
 
-## 7. Storage bucket
+## 7. Storage buckets
 
-Migration `0010` creates the public `product-images` bucket and its
-`is_admin()`-gated write policies. This only works if the **Storage** service is
-running in your stack (it is, in the standard compose). Verify in Studio →
-Storage that `product-images` exists after migrations. Admin product-image
-uploads (3.4) use the admin cookie session — no service key.
+`0001_initial_schema.sql` creates the public `product-images` bucket and the
+private `return-photos` bucket, plus their `is_admin()`-gated write policies.
+This only works if the **Storage** service is running in your stack (it is, in
+the blueprint). Verify in Studio → Storage that both buckets exist after
+applying the schema. Admin product-image uploads use the admin cookie
+session — no service key.
 
 ---
 
@@ -264,7 +317,7 @@ uploads (3.4) use the admin cookie session — no service key.
 2. **Auth**: sign up → confirmation email arrives (proves SMTP) → `/auth/callback`
    → `/account`.
 3. **Checkout**: add to cart → place a COD order → confirmation page shows a real
-   `RJ-YYMMDD-####-XXXX` order number (proves `place_order` RPC + RLS).
+   `JR-YYMMDD-####-XXXX` order number (proves `place_order` RPC + RLS).
 4. **Admin**: grant your user admin (`update auth.users set raw_app_meta_data =
    raw_app_meta_data || '{"role":"admin"}' where email = '...'`), sign in, open
    `/admin` → orders/products/coupons load.
