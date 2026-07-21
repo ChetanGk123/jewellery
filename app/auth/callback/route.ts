@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/admin/roles"
 import { safeNext } from "@/lib/auth/redirect"
 import { createServerClient } from "@/lib/db/server"
 import { ROUTES } from "@/lib/routes"
+import { SITE_URL } from "@/lib/site-url"
 
 /**
  * Landing point for every emailed auth link + Google OAuth (TASKS 2.8).
@@ -17,6 +18,14 @@ import { ROUTES } from "@/lib/routes"
  *     opened in the same browser that requested them).
  *  3. Supabase error params (`error_code=otp_expired` etc.) — surfaced as a
  *     friendly message on the sign-in page instead of a dead end.
+ *
+ * Redirects use `SITE_URL` (lib/site-url.ts), NOT `request.url`'s origin —
+ * behind a reverse proxy, Next's `output: "standalone"` server builds
+ * `request.url` from its own bind address (`0.0.0.0:3000`) rather than the
+ * `Host`/`X-Forwarded-Host` the proxy actually forwarded, even when those
+ * headers are correct. Confirmed live 2026-07-21 self-hosting behind
+ * Traefik: `host`/`x-forwarded-host` both showed the real domain while
+ * `request.url` still said `0.0.0.0:3000`.
  */
 
 /** `type` values an emailed link may carry — anything else is rejected. */
@@ -35,17 +44,6 @@ function isEmailOtpType(value: string): value is EmailOtpType {
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
-  // TEMP DEBUG (remove after diagnosing the 0.0.0.0:3000 redirect issue):
-  // shows exactly what host this handler thinks it's on, so we can tell
-  // whether the wrong host comes from GoTrue's redirect or from here.
-  console.log("[auth/callback debug]", {
-    requestUrl: request.url,
-    urlOrigin: url.origin,
-    host: request.headers.get("host"),
-    xForwardedHost: request.headers.get("x-forwarded-host"),
-    xForwardedProto: request.headers.get("x-forwarded-proto"),
-    xForwardedFor: request.headers.get("x-forwarded-for"),
-  })
   const next = safeNext(url.searchParams.get("next"))
   const tokenHash = url.searchParams.get("token_hash")
   const type = url.searchParams.get("type")
@@ -66,11 +64,11 @@ export async function GET(request: NextRequest) {
       // page, a customer on theirs.
       if (type === "recovery") {
         const dest = isAdmin(data.user) ? ROUTES.adminResetPassword : ROUTES.resetPassword
-        return NextResponse.redirect(new URL(dest, url.origin))
+        return NextResponse.redirect(new URL(dest, SITE_URL))
       }
-      return NextResponse.redirect(new URL(next, url.origin))
+      return NextResponse.redirect(new URL(next, SITE_URL))
     }
-    return redirectToSignIn(url.origin, isExpired(error.code) ? "expired" : "link")
+    return redirectToSignIn(isExpired(error.code) ? "expired" : "link")
   }
 
   // 2) PKCE code (OAuth / same-browser default-template links).
@@ -78,21 +76,21 @@ export async function GET(request: NextRequest) {
     const supabase = await createServerClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(new URL(next, url.origin))
+      return NextResponse.redirect(new URL(next, SITE_URL))
     }
-    return redirectToSignIn(url.origin, "link")
+    return redirectToSignIn("link")
   }
 
   // 3) Supabase bounced here with an error (expired/used link).
-  return redirectToSignIn(url.origin, errorCode && isExpired(errorCode) ? "expired" : "link")
+  return redirectToSignIn(errorCode && isExpired(errorCode) ? "expired" : "link")
 }
 
 function isExpired(code: string | null | undefined): boolean {
   return code === "otp_expired"
 }
 
-function redirectToSignIn(origin: string, error: "expired" | "link") {
-  const signIn = new URL(ROUTES.signIn, origin)
+function redirectToSignIn(error: "expired" | "link") {
+  const signIn = new URL(ROUTES.signIn, SITE_URL)
   signIn.searchParams.set("error", error)
   return NextResponse.redirect(signIn)
 }
