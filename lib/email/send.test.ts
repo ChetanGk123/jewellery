@@ -17,7 +17,18 @@ import { DEFAULT_STORE_INFO } from "@/lib/store-info"
 // Params are declared (and `_`-prefixed, as the other test mocks do) so
 // `mock.calls` stays typed as a tuple and assertions can index into it.
 const sendMail = mock(async (_options: unknown) => ({ messageId: "test" }))
-const createTransport = mock((_config: unknown) => ({ sendMail }))
+
+/**
+ * Every transport config ever built, in order. Kept separate from
+ * `createTransport.mock.calls` because `beforeEach` clears those, and the
+ * transport is module-level state built exactly once — so a per-test assertion
+ * on the mock would silently assert nothing after the first send.
+ */
+const transportConfigs: Array<Record<string, unknown>> = []
+const createTransport = mock((config: unknown) => {
+  transportConfigs.push(config as Record<string, unknown>)
+  return { sendMail }
+})
 
 mock.module("nodemailer", () => ({
   default: { createTransport },
@@ -47,6 +58,10 @@ const original = new Map<string, string | undefined>()
 beforeEach(() => {
   for (const key of ENV_KEYS) original.set(key, process.env[key])
   Object.assign(process.env, SMTP_ENV)
+  // Blank, not absent — this is exactly what `${SMTP_PORT:-}` in
+  // docker-compose.yml delivers, and it must still resolve to the 587 default.
+  // Set from the very first test so the one pooled transport is built with it.
+  process.env.SMTP_PORT = ""
   delete process.env.EMAIL_FROM
   sendMail.mockClear()
   createTransport.mockClear()
@@ -121,6 +136,49 @@ test("EMAIL_FROM overrides the derived sender", async () => {
   await sendTestTemplateEmailNow("orderConfirmation")
 
   expect(lastSendMailOptions().from).toBe("RJ Jewellers <orders@rjjewellers.in>")
+})
+
+/**
+ * Regression: `docker-compose.yml` declares every optional var as `${VAR:-}`,
+ * so an unset one arrives as `""` — not nullish, so a bare `??` keeps it. In
+ * production this produced an empty `To` and nodemailer's "No recipients
+ * defined" (EENVELOPE) on the very first live send.
+ */
+test("treats a blank ADMIN_ALERT_EMAIL as unset rather than an empty recipient", async () => {
+  process.env.ADMIN_ALERT_EMAIL = ""
+
+  const result = await sendTestTemplateEmailNow("orderConfirmation")
+
+  expect(result.to).not.toBe("")
+  expect(result.to).toContain("@")
+  expect(lastSendMailOptions().to).toBe(result.to)
+})
+
+test("treats a blank EMAIL_FROM as unset rather than an empty sender", async () => {
+  process.env.EMAIL_FROM = "   "
+
+  await sendTestTemplateEmailNow("orderConfirmation")
+
+  expect(lastSendMailOptions().from).toBe(`${DEFAULT_STORE_INFO.name} <${SMTP_ENV.SMTP_USER}>`)
+})
+
+test("builds the transport on port 587 with pooling, not port 0", async () => {
+  await sendTestTemplateEmailNow("orderConfirmation")
+
+  // SMTP_PORT is unset throughout this file, which is the blank/absent case:
+  // `Number("")` is 0, so a bare `??` would have dialled port 0 and never
+  // connected. Asserted against the first config ever built, since the
+  // transport is created once for the whole module.
+  const config = transportConfigs[0]
+  expect(config).toBeDefined()
+  expect(config.port).toBe(587)
+  expect(config.secure).toBe(false)
+  expect(config.pool).toBe(true)
+})
+
+test("a blank SMTP_HOST disables email, as an unset one does", () => {
+  process.env.SMTP_HOST = ""
+  expect(isEmailEnabled()).toBe(false)
 })
 
 test("reuses one pooled transport across sends", async () => {

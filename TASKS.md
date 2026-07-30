@@ -575,6 +575,26 @@ consciously declined in favour of not waiting on DNS.
   test send from admin → Emails **to a non-owner address**, and a real checkout confirming the
   customer receives the confirmation. Check the landed mail isn't spam-foldered, and watch
   `docker logs … | grep "email send failed"` stays quiet.
+- ✅ **10.6 — Fix: blank env vars defeated `??`** *(2026-07-31, found by the first live send)*.
+  The live attempt **authenticated to Gmail successfully** and then died with
+  `No recipients defined` (`EENVELOPE`). Cause: `docker-compose.yml` declares every optional var as
+  `${VAR:-}`, so an unset one reaches the container as `""` — which is **not nullish**, so
+  `process.env.X ?? fallback` keeps the empty string and the default never applies. With
+  `ADMIN_ALERT_EMAIL` commented out in the panel, `adminAlertTo()` returned `""`. `clean()` in
+  `store-info.ts` had always handled this correctly; the env reads in `send.ts` did not.
+  **Two more instances of the same latent bug, neither yet triggered:** blank `EMAIL_FROM` → an
+  empty `From`, and blank `SMTP_PORT` → `Number("")` = **0**, which would have dialled port 0 and
+  never connected at all. Fixed with one `envValue()` helper (trims, treats blank as unset) used at
+  all five call sites; `SMTP_PASS` is deliberately *not* trimmed for use — a password's own
+  whitespace is significant — only checked for blankness. **4 regression tests, all
+  mutation-checked** against the pre-fix code: the recipient test fails with `Expected: not ""` (the
+  exact production symptom) and the port test with `Expected: 587, Received: 0`. Transport configs
+  are captured in a module-level array rather than asserted via `createTransport.mock.calls`,
+  because `beforeEach` clears those and the pool is built exactly once — the earlier draft of that
+  test silently asserted nothing. `.env.example` also restructured to keep every note on its own
+  line: a trailing `# comment` after a value becomes part of it for parsers that don't strip it, and
+  a password containing `#` would be truncated by one that does. **342/342; tsc clean; build green;
+  lint at the 13-error baseline.**
 
 ## Cross-cutting (ongoing, not a phase)
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**

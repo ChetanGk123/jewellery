@@ -46,6 +46,21 @@ const SMTPS_PORT = 465
 const MAX_POOLED_CONNECTIONS = 3
 
 /**
+ * An env var's value, or undefined when it is unset **or blank**.
+ *
+ * `??` alone is not enough here: `docker-compose.yml` declares every optional
+ * var as `${VAR:-}`, so an unset var reaches the container as `""` — which is
+ * not nullish, so `process.env.X ?? fallback` yields `""` and the default never
+ * applies. That is what produced "No recipients defined" in production: an
+ * unset ADMIN_ALERT_EMAIL became an empty To. Trimmed, so a stray space from an
+ * env file can't masquerade as a value either.
+ */
+function envValue(name: string): string | undefined {
+  const trimmed = process.env[name]?.trim()
+  return trimmed ? trimmed : undefined
+}
+
+/**
  * Pooled transport, built once and reused: SMTP costs a TCP+TLS+AUTH handshake
  * per connection, which a per-send transport would re-pay on every email.
  * Null (not throwing) when unconfigured, so `sendEmail` can no-op cleanly.
@@ -53,13 +68,14 @@ const MAX_POOLED_CONNECTIONS = 3
 let cachedTransport: Transporter | null = null
 
 function getTransport(): Transporter | null {
-  const host = process.env.SMTP_HOST
-  const user = process.env.SMTP_USER
+  const host = envValue("SMTP_HOST")
+  const user = envValue("SMTP_USER")
+  // NOT trimmed via envValue: a password's own whitespace is significant.
   const pass = process.env.SMTP_PASS
-  if (!host || !user || !pass) return null
+  if (!host || !user || !pass?.trim()) return null
 
   if (!cachedTransport) {
-    const port = Number(process.env.SMTP_PORT ?? DEFAULT_SMTP_PORT)
+    const port = Number(envValue("SMTP_PORT") ?? DEFAULT_SMTP_PORT)
     cachedTransport = nodemailer.createTransport({
       host,
       port,
@@ -85,12 +101,12 @@ function getTransport(): Transporter | null {
  * Per-call (not module const) so the Settings-edited store name shows (6.15).
  */
 function fromAddress(info: ResolvedStoreInfo): string {
-  return process.env.EMAIL_FROM ?? `${info.name} <${process.env.SMTP_USER ?? ""}>`
+  return envValue("EMAIL_FROM") ?? `${info.name} <${envValue("SMTP_USER") ?? ""}>`
 }
 
 /** True when SMTP is configured (drives the confirmation-page copy). */
 export function isEmailEnabled(): boolean {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+  return Boolean(envValue("SMTP_HOST") && envValue("SMTP_USER") && process.env.SMTP_PASS?.trim())
 }
 
 /**
@@ -266,7 +282,7 @@ export type QueueNewOrderAdminInput = Omit<NewOrderAdminEmailInput, "adminUrl">
 
 /** Where new-order alerts go — a dedicated inbox, else the store email. */
 export function adminAlertTo(info: ResolvedStoreInfo): string {
-  return process.env.ADMIN_ALERT_EMAIL ?? info.email.display
+  return envValue("ADMIN_ALERT_EMAIL") ?? info.email.display
 }
 
 /**
