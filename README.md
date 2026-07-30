@@ -66,7 +66,7 @@ bun dev                           # http://localhost:3000
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ | Public client key |
-| `NEXT_PUBLIC_SITE_URL` | deploy | Absolute origin (SEO, email links); falls back to localhost |
+| `NEXT_PUBLIC_SITE_URL` | deploy | Absolute origin (SEO, email links); falls back to localhost. Needed at **build** time — it is inlined, so changing it requires a rebuild |
 | `RESEND_API_KEY` | optional | Enables all email; without it sends are silent no-ops |
 | `EMAIL_FROM` | optional | Verified sender (`Store <orders@domain>`); defaults to `onboarding@resend.dev`, which only delivers to the Resend account owner |
 | `ADMIN_ALERT_EMAIL` | optional | New-order alerts + test sends; defaults to the store email in Settings |
@@ -132,6 +132,7 @@ docker compose up --build
 docker build \
   --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
   --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
+  --build-arg NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
   -t jr-jewellers:latest .
 docker run --rm -p 3000:3000 --env-file .env.local jr-jewellers:latest
 ```

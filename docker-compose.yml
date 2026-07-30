@@ -18,6 +18,7 @@ services:
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
     image: jr-jewellers:latest
     # No host `ports:` publish — on a Dokploy host, port 3000 is already taken by
     # Dokploy's own UI, so binding it fails ("port is already allocated").

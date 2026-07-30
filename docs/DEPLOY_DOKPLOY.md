@@ -121,6 +121,7 @@ compose they're passed as `build.args`.
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxx.supabase.co` | Supabase project URL (or your Kong URL if self-hosted) |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` / `eyJ…` | The **anon/publishable** key (RLS-safe, public) |
+| `NEXT_PUBLIC_SITE_URL` | `https://app.yourdomain.com` | Absolute origin for sitemap / robots / `metadataBase` / OG / JSON-LD. Inlined like any other `NEXT_PUBLIC_*`, so setting it only at runtime is too late — `sitemap.xml` and `robots.txt` are prerendered and would ship the `localhost` fallback. Unset never crashes (hardened in `lib/site-url.ts`), it just yields wrong SEO URLs. |
 
 > ⚠️ **Confirm Dokploy passes the panel env into the *build* step**, not only the
 > runtime container. If the built page shows a Supabase URL error, the build
@@ -133,7 +134,7 @@ compose they're passed as `build.args`.
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | Recommended | Absolute origin for sitemap / robots / `metadataBase` / OG / JSON-LD. If unset the app **no longer crashes** (hardened in `lib/site-url.ts`) but SEO URLs fall back to `localhost`. Set it to your real `https://` domain. |
+| `NEXT_PUBLIC_SITE_URL` | Recommended | Same value as the build arg above (compose passes it both ways). Build-time is the one that actually matters — see §4.1. |
 | `SUPABASE_SECRET_KEY` | Optional | Server-only service key; only paths that need elevated writes use it. The app is designed to run on the anon key + RLS/RPCs. |
 | `RESEND_API_KEY` | Optional | Enables order-confirmation (4.6) + status/admin emails (5.2). No key ⇒ all sends are no-ops. |
 | `EMAIL_FROM` | Optional | Sender address; needs a **verified Resend domain** to deliver beyond the Resend account owner. |
@@ -199,7 +200,8 @@ until you add a Domain so Traefik routes to it.
 5. Save, then **Deploy**.
 
 After the domain resolves, set `NEXT_PUBLIC_SITE_URL=https://app.yourdomain.com`
-(§4.2) and redeploy so SEO/OG URLs are correct.
+(§4.1) and **redeploy** — the value is compiled in, so a restart alone leaves the
+old SEO/OG URLs in place.
 
 ---
 
@@ -258,7 +260,8 @@ instead — see the companion doc §5.)
 - [ ] `supabase/seed.sql` run once (settings singleton; see its comments for the
       first-admin bootstrap + `app_secret` steps)
 - [ ] Build-time `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` set and reaching the build
-- [ ] Runtime `NEXT_PUBLIC_SITE_URL` = real HTTPS origin
+- [ ] Build-time `NEXT_PUBLIC_SITE_URL` = real HTTPS origin (rebuild after
+      changing it — it is inlined, not read at runtime)
 - [ ] Domain added → service `web`, port `3000`, HTTPS on
 - [ ] Supabase Site URL + redirect allowlist off `localhost`
 - [ ] Google OAuth enabled in Supabase (if used)

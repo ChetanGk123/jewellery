@@ -31,8 +31,13 @@ WORKDIR /app
 # lib/env.ts during `next build`, so real values are required here.
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+# Also build-time: `NEXT_PUBLIC_SITE_URL` is inlined by the compiler like any
+# other NEXT_PUBLIC_* var, so passing it only at `docker run` is too late —
+# sitemap.xml / robots.txt / metadataBase would bake in the localhost fallback.
+ARG NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY} \
+    NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL} \
     NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production
 
