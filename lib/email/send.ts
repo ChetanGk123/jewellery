@@ -1,5 +1,6 @@
 import "server-only"
 import { after } from "next/server"
+import nodemailer, { type Transporter } from "nodemailer"
 import { buildAbandonedCartEmail } from "./abandoned-cart"
 import { buildNewOrderAdminEmail, type NewOrderAdminEmailInput } from "./admin-alert"
 import type { EmailTemplateId } from "./copy"
@@ -24,29 +25,72 @@ import { SITE_URL } from "@/lib/site-url"
 import type { ResolvedStoreInfo } from "@/lib/store-info"
 
 /**
- * Transactional email via the Resend REST API (TASKS 4.6). Deliberately a
- * plain authenticated POST — one endpoint doesn't warrant the vendor SDK.
+ * Transactional email over SMTP via Nodemailer (TASKS 10.2; replaced the Resend
+ * REST call from 4.6). SMTP was chosen to escape Resend's unverified-domain
+ * rule, which only delivered to the account owner and so silently failed every
+ * real customer send.
  *
- * Degrades to a no-op when RESEND_API_KEY isn't configured (local dev, CI):
- * checkout must never depend on email. Every failure is logged, never thrown.
+ * Degrades to a no-op when SMTP isn't configured (local dev, CI): checkout must
+ * never depend on email. Every failure is logged, never thrown.
+ *
+ * NOTE: this makes sending require a TCP socket, so it can never run on the
+ * edge runtime. No caller is edge today — keep it that way.
  */
 
-const RESEND_ENDPOINT = "https://api.resend.com/emails"
+/** Applied to connect, greeting and socket alike — no stage may outlast it. */
 const SEND_TIMEOUT_MS = 10_000
+const DEFAULT_SMTP_PORT = 587
+/** Implicit TLS (SMTPS). Every other port is STARTTLS-upgraded on connect. */
+const SMTPS_PORT = 465
+/** A storefront sends in bursts (an order fans out to customer + admin). */
+const MAX_POOLED_CONNECTIONS = 3
 
 /**
- * Sender identity. Resend requires a verified domain for real addresses;
- * `onboarding@resend.dev` works out of the box but only delivers to the
- * account owner's inbox — set EMAIL_FROM once the domain is verified.
+ * Pooled transport, built once and reused: SMTP costs a TCP+TLS+AUTH handshake
+ * per connection, which a per-send transport would re-pay on every email.
+ * Null (not throwing) when unconfigured, so `sendEmail` can no-op cleanly.
+ */
+let cachedTransport: Transporter | null = null
+
+function getTransport(): Transporter | null {
+  const host = process.env.SMTP_HOST
+  const user = process.env.SMTP_USER
+  const pass = process.env.SMTP_PASS
+  if (!host || !user || !pass) return null
+
+  if (!cachedTransport) {
+    const port = Number(process.env.SMTP_PORT ?? DEFAULT_SMTP_PORT)
+    cachedTransport = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === SMTPS_PORT,
+      auth: { user, pass },
+      pool: true,
+      maxConnections: MAX_POOLED_CONNECTIONS,
+      // Nodemailer has no single "overall deadline" — each stage needs its own
+      // bound, or a server that connects then stalls would hang the send.
+      connectionTimeout: SEND_TIMEOUT_MS,
+      greetingTimeout: SEND_TIMEOUT_MS,
+      socketTimeout: SEND_TIMEOUT_MS,
+    })
+  }
+  return cachedTransport
+}
+
+/**
+ * Sender identity. Most SMTP providers (Gmail included) reject or rewrite a
+ * `From` the authenticated account doesn't own, so the default pairs the
+ * Settings-edited store name with SMTP_USER's address. Only set EMAIL_FROM to
+ * a different address once that mailbox is a verified alias of SMTP_USER.
  * Per-call (not module const) so the Settings-edited store name shows (6.15).
  */
 function fromAddress(info: ResolvedStoreInfo): string {
-  return process.env.EMAIL_FROM ?? `${info.name} <onboarding@resend.dev>`
+  return process.env.EMAIL_FROM ?? `${info.name} <${process.env.SMTP_USER ?? ""}>`
 }
 
-/** True when a provider key is configured (drives the confirmation-page copy). */
+/** True when SMTP is configured (drives the confirmation-page copy). */
 export function isEmailEnabled(): boolean {
-  return Boolean(process.env.RESEND_API_KEY)
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
 }
 
 /**
@@ -55,30 +99,17 @@ export function isEmailEnabled(): boolean {
  * digest reports it).
  */
 async function sendEmail(to: string, message: EmailMessage, from: string): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) return false
+  const transport = getTransport()
+  if (!transport) return false
 
   try {
-    const response = await fetch(RESEND_ENDPOINT, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: message.subject,
-        html: message.html,
-        text: message.text,
-      }),
-      signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
+    await transport.sendMail({
+      from,
+      to,
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
     })
-
-    if (!response.ok) {
-      console.error(`email send failed (${response.status})`, await response.text().catch(() => ""))
-      return false
-    }
     return true
   } catch (error: unknown) {
     console.error("email send failed", error)

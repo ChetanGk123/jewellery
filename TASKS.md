@@ -513,7 +513,7 @@ consciously declined in favour of not waiting on DNS.
   it doesn't own, so GoTrue password-reset/confirmation mail is broken) and reconcile
   `ADDITIONAL_REDIRECT_URLS` (`jewellery.chetanlab.org`) against `SITE_URL`
   (`shop.chetanlab.org`) or OAuth/magic-link returns get refused.
-- ⬜ **10.2 — Transport swap.** `lib/email/send.ts` only: replace the `fetch` to `RESEND_ENDPOINT`
+- ✅ **10.2 — Transport swap** *(2026-07-31)*. `lib/email/send.ts` only: replace the `fetch` to `RESEND_ENDPOINT`
   inside `sendEmail()` (line 57) with a module-level **pooled** nodemailer transport (one SMTP
   handshake amortised across sends; the per-send alternative costs a full TLS negotiation each
   time). Preserve the contract exactly — returns `boolean`, logs and never throws, and keep a
@@ -522,6 +522,15 @@ consciously declined in favour of not waiting on DNS.
   `fromAddress()` falls back to `SMTP_USER` instead of `onboarding@resend.dev`. **Note:** SMTP is a
   TCP socket, so this permanently rules out sending from an edge route — fine today (only
   `app/opengraph-image.tsx` is edge and it sends no mail), but it's a one-way door.
+  **Done as planned** (`nodemailer@9.0.3` + `@types/nodemailer`; nodemailer ships no types of its
+  own). **Bundling checked, because `output: standalone` made it non-obvious:** nodemailer is
+  absent from `.next/standalone/node_modules` — Turbopack *inlines* it into the server chunk
+  instead (`EHLO`×9, `STARTTLS`×11 in `_1eskoob._.js`, no dangling external `require`), so the
+  runtime image is self-contained and needs no `serverExternalPackages` entry. Standalone server
+  boots clean on `bun server.js` (its 500s are the stale build-time Supabase key, unrelated —
+  see 10.1). **tsc clean; `bun test` 331/331; build green; lint at the 13-error 9.7 baseline.**
+  *No live send exercised yet — that is 10.5, and it is the only thing that proves the bundled
+  SMTP path actually talks to a server.*
 - ⬜ **10.3 — Copy + env plumbing.** The stale Resend references: `emails/actions.ts:79`
   ("set RESEND_API_KEY to enable sending"), `docker-compose.yml:46` env passthrough,
   `.env.example:14,57`, `README.md:70`, `docs/PRODUCTION_ENV.md`.
