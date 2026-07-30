@@ -2662,18 +2662,17 @@ exception
 end $$;
 
 -- ════════════════════════════════════════════════════════════════════════
--- Bootstrap data
+-- No data beyond this point
 -- ════════════════════════════════════════════════════════════════════════
-
--- The advertised launch coupon code (BRIDE20 = 20% off, no min/cap/expiry).
-insert into coupon (code, kind, value)
-values ('BRIDE20', 'percent', 20)
-on conflict (code) do nothing;
-
--- Grant the store owner admin. app_metadata rides in the JWT, so this takes
--- effect on the account's NEXT token refresh (sign out / back in). No-op (0
--- rows) if the account hasn't signed up yet — re-run afterwards.
-update auth.users
-set raw_app_meta_data =
-      coalesce(raw_app_meta_data, '{}'::jsonb) || jsonb_build_object('role', 'admin')
-where email = 'chetangkajjidoni@gmail.com';
+--
+-- This file creates schema only. Row data lives in `supabase/seed.sql`
+-- (the settings singleton and the BRIDE20 coupon the storefront advertises)
+-- and `supabase/seed_demo.sql` (a demo catalogue for dev/staging).
+--
+-- The storage.buckets inserts above are the deliberate exception: the bucket
+-- rows ARE the storage configuration, the policies beside them reference those
+-- ids, and uploads fail without them — they are structure, not content.
+--
+-- The first admin is granted by hand, per environment; `seed.sql` §2 carries
+-- the statement. It is not scripted here because a migration must not hardcode
+-- one person's email into every database built from it.

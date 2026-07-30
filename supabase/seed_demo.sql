@@ -1,8 +1,8 @@
 -- supabase/seed_demo.sql — DEMO / TEST data for exercising the whole app.
 --
--- ⚠️  NOT for a public production database. This creates two accounts with
---     passwords written in plain text below. Run it on dev/staging, or delete
---     the demo accounts before the store goes live (see §11 for the teardown).
+-- ⚠️  NOT for a public production database. It creates a demo customer whose
+--     password is written in plain text below. Run it on dev/staging, or clear
+--     it out before the store goes live (see §11 for the teardown).
 --
 -- Prerequisites: 0001_initial_schema.sql applied, and `seed.sql` run first (it
 -- creates the `setting` singleton this file does not touch).
@@ -19,9 +19,10 @@
 -- CC-licensed test images; see that folder's ATTRIBUTION.md.
 --
 -- Contents: 6 categories · 20 products (19 photographed + 1 Draft) · 20
--- product_image rows · 2 auth users · 14 reviews · 6 coupons · 5 orders with
+-- product_image rows · 1 demo customer · 14 reviews · 6 coupons · 5 orders with
 -- items · 1 return request · 3 contact tickets · 5 subscribers · 1 abandoned
--- cart.
+-- cart. Catalogue and traffic only — store settings, the cron secret and the
+-- admin account are `seed.sql`'s job.
 
 begin;
 
@@ -43,10 +44,9 @@ delete from public.coupon           where code in
 delete from public.product          where slug like 'demo-%' or sku like 'RJ-DEMO-%';
 delete from public.category         where slug in
   ('earrings','necklaces','mangalsutra','rings','bangles-kada','anklets-adornments');
--- admin_role_audit.target_id has no FK, so it survives the auth.users delete.
-delete from public.admin_role_audit where actor_email = 'seed_demo.sql';
 -- Cascades to customer_profile, cart_snapshot, push_subscription, identities.
-delete from auth.users              where email in ('demo@rjjewellers.in','admin@rjjewellers.in');
+-- Only the demo shopper — the admin account belongs to seed.sql, not here.
+delete from auth.users              where email = 'demo@rjjewellers.in';
 
 -- ════════════════════════════════════════════════════════════════════════
 -- 1. Categories (6)
@@ -308,20 +308,21 @@ cross join lateral jsonb_array_elements(p.gallery) with ordinality as g(item, or
 where p.sku like 'RJ-DEMO-%';
 
 -- ════════════════════════════════════════════════════════════════════════
--- 4. Demo accounts
+-- 4. Demo customer account
 -- ════════════════════════════════════════════════════════════════════════
---   Customer : demo@rjjewellers.in  /  DemoUser@2026
---   Admin    : admin@rjjewellers.in /  AdminDemo@2026
+--   demo@rjjewellers.in  /  DemoUser@2026
 --
--- Inserting straight into auth.users is the only way to bootstrap the FIRST
--- admin — `admin_grant_role` (0005) gates on is_admin(), which needs an admin
--- to already exist. `email_confirmed_at` is pre-set so neither account has to
--- clear a confirmation mail.
+-- A plain shopper — the orders, reviews, return request and abandoned cart
+-- below all hang off this account. The ADMIN account is not created here; it is
+-- part of the mandatory bootstrap in `seed.sql`, because a usable admin login
+-- is needed whether or not you ever load demo data.
+--
+-- `email_confirmed_at` is pre-set so the account never has to clear a
+-- confirmation mail (which self-hosted stacks often cannot send at all).
 
 do $$
 declare
-  v_demo_id  uuid := gen_random_uuid();
-  v_admin_id uuid := gen_random_uuid();
+  v_demo_id uuid := gen_random_uuid();
   v_has_provider_id boolean;
 begin
   insert into auth.users (
@@ -333,14 +334,7 @@ begin
      'demo@rjjewellers.in', crypt('DemoUser@2026', gen_salt('bf')), now(),
      '{"provider":"email","providers":["email"]}'::jsonb,
      '{"full_name":"Ananya Deshpande"}'::jsonb,
-     now() - interval '90 days', now(), '', '', '', ''),
-    ('00000000-0000-0000-0000-000000000000', v_admin_id, 'authenticated', 'authenticated',
-     'admin@rjjewellers.in', crypt('AdminDemo@2026', gen_salt('bf')), now(),
-     -- app_metadata.role = 'admin' is what is_admin() reads out of the JWT.
-     jsonb_build_object('provider','email','providers',array['email'],
-                        'role','admin','role_granted_at', now()),
-     '{"full_name":"RJ Store Admin"}'::jsonb,
-     now() - interval '120 days', now(), '', '', '', '');
+     now() - interval '90 days', now(), '', '', '', '');
 
   -- GoTrue needs a matching identity row for password sign-in. `provider_id`
   -- only exists on newer releases, so branch rather than assume.
@@ -352,24 +346,18 @@ begin
   if v_has_provider_id then
     insert into auth.identities (id, user_id, identity_data, provider, provider_id,
                                  last_sign_in_at, created_at, updated_at)
-    select gen_random_uuid(), u.id,
-           jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
-           'email', u.id::text, now(), now(), now()
-    from auth.users u
-    where u.email in ('demo@rjjewellers.in', 'admin@rjjewellers.in');
+    values (gen_random_uuid(), v_demo_id,
+            jsonb_build_object('sub', v_demo_id::text, 'email', 'demo@rjjewellers.in',
+                               'email_verified', true),
+            'email', v_demo_id::text, now(), now(), now());
   else
     insert into auth.identities (id, user_id, identity_data, provider,
                                  last_sign_in_at, created_at, updated_at)
-    select gen_random_uuid(), u.id,
-           jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
-           'email', now(), now(), now()
-    from auth.users u
-    where u.email in ('demo@rjjewellers.in', 'admin@rjjewellers.in');
+    values (gen_random_uuid(), v_demo_id,
+            jsonb_build_object('sub', v_demo_id::text, 'email', 'demo@rjjewellers.in',
+                               'email_verified', true),
+            'email', now(), now(), now());
   end if;
-
-  -- Audit row, mirroring what admin_grant_role would have written.
-  insert into public.admin_role_audit (target_id, target_email, action, actor_email)
-  values (v_admin_id, 'admin@rjjewellers.in', 'grant', 'seed_demo.sql');
 end $$;
 
 -- Prefills the checkout form for the customer account.
@@ -608,6 +596,9 @@ commit;
 -- ════════════════════════════════════════════════════════════════════════
 -- 11. Teardown — removes everything above, leaves real data alone
 -- ════════════════════════════════════════════════════════════════════════
+-- Store settings are NOT touched by this file — they belong to `seed.sql`, so
+-- there is nothing to undo here.
+--
 -- Run §0's statements on their own, or:
 --
 --   delete from public."order"         where order_no  like 'JR-DEMO-%';
@@ -618,4 +609,4 @@ commit;
 --                                                     'rings','bangles-kada','anklets-adornments');
 --   delete from public.coupon          where code in ('FESTIVE10','FLAT500','FREESHIP',
 --                                                     'WELCOME15','DIWALI25','OLDCODE');
---   delete from auth.users             where email in ('demo@rjjewellers.in','admin@rjjewellers.in');
+--   delete from auth.users             where email = 'demo@rjjewellers.in';

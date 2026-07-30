@@ -124,42 +124,40 @@ writes **real orders** into whatever project it points at. `RAZORPAY_*` and
 
 ## 3. Database setup — not covered by any env panel
 
-Run once against a fresh project, after applying
-`supabase/migrations/0001_initial_schema.sql`.
+Three files, run in order. The split is strict: the migration creates structure
+and **zero rows**, `seed.sql` adds only what the app cannot function without,
+and `seed_demo.sql` is optional sample content.
 
-1. **Settings singleton** — `supabase/seed.sql`. Without it, every admin Settings
-   save fails with `SETTINGS_ROW_MISSING`: `admin_update_settings` is an
-   `UPDATE ... WHERE id = true` with no insert.
-2. **Cron secret** — one value in two places, and they must match exactly. Let
-   Postgres generate it and hand it back, so there is no placeholder to fill in
-   and nothing to mistype:
+| # | File | Run where | What it does |
+|---|---|---|---|
+| 1 | `supabase/migrations/0001_initial_schema.sql` | every environment | Tables, functions, triggers, RLS policies, storage buckets. No data. |
+| 2 | `supabase/seed.sql` | every environment, **including production** | The settings singleton, the BRIDE20 coupon, a generated cron secret, and the first admin account. |
+| 3 | `supabase/seed_demo.sql` | dev/staging only | 20 products, 5 orders, reviews, coupons, a demo customer. Never on a public production database. |
 
-   ```sql
-   -- pgcrypto lands in `extensions` on Supabase and in `public` on some
-   -- self-hosted stacks; this resolves gen_random_bytes either way.
-   set search_path = public, extensions;
+```bash
+psql "$DATABASE_URL" -f supabase/migrations/0001_initial_schema.sql
+psql "$DATABASE_URL" -f supabase/seed.sql        # prints credentials — copy them
+psql "$DATABASE_URL" -f supabase/seed_demo.sql   # optional
+```
 
-   insert into app_secret (name, value)
-   values ('cron', encode(gen_random_bytes(32), 'hex'))
-   on conflict (name) do update set value = excluded.value
-   returning value as cron_secret;
-   ```
+**Before running step 2, edit the admin email** at the top of `seed.sql` §4 —
+it is the account you will sign in to `/admin` with. The file then prints, as a
+result set:
 
-   Copy the returned 64-character string into the app's `CRON_SECRET` env var,
-   then **redeploy**. Re-running the statement rotates the secret — the env var
-   has to be updated to match or the digest starts failing.
+- **`CRON_SECRET`** — a generated 64-char value written to `app_secret`. Copy it
+  into the app's `CRON_SECRET` env var; the two must match exactly, because the
+  route checks the bearer token while `get_daily_digest` re-checks this row, so
+  a leaked URL alone yields nothing. Re-running `seed.sql` **rotates** it.
+- **Admin email and a generated password** — nothing weak is committed to the
+  repo. Re-running does not reset an existing account's password.
 
-   If you would rather set the env var first, generate with `openssl rand -hex 32`
-   and paste the same value into a literal `values ('cron', '<that value>')`.
-
-   Two gates share it: the route checks the bearer token, and `get_daily_digest`
-   re-checks against this row, so a leaked URL alone gets nothing.
-3. **First admin** — cannot be granted through the app. `admin_grant_role` gates
-   on `is_admin()`, which needs an admin to already exist, so stamp it by hand
-   (SQL in `supabase/seed.sql` §2).
-4. **Demo data (optional)** — `supabase/seed_demo.sql` for a full catalogue,
-   orders and two logins. Not for a public production database; it has plaintext
-   passwords and a teardown block in §11.
+Why each is mandatory: without the settings row, every admin Settings save fails
+with `SETTINGS_ROW_MISSING` (`admin_update_settings` is an
+`UPDATE ... WHERE id = true` with no insert). Without the coupon, the cart's
+input still advertises `placeholder="Coupon code (try BRIDE20)"` and rejects it.
+Without the admin, there is no way in at all — `admin_grant_role` gates on
+`is_admin()`, which needs an admin to already exist, so the first one has to be
+written straight into `auth.users`.
 
 ---
 
