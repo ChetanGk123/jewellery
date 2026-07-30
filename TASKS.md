@@ -483,6 +483,57 @@ image is set.**
   noindex. Visual-regression baselines regenerated (now include the hero photo + new colours),
   verified stable across two runs.
 
+## Phase 10 — SMTP transactional email via Nodemailer (user request 2026-07-31)
+
+Every real send fails today. `fromAddress()` (`lib/email/send.ts:43`) falls back to
+`onboarding@resend.dev` because `EMAIL_FROM` is still unset pending domain verification (4.13's open
+follow-up), and that sender only delivers to the Resend account owner — so admin → Emails → "Send
+test email" returns *"The mail provider declined the send"*, and **customer order confirmations have
+been failing silently since 4.6 shipped**: `queue()` swallows every failure by design
+(`send.ts:31`, "logs and swallows"), so nobody saw it. Nodemailer over SMTP removes the
+domain-verification gate entirely — Gmail delivers to arbitrary recipients today.
+
+Verified before planning: **nodemailer 9.0.3 authenticates to `smtp.gmail.com:587` (STARTTLS) under
+Bun 1.3.11** (`transporter.verify()` — auth only, sends nothing). The transport is the only coupled
+surface: the eight `build*Email` modules, `queue()`/`after()`, and every existing test are
+transport-agnostic.
+
+Two accepted tradeoffs, both worth re-reading before starting: **(1) Gmail forces `From` to the
+authenticated account** — mail ships as the Gmail address, not `care@rjjewellers.in`, until a Gmail
+"Send mail as" alias (needs a real mailbox at that address to receive the confirmation) or a
+Workspace domain exists. **(2) 500 recipients/day** on consumer Gmail, shared with the GoTrue auth
+mail already using these same credentials. The alternative — verifying `chetanlab.org` on Resend
+(DNS we demonstrably control) — needs *zero* code change and yields a store-branded From; it was
+consciously declined in favour of not waiting on DNS.
+
+- ⬜ **10.1 — Rotate the Gmail app password (blocking — do first).** The current `SMTP_PASS` was
+  pasted into a chat transcript, and this phase promotes it from "auth mail only" to the credential
+  behind *all* customer mail. New app password → Supabase stack `.env` **and** the app env. While
+  in that file, fix `SMTP_ADMIN_EMAIL=admin@example.com` (placeholder — Gmail won't send as a From
+  it doesn't own, so GoTrue password-reset/confirmation mail is broken) and reconcile
+  `ADDITIONAL_REDIRECT_URLS` (`jewellery.chetanlab.org`) against `SITE_URL`
+  (`shop.chetanlab.org`) or OAuth/magic-link returns get refused.
+- ⬜ **10.2 — Transport swap.** `lib/email/send.ts` only: replace the `fetch` to `RESEND_ENDPOINT`
+  inside `sendEmail()` (line 57) with a module-level **pooled** nodemailer transport (one SMTP
+  handshake amortised across sends; the per-send alternative costs a full TLS negotiation each
+  time). Preserve the contract exactly — returns `boolean`, logs and never throws, and keep a
+  ~10s cap via the transport's `connectionTimeout`/`greetingTimeout`/`socketTimeout` rather than
+  `AbortSignal.timeout`. `isEmailEnabled()` keys off `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS`;
+  `fromAddress()` falls back to `SMTP_USER` instead of `onboarding@resend.dev`. **Note:** SMTP is a
+  TCP socket, so this permanently rules out sending from an edge route — fine today (only
+  `app/opengraph-image.tsx` is edge and it sends no mail), but it's a one-way door.
+- ⬜ **10.3 — Copy + env plumbing.** The stale Resend references: `emails/actions.ts:79`
+  ("set RESEND_API_KEY to enable sending"), `docker-compose.yml:46` env passthrough,
+  `.env.example:14,57`, `README.md:70`, `docs/PRODUCTION_ENV.md`.
+- ⬜ **10.4 — Tests.** New `lib/email/send.test.ts` with the transport mocked (there is none today —
+  4.6 tested only the builders): send rejected → `false`; transport throws → `false` and no rethrow;
+  `isEmailEnabled()` false → `false` with no connection attempted; `From` falls back to `SMTP_USER`.
+  The existing 331 mock `isEmailEnabled`/the builders and should stay green untouched.
+- ⬜ **10.5 — Verify.** `bun test` / tsc / build, then the two things Resend could never do: a live
+  test send from admin → Emails **to a non-owner address**, and a real checkout confirming the
+  customer receives the confirmation. Check the landed mail isn't spam-foldered, and watch
+  `docker logs … | grep "email send failed"` stays quiet.
+
 ## Cross-cutting (ongoing, not a phase)
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**
 - ✅ **Testing** (0064c58, 0435e17, 8c76de5). **Unit (67 pass / 0 fail, `bun test`):** pure domain (cart, coupons, shipping, money, whatsapp, checkout schema/order mapping) plus `submitCheckout` — the authoritative write gate — with the Supabase server client mocked: honeypot drops bots before the RPC, invalid input never reaches the DB, the RPC payload provably carries no price, success/error/unexpected-shape all mapped. **E2E (Playwright, 2 pass):** `e2e/checkout.e2e.ts` runs the critical journey (shop → product → add to cart → cart → COD form → place order → confirmation with order number → cart cleared) against a **production build** on :3200, so the strict nonce CSP + per-request rendering are exercised as shipped. Config notes: system Chrome via `channel: "chrome"` (no browser download); `*.e2e.ts` naming so `bun test` ignores them; `bun run e2e`. **Data:** E2E writes a real order into live Supabase tagged `e2e-test@example.com` — clean with `delete from "order" where customer_email = 'e2e-test@example.com'` (+ `setval('order_no_seq', 1001, false)`); this run's order was cleaned. **Visual regression (16 pass):** `e2e/visual.e2e.ts` — full-page screenshots of home / shop / product / empty-cart at 320/768/1024/1440; baselines committed (`visual.e2e.ts-snapshots/`, ~7.8 MB); `toHaveScreenshot` defaults in config (animations disabled, 2% diff tolerance); verified stable across two fresh runs; regenerate with `bun run e2e -- --update-snapshots`. **Coverage (`bun test --coverage`):** 100% funcs / 99.78% lines across the tested domain + action layer (actions, cart, checkout order/schema, coupons, shipping, store-info, money, whatsapp) — exceeds the 80% target. Caveat: Bun reports only test-imported files; `lib/db` row-mappers, `stores/cart`, and components are exercised via E2E + visual regression instead (per web testing rules: visual regression > brittle markup assertions for visual components). **Deferred to deploy:** firefox/webkit projects (need `playwright install` browser downloads) and a staging/branch Supabase so E2E stops writing prod data.
