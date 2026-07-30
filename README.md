@@ -139,4 +139,7 @@ docker run --rm -p 3000:3000 --env-file .env.local jr-jewellers:latest
 
 For a full self-hosted deployment walkthrough (Dokploy, domains, env, crons) see
 [`docs/DEPLOY_DOKPLOY.md`](docs/DEPLOY_DOKPLOY.md); for running your own Supabase,
-[`docs/SELF_HOSTED_SUPABASE.md`](docs/SELF_HOSTED_SUPABASE.md).
+[`docs/SELF_HOSTED_SUPABASE.md`](docs/SELF_HOSTED_SUPABASE.md). For the exact
+production variable set across both applications — which are build-time, which
+value comes from where, and what has to be done in the database rather than an
+env panel — see [`docs/PRODUCTION_ENV.md`](docs/PRODUCTION_ENV.md).
