@@ -20,7 +20,7 @@ type Props = {
   storeInfo: ResolvedStoreInfo
   /** Absolute site origin for preview links (SITE_URL). */
   baseUrl: string
-  /** False when RESEND_API_KEY is missing — test sends are disabled. */
+  /** False when SMTP_HOST/USER/PASS are incomplete — test sends are disabled. */
   isEmailConfigured: boolean
   /** Where test sends go (the admin alert inbox). */
   testRecipient: string
@@ -374,7 +374,7 @@ export function EmailsView({ initial, storeInfo, baseUrl, isEmailConfigured, tes
                     <span className="font-body text-[12px] text-[#8B8177]">
                       {isEmailConfigured
                         ? `Delivers this template with sample data to ${testRecipient}`
-                        : "Email isn't configured — set RESEND_API_KEY to enable test sends."}
+                        : "Email isn't configured — set SMTP_HOST, SMTP_USER and SMTP_PASS to enable test sends."}
                     </span>
                   </div>
                   {isDirty && isEmailConfigured && (

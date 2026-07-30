@@ -69,9 +69,13 @@ that does not resolve. **Email/password sign-up and password reset are both dead
 in production until you fix this.** Two options:
 
 - **Real SMTP (recommended).** Set `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` /
-  `SMTP_PASS` / `SMTP_ADMIN_EMAIL` / `SMTP_SENDER_NAME` to a provider (Resend,
-  Postmark, SES). This is separate from the app's `RESEND_API_KEY`, which only
-  sends order emails — auth mail is GoTrue's job.
+  `SMTP_PASS` / `SMTP_ADMIN_EMAIL` / `SMTP_SENDER_NAME` to a provider (Gmail,
+  Postmark, SES). `SMTP_ADMIN_EMAIL` must be an address that account may send as
+  — leaving the `admin@example.com` placeholder makes every auth mail bounce.
+  Since 10.2 the **app** sends its order mail over SMTP too, using its own
+  `SMTP_*` vars (§2). Pointing both at the same mailbox is fine and is the
+  simplest setup, but they then share one daily quota — consumer Gmail allows
+  500 recipients/day across auth *and* order mail combined.
 - **Skip confirmation.** `ENABLE_EMAIL_AUTOCONFIRM=true` lets accounts work
   immediately without mail, but password reset still cannot send, and unverified
   addresses become valid accounts.
@@ -108,8 +112,9 @@ design: `lib/env.ts` validates them with Zod at module load.
 
 | Variable | Unset behaviour |
 |---|---|
-| `RESEND_API_KEY` | Order emails silently skip; checkout still completes and the confirmation page adapts its copy. |
-| `EMAIL_FROM` | Falls back to `onboarding@resend.dev`. A custom address needs a verified Resend domain. |
+| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | Order emails silently skip; checkout still completes and the confirmation page adapts its copy. All three are needed — any one missing disables email. Read per-send, so a restart applies a change (no rebuild). |
+| `SMTP_PORT` | Falls back to `587` (STARTTLS); set `465` for implicit TLS. |
+| `EMAIL_FROM` | Falls back to the Settings store name + `SMTP_USER`'s address. A different address must be one the SMTP account is verified to send as, or the provider will reject or rewrite it. |
 | `ADMIN_ALERT_EMAIL` | New-order alerts fall back to the store email in Settings. |
 | `CRON_SECRET` | `/api/cron/*` returns **503**. Must also exist as an `app_secret` row (§3). |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Admin push off; Settings → Notifications shows "not configured". Generate with `bunx web-push generate-vapid-keys`. Requires `CRON_SECRET` too. |

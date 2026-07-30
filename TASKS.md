@@ -531,9 +531,25 @@ consciously declined in favour of not waiting on DNS.
   see 10.1). **tsc clean; `bun test` 331/331; build green; lint at the 13-error 9.7 baseline.**
   *No live send exercised yet — that is 10.5, and it is the only thing that proves the bundled
   SMTP path actually talks to a server.*
-- ⬜ **10.3 — Copy + env plumbing.** The stale Resend references: `emails/actions.ts:79`
+- ✅ **10.3 — Copy + env plumbing** *(2026-07-31)*. The stale Resend references: `emails/actions.ts:79`
   ("set RESEND_API_KEY to enable sending"), `docker-compose.yml:46` env passthrough,
   `.env.example:14,57`, `README.md:70`, `docs/PRODUCTION_ENV.md`.
+  **Plus one the plan missed:** `components/admin/emails/EmailsView.tsx:377` carried the same
+  "set RESEND_API_KEY" string as *user-facing* copy (and :23 as a prop doc) — found by sweeping for
+  `RESEND` rather than trusting the list. Also updated `README.md:12` (stack line),
+  `docs/SELF_HOSTED_SUPABASE.md:286`, `docs/DEPLOY_DOKPLOY.md` (prereqs, env table, cron §4.3,
+  go-live step 4, checklist) and `DEPLOYMENT_PLAN.md:147` (rotation runbook → `SMTP_PASS`).
+  `PRODUCTION_ENV.md` §1 no longer claims app mail is "separate from" the stack's SMTP — since
+  10.2 they can share one mailbox, and then they **share one daily quota** (consumer Gmail: 500
+  recipients/day across auth *and* order mail). Historical records (`STOREFRONT_SHORTFALLS.md`,
+  `ARCHITECTURE_PLAN.md`, `DEPLOYMENT_PLAN.md` phase table, `CASHFREE_INTEGRATION.md`) keep their
+  Resend mentions deliberately — they are snapshots of decisions as they stood.
+  **Zero `RESEND_API_KEY` references remain in code or config.** tsc clean; 331/331; build green;
+  `docker compose config` resolves all four `SMTP_*`.
+  *Noted while validating: the local `.env.local` still carries a real `RESEND_API_KEY` and the
+  `E2E_USER_*` creds, and `env_file` injects both into a local `docker compose up`. Harmless (nothing
+  reads the Resend key now, and Dokploy supplies env from its panel, not this file) but the Resend
+  key is dead weight and can be deleted.*
 - ⬜ **10.4 — Tests.** New `lib/email/send.test.ts` with the transport mocked (there is none today —
   4.6 tested only the builders): send rejected → `false`; transport throws → `false` and no rethrow;
   `isEmailEnabled()` false → `false` with no connection attempted; `From` falls back to `SMTP_USER`.

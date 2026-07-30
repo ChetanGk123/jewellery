@@ -39,8 +39,9 @@ committed compose/Dockerfile.
   `SETTINGS_ROW_MISSING`; the file also documents the first-admin bootstrap
   and the `app_secret` insert).
 - A **domain** with DNS you control, pointed at the Dokploy host.
-- Optional: a **Resend** account + verified sending domain (for order/status
-  emails — the app degrades to a no-op without it).
+- Optional: **SMTP credentials** (for order/status emails — the app degrades to
+  a no-op without them). Any provider works; the same mailbox Supabase Auth uses
+  is the simplest choice.
 
 ---
 
@@ -77,7 +78,10 @@ services:
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
       SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       ADMIN_ALERT_EMAIL: ${ADMIN_ALERT_EMAIL:-}
     env_file:                       # optional; absent files are ignored
@@ -136,8 +140,9 @@ compose they're passed as `build.args`.
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | Recommended | Same value as the build arg above (compose passes it both ways). Build-time is the one that actually matters — see §4.1. |
 | `SUPABASE_SECRET_KEY` | Optional | Server-only service key; only paths that need elevated writes use it. The app is designed to run on the anon key + RLS/RPCs. |
-| `RESEND_API_KEY` | Optional | Enables order-confirmation (4.6) + status/admin emails (5.2). No key ⇒ all sends are no-ops. |
-| `EMAIL_FROM` | Optional | Sender address; needs a **verified Resend domain** to deliver beyond the Resend account owner. |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Optional | Enables order-confirmation (4.6) + status/admin emails (5.2), over SMTP (10.2). Unless **all three** are set, every send is a no-op. Runtime-only — a restart applies them, no rebuild. |
+| `SMTP_PORT` | Optional | Defaults to `587` (STARTTLS). `465` selects implicit TLS. |
+| `EMAIL_FROM` | Optional | Sender address; defaults to the Settings store name + `SMTP_USER`'s address. Only set it to an address the SMTP account is verified to send as — Gmail and most providers reject or rewrite a `From` they don't own. |
 | `ADMIN_ALERT_EMAIL` | Optional | Recipient for the new-order admin alert (falls back to `STORE_INFO.email`). |
 | `CRON_SECRET` | Optional | Bearer token for the cron routes (daily digest 5.17, abandoned carts 6.19). See §4.3–4.4. |
 
@@ -170,7 +175,7 @@ Three one-time steps:
 The route answers `503` without `CRON_SECRET`, `401` on a bad bearer, `502`
 when the RPC or the email send fails (so the scheduler's logs show misfires),
 and `{ "ok": true, "date": …, "orders": … }` on success. Requires
-`RESEND_API_KEY` — without it the send is a no-op and the route reports `502`.
+SMTP config — without it the send is a no-op and the route reports `502`.
 
 ### 4.4 Abandoned-cart cron (TASKS 6.19)
 
@@ -222,8 +227,12 @@ instead — see the companion doc §5.)
 3. **Auth → Email Templates** — run `supabase/templates/apply.sh` with a personal
    access token to push the branded templates (2.8c), or paste them in the
    dashboard. Managed only — self-host mounts them instead.
-4. **Resend** — verify your sending domain, then set `EMAIL_FROM` to an address on
-   it and `RESEND_API_KEY` in the app env; redeploy. Until then email is a no-op.
+4. **SMTP** — set `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` in the app env and restart
+   (no rebuild needed). Until all three are set email is a no-op. Mail goes out
+   as `SMTP_USER`'s address unless `EMAIL_FROM` names an address that account is
+   verified to send as. If you point this at the same mailbox Supabase Auth uses
+   (§1 of `PRODUCTION_ENV.md`), both share that provider's daily send quota —
+   consumer Gmail allows 500 recipients/day.
 
 ---
 
@@ -266,7 +275,7 @@ instead — see the companion doc §5.)
 - [ ] Supabase Site URL + redirect allowlist off `localhost`
 - [ ] Google OAuth enabled in Supabase (if used)
 - [ ] Auth email templates applied
-- [ ] Resend domain verified + `RESEND_API_KEY`/`EMAIL_FROM` set (if email wanted)
+- [ ] `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` set + a test send received (if email wanted)
 - [ ] Smoke test: home renders · sign-in works · a COD order places · `/admin` loads
 - [ ] Backups configured (managed = automatic; self-host = your `pg_dump`)
 

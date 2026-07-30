@@ -9,7 +9,7 @@ v1 tender, GSTIN on invoices, WhatsApp enquiry throughout.
 
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 ·
 Supabase (Postgres + Auth + Storage + Realtime) · Bun (runtime, package manager,
-test runner) · Resend (transactional email) · Web Push.
+test runner) · Nodemailer/SMTP (transactional email) · Web Push.
 
 ## What's inside
 
@@ -67,8 +67,9 @@ bun dev                           # http://localhost:3000
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ | Public client key |
 | `NEXT_PUBLIC_SITE_URL` | deploy | Absolute origin (SEO, email links); falls back to localhost. Needed at **build** time — it is inlined, so changing it requires a rebuild |
-| `RESEND_API_KEY` | optional | Enables all email; without it sends are silent no-ops |
-| `EMAIL_FROM` | optional | Verified sender (`Store <orders@domain>`); defaults to `onboarding@resend.dev`, which only delivers to the Resend account owner |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | optional | Enables all email; unless **all three** are set, sends are silent no-ops. Runtime-only — a restart picks them up, no rebuild |
+| `SMTP_PORT` | optional | Defaults to `587` (STARTTLS); `465` switches to implicit TLS |
+| `EMAIL_FROM` | optional | Sender (`Store <orders@domain>`); defaults to the Settings store name + `SMTP_USER`'s address. Only override with an address the SMTP account may send as — Gmail rejects or rewrites a From it doesn't own |
 | `ADMIN_ALERT_EMAIL` | optional | New-order alerts + test sends; defaults to the store email in Settings |
 | `CRON_SECRET` | optional | Bearer token for cron routes; the same value must exist in the `app_secret` table (see `.env.example`) |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | optional | Admin Web Push notifications |

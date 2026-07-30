@@ -42,8 +42,14 @@ services:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
       # Server-only secret — read at runtime by lib/db/admin.ts.
       SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
-      # Transactional email (optional — no key ⇒ email is a no-op).
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      # Transactional email over SMTP (optional — all three of HOST/USER/PASS
+      # must be set or email is a silent no-op). Runtime-only: unlike the
+      # NEXT_PUBLIC_* vars above these are read per-send, so changing them needs
+      # only a restart, not a rebuild.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       ADMIN_ALERT_EMAIL: ${ADMIN_ALERT_EMAIL:-}
       # Cron + web push (optional). Listed explicitly rather than left to the

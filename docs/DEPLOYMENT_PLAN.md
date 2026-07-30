@@ -144,7 +144,7 @@ Rules, in order of importance:
   `NEXT_PUBLIC_SITE_URL`, VAPID key pair, `ADMIN_ALERT_EMAIL` (staging → a
   test inbox so digest tests don't spam the operator).
 - **Secret rotation runbook** (write once, per 8.2): rotating
-  `SUPABASE_SECRET_KEY`, `RESEND_API_KEY`, or `CRON_SECRET` = update panel →
+  `SUPABASE_SECRET_KEY`, `SMTP_PASS`, or `CRON_SECRET` = update panel →
   redeploy (runtime vars only, no rebuild) → for `CRON_SECRET`, update the
   `app_secret` row in the same window.
 - Full variable reference: DEPLOY_DOKPLOY §4 and `.env.example`.

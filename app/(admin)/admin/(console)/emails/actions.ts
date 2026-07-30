@@ -76,7 +76,7 @@ export async function sendTestEmail(templateId: unknown): Promise<TestEmailResul
   if (!isEmailEnabled()) {
     return {
       ok: false,
-      error: "Email isn't configured — set RESEND_API_KEY to enable sending.",
+      error: "Email isn't configured — set SMTP_HOST, SMTP_USER and SMTP_PASS to enable sending.",
     }
   }
 

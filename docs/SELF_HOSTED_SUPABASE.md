@@ -283,8 +283,11 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your ANON_KEY>
 # runtime
 NEXT_PUBLIC_SITE_URL=https://app.yourdomain.com
 SUPABASE_SECRET_KEY=<your SERVICE_ROLE_KEY>    # required — the admin console (lib/db/admin.ts) throws without it
-RESEND_API_KEY=...                              # app-level order emails (4.6/5.2)
-EMAIL_FROM=care@rjjewellers.in
+SMTP_HOST=smtp.gmail.com                        # app-level order emails (4.6/5.2/10.2)
+SMTP_PORT=587                                   # optional; 587 STARTTLS (default), 465 implicit TLS
+SMTP_USER=...                                   # all three of HOST/USER/PASS or email is a no-op
+SMTP_PASS=...                                   # Gmail: an App Password
+EMAIL_FROM=care@rjjewellers.in                  # only if SMTP_USER may send as it
 ADMIN_ALERT_EMAIL=...
 ```
 
