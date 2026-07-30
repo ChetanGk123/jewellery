@@ -46,6 +46,16 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       ADMIN_ALERT_EMAIL: ${ADMIN_ALERT_EMAIL:-}
+      # Cron + web push (optional). Listed explicitly rather than left to the
+      # `env_file` below: that only injects them when the platform writes a real
+      # .env next to this file. If it instead exports the panel env into the
+      # compose process, ${VAR} interpolation still resolves but env_file has
+      # nothing to read — and both features fail quietly (digest 503s, the
+      # Settings card reads "not configured") while the values look set.
+      CRON_SECRET: ${CRON_SECRET:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
     env_file:
       # Optional: local dev may keep values in .env / .env.local. Absent files
       # are ignored (requires Docker Compose v2.24+).
