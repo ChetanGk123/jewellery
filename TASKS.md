@@ -550,10 +550,18 @@ consciously declined in favour of not waiting on DNS.
   `E2E_USER_*` creds, and `env_file` injects both into a local `docker compose up`. Harmless (nothing
   reads the Resend key now, and Dokploy supplies env from its panel, not this file) but the Resend
   key is dead weight and can be deleted.*
-- ⬜ **10.4 — Tests.** New `lib/email/send.test.ts` with the transport mocked (there is none today —
-  4.6 tested only the builders): send rejected → `false`; transport throws → `false` and no rethrow;
-  `isEmailEnabled()` false → `false` with no connection attempted; `From` falls back to `SMTP_USER`.
-  The existing 331 mock `isEmailEnabled`/the builders and should stay green untouched.
+- ✅ **10.4 — Tests** *(2026-07-31)*. New `lib/email/send.test.ts` with the transport mocked (there was none —
+  4.6 tested only the builders, which is exactly how a total send failure stayed invisible):
+  `isEmailEnabled()` true only with all three of HOST/USER/PASS; unconfigured → no `sendMail` call at
+  all (not merely a false return); delivered → `sent`, with both html and text bodies; provider
+  rejects → `false` and **no throw**; `From` defaults to `${store name} <SMTP_USER>`; `EMAIL_FROM`
+  overrides; and two sends share one `createTransport` (proves the pooling). 7 tests, **338 total**.
+  **Mutation-checked rather than assumed**: reintroducing `onboarding@resend.dev` in `fromAddress`
+  fails the From test with a clear diff, so the suite provably guards the original bug; `send.ts`
+  verified byte-identical afterwards. Mocks use the repo's `_`-prefixed-param convention — dropping
+  the params to silence `no-unused-vars` collapses `mock.calls` to an empty tuple and breaks tsc, and
+  all six pre-existing warnings are this same rule in the other test mocks.
+  **tsc clean; 338/338; lint 13 errors (baseline) + 8 warnings (6 baseline + these 2).**
 - ⬜ **10.5 — Verify.** `bun test` / tsc / build, then the two things Resend could never do: a live
   test send from admin → Emails **to a non-owner address**, and a real checkout confirming the
   customer receives the confirmation. Check the landed mail isn't spam-foldered, and watch
