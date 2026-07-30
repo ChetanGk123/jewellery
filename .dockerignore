@@ -31,6 +31,10 @@ coverage
 refereces
 *.md
 
+# Captured UI screenshots — ~49 MB, i.e. most of the build context, and read by
+# nothing in the build.
+screenshots
+
 # Local Docker files themselves
 Dockerfile
 .dockerignore

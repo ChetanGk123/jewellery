@@ -21,7 +21,10 @@ ARG BUN_VERSION=1.3.11
 FROM oven/bun:${BUN_VERSION}-slim AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+# Cache mount survives image rebuilds, so a lockfile change re-resolves against
+# already-downloaded tarballs instead of refetching the whole dependency set.
+RUN --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
+    bun install --frozen-lockfile
 
 # ── builder: compile the standalone Next.js server ───────────────────────────
 FROM oven/bun:${BUN_VERSION}-slim AS builder
@@ -41,9 +44,21 @@ ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
     NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production
 
+# `tsc` is not run inside the image — see next.config.ts. CI (and any local
+# `bun run build`) still type-checks; doing it again here just re-pays ~112s of
+# the deploy on a 3-core box to learn what CI already proved.
+ENV SKIP_TYPE_CHECK=1
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN bun run build
+
+# `.next/cache` holds Turbopack's persistent compile cache (and tsc's
+# .tsbuildinfo). `.next` is gitignored *and* dockerignored, so this mount is its
+# only source — it turns each deploy's full recompile into an incremental one.
+# `sharing=locked` serialises concurrent builds rather than letting two writers
+# corrupt the cache. Deleting the mount only costs one slow build.
+RUN --mount=type=cache,target=/app/.next/cache,sharing=locked \
+    bun run build
 
 # ── runner: minimal runtime with a non-root user ─────────────────────────────
 FROM oven/bun:${BUN_VERSION}-slim AS runner

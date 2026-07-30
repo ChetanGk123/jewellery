@@ -1,0 +1,33 @@
+# Type + lint gate. The Docker image build sets SKIP_TYPE_CHECK=1 (see
+# next.config.ts) because `tsc` costs ~112s of every deploy on the VPS — this
+# workflow is what keeps that safe, so it must stay green before you deploy.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+
+      - run: bun install --frozen-lockfile
+
+      # `next-env.d.ts` and `.next/types/**` are gitignored but referenced by
+      # tsconfig's `include`, so a fresh checkout must regenerate them. `typegen`
+      # does that without paying for a full build.
+      - name: Generate route types
+        run: bunx next typegen
+
+      - name: Type check
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint

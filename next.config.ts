@@ -31,7 +31,17 @@ const nextConfig: NextConfig = {
   // the Docker runtime image ships a minimal `server.js` + pruned node_modules
   // instead of the whole repo. See Dockerfile.
   output: "standalone",
+  // Type errors are still a hard failure everywhere that matters — plain
+  // `bun run build`, `bun run typecheck`, and CI. Only the Docker image build
+  // opts out (it sets SKIP_TYPE_CHECK=1), because `tsc` costs ~112s of the
+  // ~5.5min deploy on the 3-core VPS and re-checks a tree CI already checked.
+  typescript: { ignoreBuildErrors: process.env.SKIP_TYPE_CHECK === "1" },
   experimental: {
+    // Persist Turbopack's compile cache to `.next/cache/turbopack` so repeat
+    // builds only recompile what changed (locally: 3.7s cold → 230ms warm).
+    // The Dockerfile keeps that directory alive across image builds with a
+    // BuildKit cache mount.
+    turbopackFileSystemCacheForBuild: true,
     serverActions: {
       // The bulk .xlsx import posts the sheet to a server action twice
       // (preview + apply); the 1 MB default would reject bigger catalogues.
