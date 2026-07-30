@@ -562,7 +562,16 @@ consciously declined in favour of not waiting on DNS.
   the params to silence `no-unused-vars` collapses `mock.calls` to an empty tuple and breaks tsc, and
   all six pre-existing warnings are this same rule in the other test mocks.
   **tsc clean; 338/338; lint 13 errors (baseline) + 8 warnings (6 baseline + these 2).**
-- ⬜ **10.5 — Verify.** `bun test` / tsc / build, then the two things Resend could never do: a live
+- 🟡 **10.5 — Verify.** *Local half done 2026-07-31; live half blocked on 10.1.* Ran the **real**
+  `sendEmail` against a throwaway in-process SMTP server (temp harness, deleted): full conversation
+  EHLO → AUTH → MAIL FROM → RCPT TO → DATA → `250 queued`, `sent: true`, and the wire format is
+  right — `From: RJ Jewellers <store@example.com>` (the SMTP_USER fallback working outside a mock),
+  `multipart/alternative` carrying **both** text/plain and text/html, 7,349 bytes. Subject is
+  RFC-2047 Q-encoded (`=?UTF-8?Q?…`), so the em-dash — and by extension `₹` — survive rather than
+  mojibake. Note `bunfig.toml` preloads `test-setup.ts` to stub `server-only`; any script importing
+  a server module outside `bun test` needs `bun --preload ./test-setup.ts`. **What this does NOT
+  prove:** Gmail-specific auth, its From-rewriting, and deliverability/spam placement. Remaining:
+  `bun test` / tsc / build, then the two things Resend could never do: a live
   test send from admin → Emails **to a non-owner address**, and a real checkout confirming the
   customer receives the confirmation. Check the landed mail isn't spam-foldered, and watch
   `docker logs … | grep "email send failed"` stays quiet.
