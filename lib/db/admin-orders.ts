@@ -24,6 +24,10 @@ export type AdminOrderItem = {
   tone: string | null
   qty: number
   lineTotalPaise: number
+  /** Storefront slug — null when the product has since been deleted. */
+  slug: string | null
+  /** Product thumbnail; null falls back to the placeholder gradient. */
+  imageUrl: string | null
 }
 
 export type AdminOrderRow = {
@@ -45,6 +49,8 @@ export type AdminOrderRow = {
   discountPaise: number
   shippingPaise: number
   totalPaise: number
+  /** Discount code the customer redeemed, or null if none was applied. */
+  couponCode: string | null
   itemCount: number
   items: AdminOrderItem[]
   awb: string | null
@@ -123,7 +129,7 @@ export function toOrderFilter(value: string | undefined): OrderFilter {
 // One string literal (not concatenated) so supabase-js can infer the embedded
 // order_item relation type from the select.
 const SELECT =
-  "id, order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, payment_method, subtotal_paise, discount_paise, shipping_paise, total_paise, awb, tracking_url, order_item(name, tone, qty, line_total_paise)"
+  "id, order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, payment_method, subtotal_paise, discount_paise, shipping_paise, total_paise, coupon_code, awb, tracking_url, order_item(name, tone, qty, line_total_paise, product(slug, primary_image_url))"
 
 const EMPTY_COUNTS: OrderCounts = {
   All: 0,
@@ -186,6 +192,7 @@ type OrderSelectRow = {
   discount_paise: number
   shipping_paise: number
   total_paise: number
+  coupon_code: string | null
   awb: string | null
   tracking_url: string | null
   order_item: {
@@ -193,6 +200,8 @@ type OrderSelectRow = {
     tone: string | null
     qty: number
     line_total_paise: number
+    // Null once the product row is gone — the line keeps its snapshotted name.
+    product: { slug: string; primary_image_url: string | null } | null
   }[]
 }
 
@@ -293,12 +302,15 @@ function mapOrderRow(
     discountPaise: o.discount_paise,
     shippingPaise: o.shipping_paise,
     totalPaise: o.total_paise,
+    couponCode: o.coupon_code,
     itemCount: items.reduce((n, it) => n + it.qty, 0),
     items: items.map((it) => ({
       name: it.name,
       tone: it.tone,
       qty: it.qty,
       lineTotalPaise: it.line_total_paise,
+      slug: it.product?.slug ?? null,
+      imageUrl: it.product?.primary_image_url ?? null,
     })),
     awb: o.awb,
     trackingUrl: o.tracking_url,
@@ -392,11 +404,12 @@ export async function getAllOrdersForExport(): Promise<ExportOrderRow[]> {
 export async function getAdminOrderByNo(orderNo: string): Promise<AdminOrderRow | null> {
   try {
     const supabase = await createServerClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("order")
       .select(SELECT)
       .eq("order_no", orderNo)
       .maybeSingle()
+    if (error) throw error
     if (!data) return null
     const row = data as OrderSelectRow
     const [{ data: hist }, { data: audit }] = await Promise.all([
@@ -484,6 +497,10 @@ export async function listAdminOrders(opts: {
       // Two bounded companion reads over just this page's rows, in parallel:
       // customer history by phone (5.15) and the audit timeline by order no
       // (5.16 — status changes + notes).
+      // Throw rather than degrade to `[]`: a failed read (RLS regression,
+      // expired session, bad embed) must reach `loadAdmin`'s error banner, not
+      // masquerade as an empty queue (audit C1).
+      if (rowsRes.error) throw rowsRes.error
       const rawRows = (rowsRes.data ?? []) as OrderSelectRow[]
       const phones = [...new Set(rawRows.map((o) => o.customer_phone))].filter(Boolean)
       let historyByPhone = new Map<string, CustomerHistory>()

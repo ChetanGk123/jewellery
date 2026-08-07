@@ -30,7 +30,7 @@ function messageFor(raw: string): string {
   if (raw.includes("ORDER_NOT_FOUND")) return "That order no longer exists."
   if (raw.includes("ORDER_TERMINAL")) return "This order is already delivered or cancelled."
   if (raw.includes("AWB_REQUIRED"))
-    return "Add the courier AWB before marking this order Delivered."
+    return "Add the courier AWB before marking this order Shipped."
   if (raw.includes("INVALID_TRANSITION")) return "That status change isn't allowed from here."
   return "Couldn't update the order. Please try again."
 }

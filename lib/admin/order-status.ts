@@ -60,6 +60,15 @@ export function advanceLabel(status: string): string | null {
   return next ? `Mark as ${next}` : null
 }
 
+/**
+ * Invoice / packing-slip printing only makes sense once the order is committed:
+ * a Pending order hasn't been accepted yet, and a Cancelled one is never
+ * packed. Mirrors `showAwbCard`'s "hide the control until its step" rule.
+ */
+export function showPrintActions(status: string): boolean {
+  return ORDER_FLOW.indexOf(status as OrderStatus) >= ORDER_FLOW.indexOf("Confirmed")
+}
+
 /** An order can be cancelled from any state that isn't already terminal. */
 export function canCancel(status: string): boolean {
   return status !== "Delivered" && status !== "Cancelled"

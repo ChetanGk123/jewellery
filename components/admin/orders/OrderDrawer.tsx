@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { addOrderNote, setOrderAwb } from "@/app/(admin)/admin/(console)/orders/actions"
-import type { AdminOrderRow, OrderEvent } from "@/lib/db/admin-orders"
+import type { AdminOrderItem, AdminOrderRow, OrderEvent } from "@/lib/db/admin-orders"
 import { AWB_MAX_LEN, TRACKING_URL_MAX_LEN, showAwbCard } from "@/lib/admin/awb"
 import { NOTE_MAX_LEN } from "@/lib/admin/order-notes"
 import {
@@ -10,6 +10,7 @@ import {
   buildStepper,
   canCancel,
   prevStatus,
+  showPrintActions,
   statusChip,
   type OrderStep,
   type StepState,
@@ -17,6 +18,7 @@ import {
 import { useDialog } from "@/hooks/useDialog"
 import type { PrintDoc } from "@/lib/admin/print"
 import { ROUTES } from "@/lib/routes"
+import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
 import { formatPaise } from "@/lib/utils/money"
 import { codConfirmationMessage, customerWhatsappUrl } from "@/lib/whatsapp"
 
@@ -141,31 +143,32 @@ export function OrderDrawer({
                 <ContactActions order={order} />
               </Card>
 
-              <div className="overflow-hidden rounded-[10px] border border-[#EAE3D7] bg-white">
+              {/* overflow-clip (not -hidden): clips the rows to the rounded
+                  corners without making this a scroll container, which
+                  collapsed the card inside the drawer's flex column. */}
+              <div className="overflow-clip rounded-[10px] border border-[#EAE3D7] bg-white">
                 <div className="border-b border-[#F0EADF] px-4 py-[13px] text-[11px] font-semibold uppercase tracking-[0.06em] text-[#A99C90]">
                   Items
                 </div>
                 {order.items.map((it, i) => (
-                  <div
-                    key={`${it.name}-${i}`}
-                    className="flex items-center gap-3 border-b border-[#F5F0E7] px-4 py-3"
-                  >
-                    <span className="flex-1 text-[13px] font-medium leading-snug text-[#2A1F1A]">
-                      {it.name}
-                      {it.tone ? (
-                        <span className="font-normal text-[#A99C90]"> · {it.tone}</span>
-                      ) : null}
-                      <span className="font-normal text-[#A99C90]"> ×{it.qty}</span>
-                    </span>
-                    <span className="text-[13px] font-semibold text-[#2A1F1A]">
-                      {formatPaise(it.lineTotalPaise)}
-                    </span>
-                  </div>
+                  <ItemRow key={`${it.name}-${i}`} item={it} />
                 ))}
                 <div className="flex flex-col gap-2 px-4 py-3">
                   <Row label="Subtotal" value={formatPaise(order.subtotalPaise)} />
-                  {order.discountPaise > 0 && (
-                    <Row label="Discount" value={`− ${formatPaise(order.discountPaise)}`} />
+                  {/* Also renders on a redeemed code that happened to take ₹0
+                      off, so the coupon is never invisible on the order. */}
+                  {(order.discountPaise > 0 || order.couponCode) && (
+                    <div className="flex items-baseline justify-between gap-3 text-[12.5px] text-[#5E4A40]">
+                      <span className="flex min-w-0 items-baseline gap-1.5">
+                        Discount
+                        {order.couponCode && (
+                          <code className="truncate rounded bg-[#F3EEE4] px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-[#8A6D1E]">
+                            {order.couponCode}
+                          </code>
+                        )}
+                      </span>
+                      <span className="shrink-0">− {formatPaise(order.discountPaise)}</span>
+                    </div>
                   )}
                   <Row
                     label="Shipping"
@@ -181,13 +184,15 @@ export function OrderDrawer({
               </div>
 
               {/* min-w + wrap: stacks instead of clipping on narrow phones */}
-              <div className="flex flex-wrap gap-2.5">
-                <PrintTrigger onClick={() => setPrintDoc("invoice")} label="Print invoice" />
-                <PrintTrigger
-                  onClick={() => setPrintDoc("packing-slip")}
-                  label="Print packing slip"
-                />
-              </div>
+              {showPrintActions(order.status) && (
+                <div className="flex flex-wrap gap-2.5">
+                  <PrintTrigger onClick={() => setPrintDoc("invoice")} label="Print invoice" />
+                  <PrintTrigger
+                    onClick={() => setPrintDoc("packing-slip")}
+                    label="Print packing slip"
+                  />
+                </div>
+              )}
 
               <Timeline order={order} onNoteAdded={onNoteAdded} />
 
@@ -419,6 +424,48 @@ function PrintDialog({
   )
 }
 
+/**
+ * One ordered line: thumbnail, name/tone/qty, line total. Links to the
+ * storefront product page in a new tab so the operator keeps the drawer open —
+ * a plain row when the product has since been deleted (no slug to link to).
+ */
+function ItemRow({ item }: { item: AdminOrderItem }) {
+  const body = (
+    <>
+      <span
+        aria-hidden="true"
+        className="h-11 w-11 flex-none rounded-lg border border-[#EFE3D0] bg-cover bg-center"
+        style={{
+          backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : PLACEHOLDER_GRADIENT,
+        }}
+      />
+      <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-[#2A1F1A]">
+        {item.name}
+        {item.tone ? <span className="font-normal text-[#A99C90]"> · {item.tone}</span> : null}
+        <span className="font-normal text-[#A99C90]"> ×{item.qty}</span>
+      </span>
+      <span className="text-[13px] font-semibold text-[#2A1F1A]">
+        {formatPaise(item.lineTotalPaise)}
+      </span>
+    </>
+  )
+
+  const rowCls = "flex items-center gap-3 border-b border-[#F5F0E7] px-4 py-3"
+  if (!item.slug) return <div className={rowCls}>{body}</div>
+
+  return (
+    <a
+      href={ROUTES.product(item.slug)}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={`Open ${item.name} in a new tab`}
+      className={`${rowCls} transition-colors hover:bg-[#FBF8F2] focus-visible:bg-[#FBF8F2] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#A87A1E]`}
+    >
+      {body}
+    </a>
+  )
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between text-[12.5px] text-[#5E4A40]">
@@ -613,8 +660,8 @@ function NoteComposer({
 /**
  * Manual courier-AWB card (6.4) — replaces the old Shiprocket stub. Courier
  * integration stays deferred: the operator books the parcel outside the app
- * and records the tracking number here. The status RPC (0031) refuses
- * Delivered until one is saved. Read-only once the order is terminal.
+ * and records the tracking number here. The status RPC refuses the move into
+ * Shipped until one is saved. Read-only once the order is terminal.
  */
 function AwbCard({
   order,
@@ -707,10 +754,8 @@ function AwbCard({
         </form>
       )}
       {awbError && <p className="text-[12px] font-medium text-[#C0392F]">{awbError}</p>}
-      {!isLocked && order.status === "Shipped" && !order.awb && (
-        <p className="text-[11.5px] text-[#A87A1E]">
-          Required before marking this order Delivered.
-        </p>
+      {!isLocked && order.status === "Packed" && !order.awb && (
+        <p className="text-[11.5px] text-[#A87A1E]">Required before marking this order Shipped.</p>
       )}
       {!isLocked && (
         <p className="text-[11px] text-[#A99C90]">

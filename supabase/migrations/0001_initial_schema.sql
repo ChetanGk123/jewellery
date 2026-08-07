@@ -659,8 +659,9 @@ grant execute on function public.customer_cancel_order(text) to authenticated;
 --   * one step forward, or one step back to undo a mis-click
 --   * Cancelled reachable from any non-terminal state (releases the coupon
 --     use, restores stock)
---   * Delivered requires a saved AWB, and stamps delivered_at (anchors the
---     return window)
+--   * Shipped requires a saved AWB (the parcel is leaving; no tracking number
+--     means nothing to give the customer)
+--   * Delivered stamps delivered_at (anchors the return window)
 --   * a backward step clears the recorded AWB/tracking link (stale courier
 --     details)
 --   * Delivered and Cancelled are terminal
@@ -712,17 +713,21 @@ begin
     return 'Cancelled';
   end if;
 
-  -- No delivery without a tracking number on file.
-  if p_status = 'Delivered' and (v_awb is null or btrim(v_awb) = '') then
-    raise exception 'AWB_REQUIRED' using errcode = 'check_violation';
-  end if;
-
-  -- One step forward, or one step back to undo a mis-click.
+  -- One step forward, or one step back to undo a mis-click. Checked before the
+  -- AWB gate so an illegal jump reports as such rather than as a missing AWB.
   v_ci := array_position(v_flow, v_current);
   v_ni := array_position(v_flow, p_status);
   if v_ni is null or (v_ni <> v_ci + 1 and v_ni <> v_ci - 1) then
     raise exception 'INVALID_TRANSITION: % -> %', v_current, p_status
       using errcode = 'check_violation';
+  end if;
+
+  -- Nothing ships without a tracking number on file. The gate sits on the move
+  -- INTO Shipped (the moment the parcel is handed to the courier), not on
+  -- Delivered -- by then the operator has no way to add it retroactively
+  -- without stepping the order backwards.
+  if p_status = 'Shipped' and (v_awb is null or btrim(v_awb) = '') then
+    raise exception 'AWB_REQUIRED' using errcode = 'check_violation';
   end if;
 
   -- A backward step invalidates the recorded courier details; the forward

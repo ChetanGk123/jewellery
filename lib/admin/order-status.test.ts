@@ -1,5 +1,22 @@
 import { describe, expect, test } from "bun:test"
-import { nextStatus, prevStatus } from "./order-status"
+import { nextStatus, prevStatus, showPrintActions } from "./order-status"
+
+describe("showPrintActions", () => {
+  test("hides printing until the order is confirmed", () => {
+    expect(showPrintActions("Pending")).toBe(false)
+  })
+
+  test("shows printing from Confirmed onward", () => {
+    for (const status of ["Confirmed", "Packed", "Shipped", "Delivered"]) {
+      expect(showPrintActions(status)).toBe(true)
+    }
+  })
+
+  test("stays hidden for cancelled and unknown statuses", () => {
+    expect(showPrintActions("Cancelled")).toBe(false)
+    expect(showPrintActions("Bogus")).toBe(false)
+  })
+})
 
 describe("prevStatus", () => {
   test("steps one back along the flow", () => {
