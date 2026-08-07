@@ -12,6 +12,7 @@ import {
   MAX_PLATING_OPTIONS,
   MAX_PRODUCT_IMAGES,
   PLATING_OPTIONS,
+  PRODUCT_STATUS_OPTIONS,
   type ProductImage,
 } from "@/lib/admin/product-status"
 import type { AdminCategory, AdminProductRow } from "@/lib/db/admin-products"
@@ -33,6 +34,7 @@ type FormState = {
   stock: string
   material: string
   badge: string
+  status: string
   blurb: string
   descLong: string
   detailsPlating: string
@@ -68,6 +70,7 @@ function initialState(p: AdminProductRow | null, categories: AdminCategory[]): F
     stock: p ? String(p.stock) : "",
     material: p?.material ?? "",
     badge: p?.badge ?? "None",
+    status: p?.status ?? "Active",
     blurb: p?.blurb ?? "",
     descLong: p?.descLong ?? "",
     detailsPlating: p?.detailsPlating ?? "",
@@ -150,9 +153,7 @@ export function ProductModal({ product, categories, onClose }: Props) {
       priceRupees: Number(form.price),
       saleRupees: form.sale.trim() === "" ? null : Number(form.sale),
       stock: Number(form.stock),
-      // Not exposed in this dialog (matches the prototype) — carried through so
-      // editing a product doesn't wipe its saved status / feature flags.
-      status: product?.status ?? "Active",
+      status: form.status,
       images: form.images,
       platingOptions: form.plating,
       material: form.material,
@@ -163,6 +164,8 @@ export function ProductModal({ product, categories, onClose }: Props) {
       detailsStones: form.detailsStones,
       detailsCare: form.detailsCare,
       shippingNote: form.shippingNote,
+      // Not exposed in this dialog — carried through so editing a product
+      // doesn't wipe its saved feature flags.
       isFeatured: product?.isFeatured ?? false,
       isFresh: product?.isFresh ?? false,
     }
@@ -290,6 +293,19 @@ export function ProductModal({ product, categories, onClose }: Props) {
                 {BADGE_OPTIONS.map((b) => (
                   <option key={b} value={b}>
                     {b}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Status" className="min-w-35 flex-1">
+              <select
+                value={form.status}
+                onChange={(e) => set("status", e.target.value)}
+                className={SELECT_CLS}
+              >
+                {PRODUCT_STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
                   </option>
                 ))}
               </select>
