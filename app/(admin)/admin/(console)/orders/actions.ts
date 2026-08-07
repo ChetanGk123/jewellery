@@ -22,7 +22,7 @@ export type StatusActionResult = { ok: boolean; error?: string }
 const VALID = new Set<string>(ORDER_STATUSES)
 
 /** The statuses that notify the customer by email (TASKS 5.2). */
-const NOTIFY = new Set<string>(["Shipped", "Delivered", "Cancelled"])
+const NOTIFY = new Set<string>(["Confirmed", "Shipped", "Delivered", "Cancelled"])
 
 /** Friendly messages for the RPC's raised exceptions (see 0007). */
 function messageFor(raw: string): string {

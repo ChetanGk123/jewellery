@@ -99,10 +99,10 @@ test("a hostile copy template cannot inject markup", () => {
 
 test("defaults carry the exact live wording (spot checks per template)", () => {
   expect(EMAIL_COPY_DEFAULTS.orderConfirmation.subject).toBe(
-    "Order confirmed — {orderNo} · {storeName}",
+    "Order received — {orderNo} · {storeName}",
   )
   expect(EMAIL_COPY_DEFAULTS.orderConfirmation.intro).toBe(
-    "Namaste {name}, your order {orderNo} is confirmed and will be delivered in 4–7 days.",
+    "Namaste {name}, we've received your order {orderNo}. We'll confirm it shortly and deliver in 4–7 days.",
   )
   expect(EMAIL_COPY_DEFAULTS.orderShipped.intro).toBe(
     "Good news — order {orderNo} has been shipped and is on its way.",

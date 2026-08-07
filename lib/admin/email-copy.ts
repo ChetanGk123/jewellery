@@ -46,6 +46,7 @@ const returnKindSchema = z.object({
 
 export const emailCopyFormSchema = z.object({
   orderConfirmation: orderConfirmationSchema,
+  orderConfirmed: statusKindSchema,
   orderShipped: statusKindSchema,
   orderDelivered: statusKindSchema,
   orderCancelled: statusKindSchema,
@@ -99,6 +100,7 @@ export function emailCopyToFormValues(raw: unknown): EmailCopyFormValues {
   const record = asRecord(raw)
   return {
     orderConfirmation: groupValues(EMAIL_COPY_DEFAULTS.orderConfirmation, record.orderConfirmation),
+    orderConfirmed: groupValues(EMAIL_COPY_DEFAULTS.orderConfirmed, record.orderConfirmed),
     orderShipped: groupValues(EMAIL_COPY_DEFAULTS.orderShipped, record.orderShipped),
     orderDelivered: groupValues(EMAIL_COPY_DEFAULTS.orderDelivered, record.orderDelivered),
     orderCancelled: groupValues(EMAIL_COPY_DEFAULTS.orderCancelled, record.orderCancelled),

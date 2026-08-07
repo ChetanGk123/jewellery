@@ -10,7 +10,7 @@ const base = {
   orderUrl: "https://shop.example/order/JR-260706-1001-AB12",
 }
 
-const KINDS: OrderStatusEmailKind[] = ["Shipped", "Delivered", "Cancelled"]
+const KINDS: OrderStatusEmailKind[] = ["Confirmed", "Shipped", "Delivered", "Cancelled"]
 
 test.each(KINDS)("%s email carries order no, total and link in both bodies", (kind) => {
   const msg = buildOrderStatusEmail({ ...base, kind })

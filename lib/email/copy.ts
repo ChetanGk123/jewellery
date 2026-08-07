@@ -76,6 +76,7 @@ export type DailyDigestCopy = {
 
 export type EmailCopy = {
   orderConfirmation: OrderConfirmationCopy
+  orderConfirmed: OrderStatusKindCopy
   orderShipped: OrderStatusKindCopy
   orderDelivered: OrderStatusKindCopy
   orderCancelled: OrderStatusKindCopy
@@ -100,10 +101,22 @@ export type EmailTemplateId = keyof EmailCopy
  */
 export const EMAIL_COPY_DEFAULTS: EmailCopy = {
   orderConfirmation: {
-    subject: "Order confirmed — {orderNo} · {storeName}",
+    // "Confirmed" is a distinct admin fulfilment status (order-status.ts) that
+    // only an operator can set — this email fires at placement, so it must say
+    // received/placed, never confirmed.
+    subject: "Order received — {orderNo} · {storeName}",
     heading: "Thank you for your order!",
-    intro: "Namaste {name}, your order {orderNo} is confirmed and will be delivered in 4–7 days.",
+    intro:
+      "Namaste {name}, we've received your order {orderNo}. We'll confirm it shortly and deliver in 4–7 days.",
     codNotice: "Please keep {total} ready at delivery — our courier collects payment in cash.",
+    button: "View your order",
+  },
+  orderConfirmed: {
+    subject: "Order {orderNo} confirmed — {storeName}",
+    heading: "Your order is confirmed!",
+    intro: "Order {orderNo} is confirmed and we've started preparing it for despatch.",
+    totalLabel: "Amount payable · Cash on Delivery",
+    note: "We'll email you again the moment it ships. Please keep the amount ready — our courier collects payment in cash.",
     button: "View your order",
   },
   orderShipped: {
@@ -212,6 +225,7 @@ export const COPY_TOKENS: { [T in EmailTemplateId]: Partial<Record<keyof EmailCo
       intro: ["name", "orderNo"],
       codNotice: ["total"],
     },
+    orderConfirmed: { subject: ["orderNo", "storeName"], intro: ["orderNo"] },
     orderShipped: { subject: ["orderNo", "storeName"], intro: ["orderNo"] },
     orderDelivered: { subject: ["orderNo", "storeName"], intro: ["orderNo"] },
     orderCancelled: { subject: ["orderNo", "storeName"], intro: ["orderNo"] },
@@ -259,6 +273,7 @@ export function resolveEmailCopy(raw: unknown): EmailCopy {
   const record = asRecord(raw)
   return {
     orderConfirmation: mergeGroup(EMAIL_COPY_DEFAULTS.orderConfirmation, record.orderConfirmation),
+    orderConfirmed: mergeGroup(EMAIL_COPY_DEFAULTS.orderConfirmed, record.orderConfirmed),
     orderShipped: mergeGroup(EMAIL_COPY_DEFAULTS.orderShipped, record.orderShipped),
     orderDelivered: mergeGroup(EMAIL_COPY_DEFAULTS.orderDelivered, record.orderDelivered),
     orderCancelled: mergeGroup(EMAIL_COPY_DEFAULTS.orderCancelled, record.orderCancelled),

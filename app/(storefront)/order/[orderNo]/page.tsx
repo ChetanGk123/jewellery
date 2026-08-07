@@ -6,7 +6,7 @@ import { getOrderConfirmation } from "@/lib/db/orders"
 import { isEmailEnabled } from "@/lib/email/send"
 
 export const metadata: Metadata = {
-  title: "Order confirmed",
+  title: "Order received",
   description: "Your Cash on Delivery order has been placed.",
   robots: { index: false, follow: false },
 }

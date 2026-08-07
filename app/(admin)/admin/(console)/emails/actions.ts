@@ -46,6 +46,7 @@ export async function updateEmailCopy(values: unknown): Promise<EmailCopyActionR
 /** The template ids the test-send accepts — matches `EmailTemplateId`. */
 const testTemplateSchema = z.enum([
   "orderConfirmation",
+  "orderConfirmed",
   "orderShipped",
   "orderDelivered",
   "orderCancelled",

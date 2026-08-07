@@ -122,6 +122,8 @@ export function buildSampleEmail(id: EmailTemplateId, ctx: SampleEmailContext): 
         info,
         copy.returnAdminAlert,
       )
+    case "orderConfirmed":
+      return buildStatusSample("Confirmed", ctx)
     case "orderShipped":
       return buildStatusSample("Shipped", ctx)
     case "orderDelivered":

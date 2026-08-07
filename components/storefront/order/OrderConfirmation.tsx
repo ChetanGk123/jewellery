@@ -42,11 +42,11 @@ export function OrderConfirmation({ confirmation, couponDropped, emailSent }: Pr
       </h1>
 
       <p className="m-0 max-w-[460px] text-[16px] font-light leading-[1.6] text-[#5E4A44]">
-        Your order <span className="font-semibold text-maroon-700">{confirmation.orderNo}</span> is
-        confirmed.{" "}
+        We've received your order{" "}
+        <span className="font-semibold text-maroon-700">{confirmation.orderNo}</span>.{" "}
         {emailSent ? (
           <>
-            A confirmation email is on its way to{" "}
+            A receipt is on its way to{" "}
             <span className="text-maroon-900">{confirmation.customerEmail}</span>.
           </>
         ) : (

@@ -11,6 +11,7 @@ const ctx = {
 
 const ALL_IDS: EmailTemplateId[] = [
   "orderConfirmation",
+  "orderConfirmed",
   "orderShipped",
   "orderDelivered",
   "orderCancelled",

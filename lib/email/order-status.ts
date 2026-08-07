@@ -1,5 +1,5 @@
 /**
- * Order status-change emails (TASKS 5.2): Shipped / Delivered / Cancelled
+ * Order status-change emails (TASKS 5.2): Confirmed / Shipped / Delivered / Cancelled
  * customer notifications — the deliberate 4.6 deferrals. Pure (no server-only
  * deps) so it unit-tests without a mail provider. Same email-client constraints
  * as `order-confirmation.ts`: inline styles, table layout, system font stack.
@@ -18,8 +18,8 @@ import type { EmailMessage } from "./order-confirmation"
 import { DEFAULT_STORE_INFO, type ResolvedStoreInfo } from "@/lib/store-info"
 import { formatPaise } from "@/lib/utils/money"
 
-/** The three order statuses that notify the customer (audit C2). */
-export type OrderStatusEmailKind = "Shipped" | "Delivered" | "Cancelled"
+/** The order statuses that notify the customer (audit C2). */
+export type OrderStatusEmailKind = "Confirmed" | "Shipped" | "Delivered" | "Cancelled"
 
 /** One ordered item, for the Delivered email's review invitations (6.18). */
 export type OrderStatusEmailItem = {
@@ -52,6 +52,7 @@ const BODY_FONT = "'Segoe UI', Helvetica, Arial, sans-serif"
  * lives in copy.ts / the operator's saved overrides.
  */
 const KIND_META: Record<OrderStatusEmailKind, { copyKey: EmailTemplateId; accent: string }> = {
+  Confirmed: { copyKey: "orderConfirmed", accent: "#1B6FA8" },
   Shipped: { copyKey: "orderShipped", accent: "#71182B" },
   Delivered: { copyKey: "orderDelivered", accent: "#15692F" },
   Cancelled: { copyKey: "orderCancelled", accent: "#C0392F" },

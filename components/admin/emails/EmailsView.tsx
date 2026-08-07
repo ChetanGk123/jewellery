@@ -67,7 +67,7 @@ const TEMPLATE_GROUPS: Array<{ group: string; templates: TemplateDef[] }> = [
     templates: [
       {
         id: "orderConfirmation",
-        label: "Order confirmed",
+        label: "Order received",
         description: "Sent the moment a COD order is placed",
         fields: [
           SUBJECT,
@@ -76,6 +76,12 @@ const TEMPLATE_GROUPS: Array<{ group: string; templates: TemplateDef[] }> = [
           { key: "codNotice", label: "COD notice box", multiline: true },
           BUTTON,
         ],
+      },
+      {
+        id: "orderConfirmed",
+        label: "Order confirmed",
+        description: "Sent when you mark an order Confirmed",
+        fields: STATUS_FIELDS,
       },
       {
         id: "orderShipped",
