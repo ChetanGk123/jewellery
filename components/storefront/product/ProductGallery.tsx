@@ -7,10 +7,10 @@ import { PLACEHOLDER_GRADIENT } from "@/lib/theme"
 
 /**
  * Product image gallery — a large primary frame with a row of selectable
- * thumbnails, matched to the storefront prototype. Seed data ships CSS
- * gradients (`bg`) rather than photos, so each frame falls back to the gradient
- * plus an engraved sunburst motif when no `url` is present. Thumbnails only
- * appear when there is more than one image.
+ * thumbnails, matched to the storefront prototype. Both the primary frame and
+ * the thumbnails render the photo when a `url` is present; without one they
+ * fall back to the `bg` gradient plus an engraved motif (older seed rows ship
+ * gradients only). Thumbnails appear only when there is more than one image.
  */
 export function ProductGallery({
   images,
@@ -60,12 +60,24 @@ export function ProductGallery({
                 aria-label={`View image ${index + 1} of ${productName}`}
                 aria-pressed={isActive}
                 onClick={() => setActiveIndex(index)}
-                className={`flex aspect-square items-center justify-center rounded-[3px] border-2 transition-colors ${
+                className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-[3px] border-2 transition-colors ${
                   isActive ? "border-gold-500" : "border-[#EFE3D0] hover:border-gold-300"
                 }`}
                 style={{ background: img.bg ?? PLACEHOLDER_GRADIENT }}
               >
-                {img.url ? <span className="sr-only">Thumbnail {index + 1}</span> : <ThumbMotif />}
+                {img.url ? (
+                  // Decorative: the button's aria-label already names it, so an
+                  // alt here would announce the same thumbnail twice.
+                  <Image
+                    src={img.url}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 25vw, 150px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <ThumbMotif />
+                )}
               </button>
             )
           })}

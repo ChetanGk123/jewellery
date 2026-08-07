@@ -26,6 +26,22 @@ const securityHeaders = [
   },
 ] as const
 
+/**
+ * Supabase hostname for `next/image`, derived from the same public env var the
+ * CSP uses (`supabaseOrigin` in proxy.ts). Hardcoding it here meant renaming
+ * the self-hosted stack silently broke every product image with an
+ * "unconfigured host" runtime error — env is the single source of truth.
+ * Next loads `.env*` before evaluating this file.
+ */
+function supabaseImageHost(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  try {
+    return url ? new URL(url).hostname : ""
+  } catch {
+    return ""
+  }
+}
+
 const nextConfig: NextConfig = {
   // Trace only the files the server actually needs into `.next/standalone`, so
   // the Docker runtime image ships a minimal `server.js` + pruned node_modules
@@ -50,11 +66,15 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "jewellery-db.chetanlab.org",
-        pathname: "/storage/v1/object/public/**",
-      },
+      ...(supabaseImageHost()
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: supabaseImageHost(),
+              pathname: "/storage/v1/object/public/**",
+            },
+          ]
+        : []),
       // Managed Supabase Cloud project — remove once fully cut over to the
       // self-hosted stack above (docs/SELF_HOSTED_SUPABASE.md).
       {

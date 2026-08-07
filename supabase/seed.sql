@@ -103,8 +103,9 @@ from app_secret where name = 'cron';
 -- stack often cannot send confirmation mail at all (the blueprint ships an SMTP
 -- host that does not exist — see docs/PRODUCTION_ENV.md §1).
 --
--- The password is randomly generated and printed at the end. Change it from
--- Account → password, or from the SQL editor:
+-- The password is set below and re-asserted on every run, so the seed is
+-- idempotent: re-running it always leaves this account signable-in with the
+-- password in `v_password`. Change it there, or from the SQL editor:
 --   update auth.users set encrypted_password = crypt('<new password>', gen_salt('bf'))
 --    where email = '<the address below>';
 --
@@ -114,7 +115,7 @@ from app_secret where name = 'cron';
 do $$
 declare
   v_admin_email text := 'owner@example.com';   -- ← CHANGE ME
-  v_password    text := 'Rj-' || encode(gen_random_bytes(9), 'hex') || '!';
+  v_password    text := 'Shop@owner';
   v_admin_id    uuid;
   v_existing    uuid;
   v_has_provider_id boolean;
@@ -122,15 +123,18 @@ begin
   select id into v_existing from auth.users where email = v_admin_email;
 
   if v_existing is not null then
-    -- Already there: re-assert the role (harmless) and say so, rather than
-    -- resetting a password the operator may already be using.
+    -- Already there: re-assert the role AND the password, so the credential
+    -- printed below is always the one that actually works.
     update auth.users
        set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
-             || jsonb_build_object('role', 'admin', 'role_granted_at', now())
+             || jsonb_build_object('role', 'admin', 'role_granted_at', now()),
+           encrypted_password = crypt(v_password, gen_salt('bf')),
+           email_confirmed_at = coalesce(email_confirmed_at, now())
      where id = v_existing;
 
     insert into _bootstrap_output values
-      (2, 'Admin account', v_admin_email || ' (already existed — role re-asserted, password unchanged)');
+      (2, 'Admin account',  v_admin_email || ' (already existed — role + password re-asserted)'),
+      (3, 'Admin password', v_password);
     return;
   end if;
 

@@ -859,6 +859,7 @@ declare
   v_id       uuid;
   v_base     text;
   v_slug     text;
+  v_bg       jsonb;
   v_gallery  jsonb   := coalesce(p_payload->'gallery', '[]'::jsonb);
   v_plating  text[]  := coalesce(
                           array(select jsonb_array_elements_text(
@@ -945,6 +946,30 @@ begin
       raise exception 'PRODUCT_NOT_FOUND' using errcode = 'no_data_found';
     end if;
   end if;
+
+  -- Project the admin-edited gallery onto product_image, which is what the
+  -- storefront actually reads (getProducts / getProductBySlug embed it). The
+  -- console only ever wrote product.gallery, so image edits never reached the
+  -- shop. Rebuild wholesale: keep any bg swatch already held for a surviving
+  -- url, order the marked primary first so the one-primary index can't be
+  -- violated by a malformed bulk-import row.
+  select coalesce(jsonb_object_agg(url, bg) filter (where url is not null and bg is not null),
+                  '{}'::jsonb)
+    into v_bg
+    from product_image where product_id = v_id;
+
+  delete from product_image where product_id = v_id;
+
+  insert into product_image (product_id, url, design_name, bg, is_primary, sort_order)
+  select v_id, g.url, g.design_name, v_bg->>g.url, g.rn = 1, g.rn - 1
+  from (
+    select btrim(im->>'url')                    as url,
+           nullif(btrim(im->>'name'), '')       as design_name,
+           row_number() over (
+             order by coalesce((im->>'primary')::boolean, false) desc, ord) as rn
+    from jsonb_array_elements(v_gallery) with ordinality t(im, ord)
+    where coalesce(btrim(im->>'url'), '') <> ''
+  ) g;
 
   return v_id;
 end;
