@@ -1883,6 +1883,118 @@ grant execute on function public.admin_list_admins() to authenticated;
 grant execute on function public.admin_grant_role(text) to authenticated;
 grant execute on function public.admin_revoke_role(uuid) to authenticated;
 
+-- ---------- admin: customers ----------
+
+-- admin_list_customers: one aggregated row per buyer for the Customers console
+-- (11.1). A definer function is required because PostgREST cannot GROUP BY, and
+-- the aggregate spans two tables.
+--
+-- Identity is `order.user_id`: place_order raises AUTH_REQUIRED, so every real
+-- checkout carries one, and review.user_id / customer_profile.id key off the
+-- same auth.users id. Orders with a NULL user_id (seed rows only) are excluded
+-- by design -- they have no identity to group under.
+--
+-- Name/phone/email are taken from the customer's MOST RECENT order, not from
+-- customer_profile: the profile row is created on demand and is absent for most
+-- buyers, and the latest order is what the operator would phone today.
+--
+-- Lifetime spend excludes Cancelled: this is a COD store, so a cancelled order
+-- was never paid and must not inflate the customer's value.
+--
+-- total_count is a window over the filtered set (evaluated before LIMIT), so the
+-- console gets its pager total without a second round trip.
+create or replace function public.admin_list_customers(
+  p_search text default null,
+  p_sort   text default 'recent',
+  p_limit  int  default 10,
+  p_offset int  default 0
+)
+returns table (
+  user_id         uuid,
+  name            text,
+  phone           text,
+  email           text,
+  order_count     bigint,
+  cancelled_count bigint,
+  lifetime_paise  bigint,
+  first_order_at  timestamptz,
+  last_order_at   timestamptz,
+  review_count    bigint,
+  avg_rating      numeric,
+  total_count     bigint
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_search text := nullif(btrim(coalesce(p_search, '')), '');
+  v_limit  int  := least(greatest(coalesce(p_limit, 10), 1), 100);
+  v_offset int  := greatest(coalesce(p_offset, 0), 0);
+begin
+  if not public.is_admin() then
+    raise exception 'NOT_ADMIN' using errcode = '42501';
+  end if;
+
+  return query
+  with per_customer as (
+    select
+      o.user_id                                                        as uid,
+      (array_agg(o.customer_name  order by o.created_at desc))[1]      as c_name,
+      (array_agg(o.customer_phone order by o.created_at desc))[1]      as c_phone,
+      (array_agg(o.customer_email order by o.created_at desc))[1]      as c_email,
+      count(*)                                                         as n_orders,
+      count(*) filter (where o.status = 'Cancelled')                   as n_cancelled,
+      coalesce(sum(o.total_paise) filter (where o.status <> 'Cancelled'), 0) as spend,
+      min(o.created_at)                                                as first_at,
+      max(o.created_at)                                                as last_at
+    from "order" o
+    where o.user_id is not null
+    group by o.user_id
+  ),
+  per_reviewer as (
+    select r.user_id as uid, count(*) as n_reviews, avg(r.rating)::numeric as rating
+    from review r
+    where r.user_id is not null and r.status = 'approved'
+    group by r.user_id
+  ),
+  joined as (
+    select
+      c.uid, c.c_name, c.c_phone, c.c_email, c.n_orders, c.n_cancelled,
+      c.spend, c.first_at, c.last_at,
+      coalesce(v.n_reviews, 0)          as n_reviews,
+      round(v.rating, 1)                as rating
+    from per_customer c
+    left join per_reviewer v on v.uid = c.uid
+  ),
+  filtered as (
+    -- Matched against the displayed (latest-order) values so a search hit is
+    -- always visible in the row it returns.
+    select * from joined j
+    where v_search is null
+       or j.c_name  ilike '%' || v_search || '%'
+       or j.c_phone ilike '%' || v_search || '%'
+       or j.c_email ilike '%' || v_search || '%'
+  )
+  select
+    f.uid, f.c_name, f.c_phone, f.c_email,
+    f.n_orders, f.n_cancelled, f.spend, f.first_at, f.last_at,
+    f.n_reviews, f.rating,
+    count(*) over () as total_count
+  from filtered f
+  order by
+    case when p_sort = 'spend'  then f.spend    end desc nulls last,
+    case when p_sort = 'orders' then f.n_orders end desc nulls last,
+    case when p_sort = 'name'   then f.c_name   end asc  nulls last,
+    -- 'recent' is the default and the tiebreaker for every other sort.
+    f.last_at desc
+  limit v_limit offset v_offset;
+end;
+$$;
+
+revoke all on function public.admin_list_customers(text, text, int, int) from public;
+grant execute on function public.admin_list_customers(text, text, int, int) to authenticated;
+
 -- ---------- admin: audit trail trigger ----------
 
 -- tg_admin_audit: single AFTER trigger writer wired to order/product/setting/

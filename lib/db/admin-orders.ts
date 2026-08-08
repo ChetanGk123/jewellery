@@ -2,6 +2,7 @@ import "server-only"
 import { istDayStartIso, shiftDate, type OrderDateRange } from "@/lib/admin/order-dates"
 import { ORDER_STATUSES, ORDERS_PAGE_SIZE, type OrderStatus } from "@/lib/admin/order-status"
 import { type AdminRead, loadAdmin } from "./admin-read"
+import { tallyHistory, type CustomerHistory } from "@/lib/admin/customers"
 import { createServerClient } from "./server"
 
 /**
@@ -37,6 +38,8 @@ export type AdminOrderRow = {
   createdAt: string
   dateLabel: string
   customerName: string
+  /** Buyer's auth id — null on legacy seed orders; gates the Customers link. */
+  userId: string | null
   phone: string
   email: string
   addressLine: string
@@ -56,7 +59,7 @@ export type AdminOrderRow = {
   awb: string | null
   /** Courier tracking page for this shipment (6.4c) — shown to the customer. */
   trackingUrl: string | null
-  /** Lifetime orders from this customer (matched by phone), incl. this one. */
+  /** Lifetime orders from this customer (matched by user id), incl. this one. */
   customerOrderCount: number
   /** How many of those were cancelled — the COD-risk signal. */
   customerCancelledCount: number
@@ -129,7 +132,7 @@ export function toOrderFilter(value: string | undefined): OrderFilter {
 // One string literal (not concatenated) so supabase-js can infer the embedded
 // order_item relation type from the select.
 const SELECT =
-  "id, order_no, status, created_at, customer_name, customer_phone, customer_email, address_line, city, state, pincode, payment_method, subtotal_paise, discount_paise, shipping_paise, total_paise, coupon_code, awb, tracking_url, order_item(name, tone, qty, line_total_paise, product(slug, primary_image_url))"
+  "id, order_no, status, created_at, user_id, customer_name, customer_phone, customer_email, address_line, city, state, pincode, payment_method, subtotal_paise, discount_paise, shipping_paise, total_paise, coupon_code, awb, tracking_url, order_item(name, tone, qty, line_total_paise, product(slug, primary_image_url))"
 
 const EMPTY_COUNTS: OrderCounts = {
   All: 0,
@@ -181,6 +184,7 @@ type OrderSelectRow = {
   status: string
   created_at: string
   customer_name: string
+  user_id: string | null
   customer_phone: string
   customer_email: string
   address_line: string
@@ -249,24 +253,6 @@ function groupEvents(rows: AuditSelectRow[]): Map<string, OrderEvent[]> {
   return byOrder
 }
 
-/** Per-customer order history (keyed by phone — stable across guest edits). */
-type CustomerHistory = { orders: number; cancelled: number }
-
-/** Tally `{phone → history}` from narrow `customer_phone, status` rows. */
-function tallyHistory(
-  rows: { customer_phone: string; status: string }[],
-): Map<string, CustomerHistory> {
-  const byPhone = new Map<string, CustomerHistory>()
-  for (const row of rows) {
-    const prev = byPhone.get(row.customer_phone) ?? { orders: 0, cancelled: 0 }
-    byPhone.set(row.customer_phone, {
-      orders: prev.orders + 1,
-      cancelled: prev.cancelled + (row.status === "Cancelled" ? 1 : 0),
-    })
-  }
-  return byPhone
-}
-
 /** Map a `SELECT` row to the camelCase `AdminOrderRow` the console uses. */
 function mapOrderRow(
   o: OrderSelectRow,
@@ -290,6 +276,7 @@ function mapOrderRow(
     createdAt: o.created_at,
     dateLabel: istDate(o.created_at),
     customerName: o.customer_name,
+    userId: o.user_id,
     phone: o.customer_phone,
     email: o.customer_email,
     addressLine: o.address_line,
@@ -415,8 +402,8 @@ export async function getAdminOrderByNo(orderNo: string): Promise<AdminOrderRow 
     const [{ data: hist }, { data: audit }] = await Promise.all([
       supabase
         .from("order")
-        .select("customer_phone, status")
-        .eq("customer_phone", row.customer_phone),
+        .select("user_id, status")
+        .eq("user_id", row.user_id ?? ""),
       supabase
         .from("admin_audit_log")
         .select(AUDIT_SELECT)
@@ -427,7 +414,7 @@ export async function getAdminOrderByNo(orderNo: string): Promise<AdminOrderRow 
     ])
     return mapOrderRow(
       row,
-      tallyHistory(hist ?? []).get(row.customer_phone),
+      row.user_id ? tallyHistory(hist ?? []).get(row.user_id) : undefined,
       groupEvents((audit ?? []) as AuditSelectRow[]).get(row.order_no) ?? [],
     )
   } catch (err) {
@@ -502,13 +489,15 @@ export async function listAdminOrders(opts: {
       // masquerade as an empty queue (audit C1).
       if (rowsRes.error) throw rowsRes.error
       const rawRows = (rowsRes.data ?? []) as OrderSelectRow[]
-      const phones = [...new Set(rawRows.map((o) => o.customer_phone))].filter(Boolean)
-      let historyByPhone = new Map<string, CustomerHistory>()
+      const userIds = [...new Set(rawRows.map((o) => o.user_id))].filter(
+        (id): id is string => Boolean(id),
+      )
+      let historyByUser = new Map<string, CustomerHistory>()
       let eventsByOrder = new Map<string, OrderEvent[]>()
       if (rawRows.length > 0) {
         const [{ data: hist }, { data: audit }] = await Promise.all([
-          phones.length > 0
-            ? supabase.from("order").select("customer_phone, status").in("customer_phone", phones)
+          userIds.length > 0
+            ? supabase.from("order").select("user_id, status").in("user_id", userIds)
             : Promise.resolve({ data: [] }),
           supabase
             .from("admin_audit_log")
@@ -521,12 +510,16 @@ export async function listAdminOrders(opts: {
             .in("action", TIMELINE_ACTIONS)
             .order("created_at", { ascending: true }),
         ])
-        historyByPhone = tallyHistory(hist ?? [])
+        historyByUser = tallyHistory(hist ?? [])
         eventsByOrder = groupEvents((audit ?? []) as AuditSelectRow[])
       }
 
       const rows: AdminOrderRow[] = rawRows.map((o) =>
-        mapOrderRow(o, historyByPhone.get(o.customer_phone), eventsByOrder.get(o.order_no) ?? []),
+        mapOrderRow(
+          o,
+          o.user_id ? historyByUser.get(o.user_id) : undefined,
+          eventsByOrder.get(o.order_no) ?? [],
+        ),
       )
 
       return { rows, counts, filter, search, range, page, pageCount, total }

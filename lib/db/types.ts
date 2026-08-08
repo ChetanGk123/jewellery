@@ -804,6 +804,23 @@ export type Database = {
           is_self: boolean
         }[]
       }
+      admin_list_customers: {
+        Args: { p_search?: string | null; p_sort?: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          user_id: string
+          name: string
+          phone: string
+          email: string
+          order_count: number
+          cancelled_count: number
+          lifetime_paise: number
+          first_order_at: string
+          last_order_at: string
+          review_count: number
+          avg_rating: number | null
+          total_count: number
+        }[]
+      }
       admin_remove_subscriber: { Args: { p_id: string }; Returns: string }
       admin_review_contact: { Args: { p_review_id: string }; Returns: Json }
       admin_revoke_role: { Args: { p_user_id: string }; Returns: string }

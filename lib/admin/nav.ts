@@ -16,6 +16,7 @@ export type AdminIconKey =
   | "orders"
   | "returns"
   | "products"
+  | "customers"
   | "analytics"
   | "categories"
   | "coupons"
@@ -39,6 +40,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: ROUTES.adminOrders, label: "Orders", icon: "orders", badge: "orders" },
   { href: ROUTES.adminReturns, label: "Returns", icon: "returns", badge: "returns" },
   { href: ROUTES.adminProducts, label: "Products", icon: "products" },
+  { href: ROUTES.adminCustomers, label: "Customers", icon: "customers" },
   { href: ROUTES.adminAnalytics, label: "Analytics", icon: "analytics" },
   { href: ROUTES.adminCategories, label: "Categories", icon: "categories" },
   {
@@ -80,6 +82,10 @@ export const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
   [ROUTES.adminProducts]: {
     title: "Products",
     subtitle: "Manage your catalogue",
+  },
+  [ROUTES.adminCustomers]: {
+    title: "Customers",
+    subtitle: "Who buys, what they spend, and what they say",
   },
   [ROUTES.adminAnalytics]: {
     title: "Product Analytics",

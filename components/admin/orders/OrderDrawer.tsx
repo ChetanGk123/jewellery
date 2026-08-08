@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useTransition } from "react"
 import { addOrderNote, setOrderAwb } from "@/app/(admin)/admin/(console)/orders/actions"
 import type { AdminOrderItem, AdminOrderRow, OrderEvent } from "@/lib/db/admin-orders"
@@ -132,6 +133,22 @@ export function OrderDrawer({
                       {" "}
                       · {order.customerCancelledCount} cancelled
                     </span>
+                  )}
+                  {/* Legacy seed orders carry no user_id, so there is no
+                      customer record to open — the count stands alone. */}
+                  {order.userId && (
+                    <>
+                      {" · "}
+                      {/* Carries the phone as the list's search term so the
+                          row is on page 1 and the detail resolves, however
+                          many customers the store has. */}
+                      <Link
+                        href={`${ROUTES.adminCustomers}?search=${encodeURIComponent(order.phone)}&customer=${encodeURIComponent(order.userId)}`}
+                        className="font-semibold text-maroon-700 underline underline-offset-2 hover:text-maroon-900"
+                      >
+                        View customer
+                      </Link>
+                    </>
                   )}
                 </span>
                 <span className="break-words text-[12.5px] leading-relaxed text-[#5E4A40]">

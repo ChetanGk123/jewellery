@@ -33,6 +33,14 @@ const ICON_PATHS: Record<AdminIconKey, ReactNode> = {
       <path d="M3 8.5 12 13l9-4.5M12 13v7" />
     </>
   ),
+  customers: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
   analytics: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
   categories: (
     <path d="M3 6a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6Z" />

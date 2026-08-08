@@ -596,7 +596,73 @@ consciously declined in favour of not waiting on DNS.
   a password containing `#` would be truncated by one that does. **342/342; tsc clean; build green;
   lint at the 13-error baseline.**
 
-## Cross-cutting (ongoing, not a phase)
+## Phase 11 — Admin Customers page + per-customer analytics (user request 2026-08-08)
+
+The console can answer "what happened to this order?" but not "who is this buyer?". Operator-facing
+gap: an order drawer shows *"3 orders from this customer"* as a dead string — there is nowhere to
+click through to the person, their history, or whether they review what they buy. This phase adds a
+**Customers** view modelled on Products (searchable, sortable, paginated list) plus a per-customer
+detail modelled on the prototype's `isAnalyticsList → isAnalyticsDetail` drill-in.
+
+**Facts established while scoping (2026-08-08) — do not re-derive:**
+- **Identity key = `order.user_id`.** `place_order` raises `AUTH_REQUIRED` (`0001:421`), so every
+  real checkout carries a `user_id`; there is no guest checkout. `review.user_id` and
+  `customer_profile.id` key off the same `auth.users` id, so it is the only value that joins all
+  three. **Two demo rows (`JR-DEMO-0003`, `JR-DEMO-0005`) have `user_id = NULL`** and will not appear
+  — they were inserted by `seed.sql`, not the RPC. Accept, or backfill the seed.
+- **`customer_profile` is not a customer registry** — 3 rows against 5 distinct buyers. The row is
+  created on demand, so name/phone/email must come from the customer's **most recent order**, with
+  the profile joined only when present.
+- **PostgREST cannot `GROUP BY`.** Per-customer aggregates need SQL. House pattern is a
+  `SECURITY DEFINER` RPC gated on `public.is_admin()` (0007/0008/0011), *not* a view.
+- **Email lives only on `order.customer_email`** — `auth.users` is unreachable from PostgREST and
+  `customer_profile` has no email column.
+- The prototype has **no Customers view**; its list→detail analytics pattern is the closest match.
+
+- ✅ **11.1 — `admin_list_customers` + `admin_customer_detail` RPCs.** New migration re-emitting into
+  `0001_initial_schema.sql` (the canonical schema per `docs/SELF_HOSTED_SUPABASE.md:118`), plus the
+  extracted `create or replace` block to apply to live DBs. `admin_list_customers(p_search, p_sort,
+  p_limit, p_offset)` returns one row per `user_id`: latest name/phone/email, order count, lifetime
+  spend (**exclude Cancelled** — COD means a cancelled order was never paid), cancelled count,
+  first/last order date, review count, average rating given. `admin_customer_detail(p_user_id)`
+  returns the same header plus the order list. Both `is_admin()`-gated, `revoke all from public`,
+  `grant execute to authenticated` — matching `admin_set_order_status`. **DONE.** `admin_list_customers(p_search, p_sort, p_limit, p_offset)` added to `0001_initial_schema.sql` (~line 1886) and **applied + live-probed** (returns `NOT_ADMIN` for a non-admin caller). Returns one row per `user_id` with latest name/phone/email, order/cancelled counts, lifetime spend (Cancelled excluded), first/last order, review count, avg rating, and `count(*) over ()` as `total_count` so the pager needs no second round trip. **Only one RPC was needed** — the detail is two plain `user_id` filters the admin RLS already allows, so `admin_customer_detail` was dropped from the plan. *Apply note: PostgREST cannot see a NEW function until `notify pgrst, 'reload schema'`; and Studio runs a script as one transaction, so the `grant` must be a separate execution or a failure there rolls back the `create`.*
+- ✅ **11.2 — `lib/db/admin-customers.ts`.** `listAdminCustomers({search, sort, page})` →
+  `AdminCustomersPage` and `getAdminCustomerDetail(userId)`, both wrapped in `loadAdmin` so a failed
+  read shows the error banner instead of an empty list (audit C1). Mirror `admin-orders.ts`: exact
+  count for pagination, IST date labels, `CUSTOMERS_PAGE_SIZE = 10`. **Check `rowsRes.error` and
+  throw** — do not `?? []`. **DONE.** `lib/db/admin-customers.ts` (`listAdminCustomers`, `getAdminCustomerDetail`) + client-safe `lib/admin/customers.ts`. Both reads throw on error so `loadAdmin` shows the banner (audit C1). bigint arrives as a string over PostgREST — every count is coerced.
+- ✅ **11.3 — Customers list view.** `/admin/customers` + `components/admin/customers/CustomersView.tsx`,
+  built from `ProductsView.tsx` (same table chrome, URL-driven `?search=`/`?sort=`/`?page=`, same
+  pager). Columns: name + email, phone, orders, lifetime spend, last order, a **repeat/at-risk chip**
+  (≥3 orders = Repeat; any cancellation = a muted risk marker). Row click opens the detail. **DONE.** `/admin/customers` + `CustomersView.tsx`, built from `ProductsView`: URL-driven `?search=`/`?sort=`/`?page=`, shared `AdminSearchBox` + `AdminPager`, columns for orders / lifetime / reviews·avg / last order / standing chip.
+- ✅ **11.4 — Customer detail + analytics.** List↔detail as **client state with a `?customer=` deep
+  link**, exactly as `AnalyticsView.tsx` does with `?product=` — not a second route. Contains:
+  (a) **stat cards** — lifetime spend, order count, average order value, cancellation rate, reviews
+  written, average rating given; (b) **order history** — every order with status chip, total, item
+  count, linking to `/admin/orders?search={order_no}`; (c) **reviews per order** — for each order,
+  the reviews that customer left on *that order's products*, joined on
+  `order_item.product_id + review.user_id`, so an unreviewed order reads "no review yet". This join
+  is the one piece with no existing precedent — build it first and confirm the shape against real
+  data before styling. **DONE.** `CustomerDetail.tsx` — five stat cards, then each order as a card (status chip, link to the orders queue) with every line item carrying its review inline. **Deviation from plan: list↔detail is a URL round-trip (`?customer=`), not client state.** `AnalyticsView` can hold client state because it already has every row's data; here the history is a second read, so holding it for every row would fetch history nobody opens.
+- ✅ **11.5 — Wire it into the console.** `ROUTES.adminCustomers`, an `ADMIN_NAV` entry + a
+  `customers` icon in `AdminNavIcons` (nav registry drives sidebar *and* topbar title — one edit).
+  Place it after Products. No badge count. **DONE.** `ROUTES.adminCustomers`, `ADMIN_NAV` entry after Products, `ADMIN_PAGE_META`, and a `customers` icon. No badge.
+- ✅ **11.6 — Make the order drawer's customer line clickable.** `OrderDrawer.tsx:125` renders
+  *"N orders from this customer"* as dead text; link it to the customer detail. **Note the identity
+  mismatch:** the drawer tallies by `customer_phone` (`tallyHistory`, `admin-orders.ts:247`) while
+  this phase keys on `user_id`, so the two counts can disagree — one person with two phone numbers,
+  or a shared family phone. Align the drawer onto `user_id` as part of this item. **DONE.** `tallyHistory` re-keyed from `customer_phone` onto `user_id` and moved to the client-safe module. **This fixed a live wrong answer:** two accounts share phone `9972777455`, so the drawer read *"4 orders from this customer"* on orders belonging to buyers with 3 and 1. The customer line now also links to the detail, carrying the phone as the list's `search` so the row resolves regardless of store size. Legacy `user_id`-less seed orders get no link.
+- ✅ **11.7 — Tests.** Pure helpers only, per house practice: spend/AOV/cancellation-rate maths,
+  the repeat/at-risk chip thresholds, and the search-param parsing (`?customer=`, `?sort=`) against
+  hostile input — mirroring `lib/reviews-page.test.ts`. RPC behaviour is verified by live probe
+  (NOT_ADMIN + a happy path), as in 6.4.
+
+*Deferred by default — call them out rather than silently building: customer segments/tags, CSV
+export, an email-this-customer action, lifetime-value forecasting, and any write path (the console
+stays read-only on customers; edits belong to the customer's own account page).*
+
+## Cross-cutting (ongoing, not a phase) **DONE.** 16 tests across `lib/admin/customers.test.ts` (sort parsing, chip precedence, cancellation rate, AOV, `tallyHistory`) and `lib/admin/resolve-reviews.test.ts` (the earliest-order review rule, incl. the repurchase case). **370 total; tsc clean; build green (`/admin/customers` `ƒ`); lint at the pre-existing baseline.**
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**
 - ✅ **Testing** (0064c58, 0435e17, 8c76de5). **Unit (67 pass / 0 fail, `bun test`):** pure domain (cart, coupons, shipping, money, whatsapp, checkout schema/order mapping) plus `submitCheckout` — the authoritative write gate — with the Supabase server client mocked: honeypot drops bots before the RPC, invalid input never reaches the DB, the RPC payload provably carries no price, success/error/unexpected-shape all mapped. **E2E (Playwright, 2 pass):** `e2e/checkout.e2e.ts` runs the critical journey (shop → product → add to cart → cart → COD form → place order → confirmation with order number → cart cleared) against a **production build** on :3200, so the strict nonce CSP + per-request rendering are exercised as shipped. Config notes: system Chrome via `channel: "chrome"` (no browser download); `*.e2e.ts` naming so `bun test` ignores them; `bun run e2e`. **Data:** E2E writes a real order into live Supabase tagged `e2e-test@example.com` — clean with `delete from "order" where customer_email = 'e2e-test@example.com'` (+ `setval('order_no_seq', 1001, false)`); this run's order was cleaned. **Visual regression (16 pass):** `e2e/visual.e2e.ts` — full-page screenshots of home / shop / product / empty-cart at 320/768/1024/1440; baselines committed (`visual.e2e.ts-snapshots/`, ~7.8 MB); `toHaveScreenshot` defaults in config (animations disabled, 2% diff tolerance); verified stable across two fresh runs; regenerate with `bun run e2e -- --update-snapshots`. **Coverage (`bun test --coverage`):** 100% funcs / 99.78% lines across the tested domain + action layer (actions, cart, checkout order/schema, coupons, shipping, store-info, money, whatsapp) — exceeds the 80% target. Caveat: Bun reports only test-imported files; `lib/db` row-mappers, `stores/cart`, and components are exercised via E2E + visual regression instead (per web testing rules: visual regression > brittle markup assertions for visual components). **Deferred to deploy:** firefox/webkit projects (need `playwright install` browser downloads) and a staging/branch Supabase so E2E stops writing prod data.
 - ✅ **Performance** — CWV budgets (LCP <2.5s), `next/image` dims, font preload, bundle budget. *Done in 4.18 (see its entry for the caching layer + measurements).*
