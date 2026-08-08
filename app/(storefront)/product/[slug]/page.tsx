@@ -8,13 +8,18 @@ import { ProductGallery } from "@/components/storefront/product/ProductGallery"
 import { ProductReviews } from "@/components/storefront/product/ProductReviews"
 import { ProductTabs } from "@/components/storefront/product/ProductTabs"
 import { StarRating } from "@/components/storefront/product/StarRating"
-import { getApprovedReviews, getProductBySlug, getRelatedProducts } from "@/lib/db/queries"
+import { getApprovedReviewsPage, getProductBySlug, getRelatedProducts } from "@/lib/db/queries"
 import { hasDeliveredPurchase } from "@/lib/db/orders"
 import { getCustomerProfile } from "@/lib/db/profile"
 import { getCurrentUser } from "@/lib/db/server"
 import { getStoreInfo, getStoreSettings } from "@/lib/db/settings"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { getNonce } from "@/lib/csp-nonce"
+import {
+  parseReviewsPage,
+  REVIEWS_PAGE_PARAM,
+  type RawSearchParams,
+} from "@/lib/listing"
 import { ROUTES } from "@/lib/routes"
 import { buildProductJsonLd } from "@/lib/seo"
 import { SITE_URL } from "@/lib/site-url"
@@ -22,6 +27,7 @@ import { discountPercent, formatPaise } from "@/lib/utils/money"
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>
+  searchParams: Promise<RawSearchParams>
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -56,13 +62,14 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
  * a gallery + info split, tabbed copy, customer reviews, and a related-products
  * rail. Add to Cart / WhatsApp remain stubs until Phase 2.
  */
-export default async function ProductPage({ params }: ProductPageProps) {
+export default async function ProductPage({ params, searchParams }: ProductPageProps) {
   const { slug } = await params
+  const reviewsPage = parseReviewsPage((await searchParams)[REVIEWS_PAGE_PARAM])
   const product = await getProductBySlug(slug)
   if (!product) notFound()
 
   const [reviews, related, settings, user, info] = await Promise.all([
-    getApprovedReviews(product.id),
+    getApprovedReviewsPage(product.id, reviewsPage),
     getRelatedProducts(product.category.slug, product.slug),
     getStoreSettings(),
     getCurrentUser(),
@@ -194,10 +201,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </div>
 
       <ProductReviews
-        reviews={reviews}
+        reviews={reviews.items}
         productId={product.id}
         hasPurchased={hasPurchased}
         prefillName={profile?.fullName ?? ""}
+        page={reviews.page}
+        pageCount={reviews.pageCount}
+        baseHref={ROUTES.product(product.slug)}
       />
 
       {related.length > 0 && (

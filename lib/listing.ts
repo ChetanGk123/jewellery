@@ -24,6 +24,19 @@ export const PRICE_STEP_RUPEES = 100
 /** Products per listing page (TASKS 4.17). */
 export const PRODUCTS_PAGE_SIZE = 24
 
+/** Reviews per page on the product detail page — two full rows of the 3-col grid. */
+export const REVIEWS_PAGE_SIZE = 6
+
+/** Search-param name for the reviews pager, kept off `page` so it can't collide. */
+export const REVIEWS_PAGE_PARAM = "reviews"
+
+/** Parse the `?reviews=` param — any non-positive-integer input falls back to 1. */
+export function parseReviewsPage(value: string | string[] | undefined): number {
+  const first = Array.isArray(value) ? value[0] : value
+  const parsed = Number(first)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
+}
+
 const PAISE_PER_RUPEE = 100
 
 const VALID_SORTS: readonly ProductSort[] = [

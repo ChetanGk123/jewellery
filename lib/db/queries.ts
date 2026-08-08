@@ -1,7 +1,7 @@
 import "server-only"
 import { unstable_cache } from "next/cache"
 import { cache } from "react"
-import { PRODUCTS_PAGE_SIZE } from "@/lib/listing"
+import { PRODUCTS_PAGE_SIZE, REVIEWS_PAGE_SIZE } from "@/lib/listing"
 import { CACHE_TAGS, CATALOG_REVALIDATE_SECONDS } from "./cache"
 import { publicClient } from "./public"
 import type { Database } from "./types"
@@ -479,21 +479,57 @@ export async function getRelatedProducts(
   return products.filter((p) => p.slug !== excludeSlug).slice(0, limit)
 }
 
-/** Approved reviews for a product, newest first. */
-export const getApprovedReviews = unstable_cache(
-  async (productId: string): Promise<Review[]> => {
+/** One page of a product's approved reviews, plus the total for the pager. */
+export type ReviewsPage = {
+  items: Review[]
+  total: number
+  pageCount: number
+  /** The page actually served — clamped into range, as in `ProductsPage`. */
+  page: number
+}
+
+/**
+ * Approved reviews for a product, newest first, one page at a time. A popular
+ * product would otherwise ship every review's markup on every page view (23
+ * reviews already added ~50% to the product page's HTML).
+ */
+export const getApprovedReviewsPage = unstable_cache(
+  async (productId: string, page: number): Promise<ReviewsPage> => {
+    const pageSize = REVIEWS_PAGE_SIZE
+
+    // Count first and clamp, for the same reason as getProductsPage: an
+    // out-of-range `.range()` offset is a hard PostgREST error, not an empty
+    // result, and `?reviews=99` is trivially reachable from a stale link.
+    const { count, error: countError } = await publicClient
+      .from("review")
+      .select("id", { count: "exact", head: true })
+      .eq("product_id", productId)
+      .eq("status", "approved")
+
+    if (countError) {
+      throw new Error(`getApprovedReviewsPage count failed: ${countError.message}`)
+    }
+
+    const total = count ?? 0
+    if (total === 0) return { items: [], total: 0, pageCount: 1, page: 1 }
+
+    const pageCount = Math.max(1, Math.ceil(total / pageSize))
+    const safePage = Math.min(Math.max(1, page), pageCount)
+    const from = (safePage - 1) * pageSize
+
     const { data, error } = await publicClient
       .from("review")
       .select("*")
       .eq("product_id", productId)
       .eq("status", "approved")
       .order("created_at", { ascending: false })
+      .range(from, from + pageSize - 1)
 
     if (error) {
-      throw new Error(`getApprovedReviews failed: ${error.message}`)
+      throw new Error(`getApprovedReviewsPage failed: ${error.message}`)
     }
-    return data ?? []
+    return { items: data ?? [], total, pageCount, page: safePage }
   },
-  ["getApprovedReviews"],
+  ["getApprovedReviewsPage"],
   { tags: [CACHE_TAGS.reviews], revalidate: CATALOG_REVALIDATE_SECONDS },
 )
