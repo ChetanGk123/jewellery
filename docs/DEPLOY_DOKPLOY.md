@@ -126,6 +126,7 @@ compose they're passed as `build.args`.
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxx.supabase.co` | Supabase project URL (or your Kong URL if self-hosted) |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` / `eyJ…` | The **anon/publishable** key (RLS-safe, public) |
 | `NEXT_PUBLIC_SITE_URL` | `https://app.yourdomain.com` | Absolute origin for sitemap / robots / `metadataBase` / OG / JSON-LD. Inlined like any other `NEXT_PUBLIC_*`, so setting it only at runtime is too late — `sitemap.xml` and `robots.txt` are prerendered and would ship the `localhost` fallback. Unset never crashes (hardened in `lib/site-url.ts`), it just yields wrong SEO URLs. |
+| `HANDBOOK_ORIGIN` | `https://your-docs.mintlify.app` | Optional — serves the operator handbook (TASKS 12) at `/docs` by reverse-proxying its Mintlify deployment. **Build-time despite the missing `NEXT_PUBLIC_` prefix**: `rewrites()` runs during `next build` and bakes the origin into the routes manifest, so a runtime-only value is silently ignored and `/docs` stays unrouted. Changing it needs a **rebuild**, not a restart. Also requires Mintlify's dashboard "Host at" → `<domain>/docs`. See `handbook/README.md`. |
 
 > ⚠️ **Confirm Dokploy passes the panel env into the *build* step**, not only the
 > runtime container. If the built page shows a Supabase URL error, the build
