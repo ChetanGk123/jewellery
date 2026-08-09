@@ -46,3 +46,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Handbook static export artifact (bun run handbook:export)
+handbook-static.zip
