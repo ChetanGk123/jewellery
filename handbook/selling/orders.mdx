@@ -1,0 +1,179 @@
+---
+title: "Orders"
+description: "Taking an order from the moment it lands to the moment it's delivered."
+---
+
+This is the screen you'll live in. Everything else in the console supports what
+happens here.
+
+## The five stages
+
+Every order walks the same path, one step at a time:
+
+```
+Pending → Confirmed → Packed → Shipped → Delivered
+```
+
+| Stage | What it means | What you do next |
+| --- | --- | --- |
+| **Pending** | Just arrived. You haven't accepted it. | Check it, then Confirm. |
+| **Confirmed** | You've accepted it. The customer has been emailed. | Pick and pack the pieces. |
+| **Packed** | Boxed and ready for the courier. | Hand it over, get the AWB. |
+| **Shipped** | With the courier, tracking number recorded. | Wait for delivery. |
+| **Delivered** | Done. | Nothing — this is final. |
+
+**Cancelled** sits outside that line. An order can be cancelled at any stage
+before it's delivered.
+
+<Warning>
+  **Pending is not "accepted".** A Pending order is a customer sitting there
+  wondering whether you got it. They receive no confirmation email until you
+  move it to Confirmed — so clear Pending first, every morning.
+</Warning>
+
+## Finding an order
+
+The list shows orders from the **last two days** by default, which is what you
+usually want.
+
+<CardGroup cols={2}>
+  <Card title="Status tabs" icon="filter">
+    Along the top: **All**, and one tab per stage. Click **Pending** to see only
+    what needs accepting.
+  </Card>
+  <Card title="Search" icon="magnifying-glass">
+    Type an order number, customer name, phone number or email. Results narrow
+    as you type.
+  </Card>
+  <Card title="Date range" icon="calendar">
+    Set your own **from** and **to** dates, or click **All dates** to drop the
+    two-day window entirely.
+  </Card>
+  <Card title="Export CSV" icon="file-arrow-down">
+    Downloads every order — not just the page you're looking at — as a
+    spreadsheet, for your accountant or your own records.
+  </Card>
+</CardGroup>
+
+<Note>
+  A customer on the phone asking "where's my order?" — search their **phone
+  number**. It's the fastest way in, and they'll always know it.
+</Note>
+
+## Working a single order
+
+Click any row to slide open the order panel. Everything you can do to an order
+lives here.
+
+### Advance it one stage
+
+The big button carries the next step's name — **Mark as Confirmed**, then
+**Mark as Packed**, and so on. The progress track along the top shows where the
+order is.
+
+Each move is real: the customer gets an email at Confirmed, at Shipped and at
+Delivered.
+
+### Step back if you mis-clicked
+
+There's a one-step-back control for when your finger slipped. It takes the order
+back exactly one stage.
+
+<Warning>
+  Stepping back from **Shipped** clears the courier details you saved. You'll
+  need to enter the AWB again to ship it. Delivered and Cancelled can't be
+  stepped back at all — they're final.
+</Warning>
+
+### Record the courier tracking number
+
+Once an order is Packed, a courier box appears asking for the **AWB number**,
+with an optional **tracking link**.
+
+<Info>
+  **The AWB is required before Shipped.** This is deliberate: the customer's
+  shipping email contains that number, and an email telling them their parcel is
+  on its way with nothing to track is worse than no email.
+</Info>
+
+### Print the paperwork
+
+From **Confirmed** onwards, two print buttons appear:
+
+- **Print invoice** — the customer's bill, goes in the parcel.
+- **Print packing slip** — your own pick list for packing the right pieces.
+
+Both open a clean printable page. Use your browser's print dialog, or save as
+PDF.
+
+<Tip>
+  Nothing to print on a Pending order — you haven't accepted it yet — and
+  nothing on a Cancelled one. That's why the buttons only appear from Confirmed.
+</Tip>
+
+### Leave a note for yourself
+
+The notes box records anything the order itself doesn't say — *"customer asked
+for delivery after 6pm"*, *"gift wrap requested on WhatsApp"*.
+
+Notes are internal. Customers never see them. Every note is stamped with who
+wrote it and when, so a second person picking up the order knows the history.
+
+### Read the history
+
+The timeline at the bottom lists every status change with who made it and when.
+This is your answer whenever someone asks what happened to an order.
+
+## Cancelling an order
+
+<Steps>
+  <Step title="Open the order and press Cancel order">
+    Available at any stage except Delivered and already-Cancelled.
+  </Step>
+  <Step title="Confirm in the dialog">
+    The console asks twice on purpose.
+  </Step>
+  <Step title="Stock returns automatically">
+    The pieces go back into your available stock, and the customer is emailed
+    that their order was cancelled.
+  </Step>
+</Steps>
+
+<Warning>
+  **Cancelling can't be undone.** There's no un-cancel. If the customer changes
+  their mind, they place a new order.
+</Warning>
+
+## Common situations
+
+<AccordionGroup>
+  <Accordion title="The customer wants to change their order">
+    There's no editing an order in place. Cancel it and ask them to reorder — or
+    for something small like a different plating, note it on the order and sort
+    it out when you pack.
+  </Accordion>
+
+  <Accordion title="The courier lost the parcel">
+    Leave the order at Shipped while you chase the courier with the AWB. If it's
+    genuinely gone, cancel the order (restoring stock) and settle with the
+    customer directly.
+  </Accordion>
+
+  <Accordion title="A COD parcel came back undelivered">
+    Cancel the order. Stock returns automatically. If the same customer keeps
+    doing this, [Customers](/insight/customers) flags them with a **Has
+    cancelled** mark — worth a confirming phone call before you ship to them
+    again.
+  </Accordion>
+
+  <Accordion title="I marked something Shipped by mistake">
+    Step it back one stage. Note that this clears the AWB you entered, so
+    you'll re-enter it when you genuinely ship.
+  </Accordion>
+
+  <Accordion title="An order has been Pending for days">
+    The Dashboard's **Overdue Pending Orders** list exists for exactly this.
+    Phone the customer, apologise, then Confirm or cancel. Don't leave them
+    hanging.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Brand tile: maroon field, gold monogram (palette from ARCHITECTURE_PLAN §5). -->
+  <rect width="512" height="512" rx="96" fill="#2A0A12"/>
+  <rect x="40" y="40" width="432" height="432" rx="72" fill="none" stroke="#C9A24B" stroke-width="6" opacity="0.55"/>
+  <text x="256" y="332" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="220" fill="#E6CA7E" letter-spacing="6">JR</text>
+</svg>

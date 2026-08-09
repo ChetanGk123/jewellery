@@ -1,0 +1,124 @@
+---
+title: "Returns"
+description: "Approving a return, getting the item back, and paying the refund."
+---
+
+When a customer asks to return something, it appears here as a card. Each card
+carries the order number, who the customer is, what they said, and any photos
+they attached.
+
+## The path a return takes
+
+```
+Requested → Approved → Received → Refunded (or Exchanged)
+                    ↘
+                      Rejected
+```
+
+Each card only shows the buttons that are legal at its current stage, so you
+can't accidentally refund something you never got back.
+
+## Step by step
+
+<Steps>
+  <Step title="Read the request">
+    The card shows the customer's reason in their own words, whether they want a
+    **refund** or an **exchange**, the order total, and any photos they
+    uploaded. Click a photo to see it full size.
+  </Step>
+
+  <Step title="Approve or reject">
+    **✓ Approve return** tells the customer to send the item back, and emails
+    them the instructions.
+
+    **× Reject** declines it. There's a note box above these buttons — anything
+    you type there is **shown to the customer** when you reject, so give them a
+    real reason.
+
+    <Warning>That note is the one piece of text on this screen the customer reads. "Outside the return window — delivered 21 days ago" is fair. Blank is not.</Warning>
+  </Step>
+
+  <Step title="Wait for the parcel, then mark it received">
+    When the item physically arrives back and you've checked its condition,
+    press **Mark item received**.
+
+    Inspect before you press. Once it's marked received, the next step is paying
+    out.
+  </Step>
+
+  <Step title="Settle it">
+    Two ways to finish:
+
+    **Record UPI refund…** — enter the **amount in ₹** and the **UTR reference**
+    from your UPI app, then press **Record refund**. Both are required; the
+    console won't let you record a refund you can't evidence.
+
+    **Mark exchanged** — for when you're sending a replacement piece instead of
+    money back.
+
+    Either way the customer is emailed automatically.
+  </Step>
+</Steps>
+
+## Refund before or after the item arrives?
+
+The console assumes **item first, money second** — that's why refunding is only
+possible after **Received**.
+
+If you'd rather refund a trusted regular immediately, pay them by UPI now, and
+record it here with the UTR once the item lands. The record stays accurate
+either way.
+
+## What gets kept
+
+Every settled return keeps its evidence on the card:
+
+- Refunds show the **amount, the UTR reference and the date**.
+- Exchanges and rejections show the date they were settled.
+- Any note you wrote stays attached.
+
+This is your record if a payment is disputed months later. Don't rely on your
+UPI app's history alone.
+
+## Setting your return policy
+
+The rules customers see — **how many days** they have after delivery, and **who
+pays return shipping** — are in
+[Settings → Returns](/setup/settings#returns).
+
+<Note>
+  Changing the return window affects future requests, not ones already open.
+</Note>
+
+## Common situations
+
+<AccordionGroup>
+  <Accordion title="The returned item arrived damaged">
+    Don't mark it received yet. Photograph it, phone the customer, and agree
+    what happens. If you're declining after inspection, that's a conversation —
+    the console has no "reject after received" step, so settle it by phone and
+    record the outcome as a note on the original order.
+  </Accordion>
+
+  <Accordion title="The customer wants an exchange but you're out of stock">
+    Phone them and offer a refund instead. Then record it as a refund here.
+    Their original preference doesn't lock you in.
+  </Accordion>
+
+  <Accordion title="The request is outside my return window">
+    Reject it, and write the reason in the note box — the customer sees it. Or
+    approve it anyway as a goodwill gesture; the choice is always yours.
+  </Accordion>
+
+  <Accordion title="I refunded a different amount than the order total">
+    That's fine — you type the amount. Partial refunds (keeping a restocking
+    charge, or refunding one item from a set) are recorded exactly as you enter
+    them.
+  </Accordion>
+
+  <Accordion title="The photos won't load">
+    Reload the page. The photos are stored privately and their viewing links are
+    short-lived, so a page left open for hours will show a "photos unavailable"
+    message until refreshed.
+  </Accordion>
+</AccordionGroup>

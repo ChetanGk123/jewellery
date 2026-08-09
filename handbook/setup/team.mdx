@@ -1,0 +1,72 @@
+---
+title: "Team"
+description: "Who can sign in to the admin console."
+---
+
+Everyone with access to the console, and the controls to add or remove them.
+
+## Giving someone access
+
+<Steps>
+  <Step title="Ask them to create an account on your storefront first">
+    They sign up as an ordinary customer, with the email address you're about to
+    grant. Access is added to an account that already exists.
+  </Step>
+  <Step title="Type that email into 'Grant admin access'">
+    Press **Grant access**. You'll see *"Access granted."*
+  </Step>
+  <Step title="They sign in at /admin">
+    Same email and password they just signed up with.
+  </Step>
+</Steps>
+
+<Warning>
+  **Admin access is all-or-nothing.** There are no limited roles. Anyone you add
+  can change prices, cancel orders, read every customer's phone number and
+  address, see your revenue, and remove your access. Add people you'd trust with
+  the shop keys.
+</Warning>
+
+## Removing access
+
+Press **Remove access** next to their name and confirm. They're out immediately.
+
+Their account still exists as an ordinary customer — you've removed the console
+access, not the person.
+
+<Note>
+  Do this the same day someone leaves. Not next week.
+</Note>
+
+## The record of changes
+
+Below the list is a log of recent access changes — who was granted or removed,
+by whom, and when.
+
+This is why individual accounts matter. A shared login tells you *someone*
+cancelled an order; individual accounts tell you who, and let you ask them
+about it.
+
+## Sensible practice
+
+<CardGroup cols={2}>
+  <Card title="One account per person" icon="user">
+    Never a shared login. The record is worthless without it.
+  </Card>
+  <Card title="Keep the list short" icon="users-slash">
+    Two or three people. Every extra account is another way in.
+  </Card>
+  <Card title="Review it occasionally" icon="calendar-check">
+    Every few months, read the list. Remove anyone who no longer needs it.
+  </Card>
+  <Card title="Always keep two" icon="key">
+    At least two admins, so a forgotten password never locks the business out of
+    its own store.
+  </Card>
+</CardGroup>
+
+<Warning>
+  **Don't remove your own access.** If you're the only admin and you remove
+  yourself, nobody can grant it back from inside the console — that needs
+  technical help at the database level.
+</Warning>

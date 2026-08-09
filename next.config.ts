@@ -87,6 +87,65 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: [...securityHeaders] }]
   },
+  /**
+   * Serve the operator handbook (Mintlify, `handbook/`) under our own origin at
+   * `/docs`. Mintlify is a hosted platform — it can't be mounted as a real Next
+   * route — so this reverse-proxies its deployment.
+   *
+   * **Requires the "Host at" toggle set to `<domain>/docs` in the Mintlify
+   * dashboard** (their subpath hosting setup). That's what makes the deployment
+   * emit its assets under `/mintlify-assets/*` and `/_mintlify/*`, which we
+   * forward below. Without it Mintlify serves from root and its chunks land on
+   * `/_next/static/*` — the same namespace as our own app's chunks — so the page
+   * loads its HTML and then 404s every script. Verified: not a theory.
+   *
+   * Left off entirely until `HANDBOOK_ORIGIN` is set, so local dev doesn't get
+   * a half-broken `/docs`. Preview the handbook with `bun run handbook` (:3333).
+   *
+   * These paths are excluded from the `proxy.ts` matcher — they carry
+   * Mintlify's own script policy, not our nonce CSP, which would block their
+   * bundle outright. Nothing of ours renders here.
+   */
+  async rewrites() {
+    const handbook = process.env.HANDBOOK_ORIGIN
+    if (!handbook) return { beforeFiles: [], afterFiles: [], fallback: [] }
+    return {
+      // Before filesystem + dynamic routing, so `/docs` beats the storefront's
+      // `[category]` catch-all (which otherwise answers it "Category not found").
+      beforeFiles: [
+        { source: "/docs", destination: `${handbook}/docs` },
+        { source: "/docs/:path*", destination: `${handbook}/docs/:path*` },
+      ],
+      afterFiles: [],
+      // Only reached when this app has no such route — so Mintlify's own assets
+      // (it is itself a Next app, sharing our `/_next/*` namespace) resolve here
+      // while every real app asset is served by us, untouched. A blanket
+      // `/_next/*` rewrite instead of a fallback would break the app.
+      fallback: [
+        { source: "/_next/:path*", destination: `${handbook}/_next/:path*` },
+        { source: "/mintlify-assets/:path*", destination: `${handbook}/mintlify-assets/:path*` },
+        { source: "/_mintlify/:path*", destination: `${handbook}/_mintlify/:path*` },
+      ],
+    }
+  },
+  /**
+   * Dev doorway to the handbook. `mint dev` serves from root and emits
+   * root-relative links (`/glossary`, `/selling/orders`) — it has no base-path
+   * option, verified in `mint dev --help`. Proxying it under `/docs` therefore
+   * yields a page that renders but whose every link escapes into the storefront
+   * (`/glossary` → the `[category]` catch-all → "Category not found").
+   *
+   * So locally `/docs` redirects to the handbook server rather than pretending
+   * to host it. The real in-place `/docs` needs Mintlify's "Host at" mode, which
+   * makes *Mintlify* emit `/docs/...` links — see `rewrites()` above.
+   */
+  async redirects() {
+    if (process.env.HANDBOOK_ORIGIN || process.env.NODE_ENV === "production") return []
+    return [
+      { source: "/docs", destination: "http://localhost:3333", permanent: false },
+      { source: "/docs/:path*", destination: "http://localhost:3333/:path*", permanent: false },
+    ]
+  },
 }
 
 export default nextConfig

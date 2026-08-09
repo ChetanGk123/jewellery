@@ -9,7 +9,9 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,css,mjs}\"",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "handbook": "cd handbook && npx mint dev --port 3333",
+    "handbook:export": "cd handbook && npx mint export --output ../handbook-static.zip"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "RJ Jewellers Handbook",
+  "description": "How to run the RJ Jewellers store from the admin console.",
+  "colors": {
+    "primary": "#4A0E1C",
+    "light": "#E6CA7E",
+    "dark": "#A87A1E"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Start here",
+        "pages": ["index", "signing-in", "daily-routine", "glossary"]
+      },
+      {
+        "group": "Selling",
+        "pages": [
+          "selling/orders",
+          "selling/returns",
+          "selling/messages",
+          "selling/reviews"
+        ]
+      },
+      {
+        "group": "Your catalogue",
+        "pages": [
+          "catalogue/products",
+          "catalogue/categories",
+          "catalogue/coupons",
+          "catalogue/bulk-editing"
+        ]
+      },
+      {
+        "group": "Knowing your business",
+        "pages": [
+          "insight/dashboard",
+          "insight/analytics",
+          "insight/customers",
+          "insight/subscribers"
+        ]
+      },
+      {
+        "group": "Setting up the store",
+        "pages": ["setup/settings", "setup/emails", "setup/team"]
+      },
+      {
+        "group": "When something goes wrong",
+        "pages": ["troubleshooting"]
+      }
+    ]
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Open the console",
+      "href": "https://YOUR-STORE-DOMAIN/admin"
+    }
+  }
+}

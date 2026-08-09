@@ -1,0 +1,161 @@
+---
+title: "Products"
+description: "Adding pieces, editing them, and keeping stock straight."
+---
+
+Your catalogue. Everything a customer can buy starts on this screen.
+
+## Finding things
+
+<CardGroup cols={2}>
+  <Card title="Search" icon="magnifying-glass">
+    By product name or SKU.
+  </Card>
+  <Card title="Status filter" icon="filter">
+    **All**, **Active**, **Low stock**, **Out of stock**, **Draft**.
+  </Card>
+  <Card title="Category filter" icon="tags">
+    Narrow to one collection.
+  </Card>
+  <Card title="Row actions" icon="ellipsis">
+    **Edit product**, **View analytics**, **View on storefront** — the last one
+    opens the customer's view of that piece in a new tab.
+  </Card>
+</CardGroup>
+
+### Reading the status chip
+
+The chip in each row comes from the product's status **and** its stock:
+
+| Chip | Means |
+| --- | --- |
+| **Draft** | Hidden from customers, whatever the stock says. |
+| **Out of stock** | Stock is zero. Visible, but can't be bought. |
+| **Low stock** | Five or fewer left. Time to reorder. |
+| **Active** | On sale and in stock. |
+
+<Tip>
+  Filter by **Low stock** once a week. Reordering at five is a calm decision;
+  reordering at zero is a lost sale.
+</Tip>
+
+## Adding a product
+
+Press **Add New Product**. The form is one panel — here's what each field does.
+
+### The basics
+
+| Field | What to put in it |
+| --- | --- |
+| **Product name** | What customers see. *"Kundan Rani Haar"*, not *"NK-001"*. |
+| **Short tagline** | One line under the name on the storefront. |
+| **SKU** | Your private code, e.g. `JR-NK-001`. Customers never see it. Never reuse one. |
+| **Category** | Which collection it belongs to. Set these up in [Categories](/catalogue/categories) first. |
+| **Price (₹)** | The normal price. |
+| **Sale price (₹)** | Optional. Fill it in and the storefront shows the original struck through. Leave blank when not on offer. |
+| **Stock** | How many you physically have. |
+| **Status** | **Active** to sell it, **Draft** to keep it hidden. |
+| **Badge** | Optional ribbon: **Bestseller**, **New**, **Bridal Edit**, or **None**. |
+
+<Warning>
+  **Stock is a real number, not a guess.** It's what stops you selling a piece
+  you don't have. Sales reduce it automatically; cancellations put it back. Your
+  job is to raise it when new stock physically arrives.
+</Warning>
+
+### The description fields
+
+These all appear on the product page and are what actually sells the piece:
+
+- **Description** — the main paragraph.
+- **Material** — e.g. *"22K gold-tone, anti-tarnish"*.
+- **Stones** — e.g. *"Kundan, pearls, cubic zirconia"*.
+- **Care instructions** — e.g. *"Keep dry; store in a soft pouch"*.
+- **Shipping information** — dispatch and returns detail for this piece.
+
+<Tip>
+  Care and materials matter more in artificial jewellery than anywhere else.
+  A buyer who knows to keep it dry is a buyer who doesn't come back
+  disappointed in three weeks.
+</Tip>
+
+### Plating finish
+
+Offer the finishes this piece comes in. Three are one click — **Gold tone**,
+**Silver tone**, **Rose gold** — and you can add your own labels (*"Antique
+gold"*) up to eight in total. The customer picks one at checkout.
+
+### Designs & images
+
+Up to **six** photos per product.
+
+<Steps>
+  <Step title="Upload image">
+    Add a photo and give it a design name.
+  </Step>
+  <Step title="Set primary">
+    One photo is the **Primary** — the thumbnail used in listings and search.
+    Pick your best-lit, clearest shot.
+  </Step>
+  <Step title="Replace or Remove">
+    Swap a photo without losing the entry, or delete it entirely.
+  </Step>
+</Steps>
+
+<Tip>
+  Shoot on a plain, light background in daylight. Six consistent photos look
+  like a shop; six mismatched ones look like a marketplace listing.
+</Tip>
+
+Press **Save Product** when you're done.
+
+## Editing
+
+Click any row, change what you need, save. Changes are live on the storefront
+immediately — including price changes, so double-check before saving.
+
+## Taking a product down
+
+Set its status to **Draft**. It vanishes from the storefront and keeps
+everything — photos, description, its sales history in
+[Analytics](/insight/analytics).
+
+Draft is almost always the right move. Reach for delete only for a listing
+created by mistake.
+
+## Adding many products at once
+
+Setting up your catalogue for the first time, or doing a price revision across
+fifty pieces? Don't do it one at a time —
+[edit them in a spreadsheet](/catalogue/bulk-editing).
+
+## Common situations
+
+<AccordionGroup>
+  <Accordion title="A customer says a product page is out of date">
+    Edit and save; the storefront updates immediately. If they're still seeing
+    the old version, ask them to refresh.
+  </Accordion>
+
+  <Accordion title="I sold a piece in person, not through the site">
+    Reduce its stock by hand in the product editor. The console only knows about
+    orders placed on the website.
+  </Accordion>
+
+  <Accordion title="Two products ended up with the same SKU">
+    Change one. Duplicate SKUs make your own catalogue searches useless and turn
+    spreadsheet imports into guesswork.
+  </Accordion>
+
+  <Accordion title="Should I use sale price or a coupon?">
+    **Sale price** for a permanent markdown on one piece. **[Coupon](/catalogue/coupons)** for a
+    time-limited campaign across the shop. Coupons are far easier to end
+    cleanly.
+  </Accordion>
+
+  <Accordion title="How do I feature a piece on the homepage?">
+    Give it a badge, and check the homepage settings in
+    [Settings](/setup/settings) — the hero and promo blocks there are what
+    customers see first.
+  </Accordion>
+</AccordionGroup>

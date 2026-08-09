@@ -1,0 +1,110 @@
+---
+title: "Editing in a spreadsheet"
+description: "Changing many products, categories or coupons at once with Excel."
+---
+
+Editing fifty prices one product at a time is an afternoon. In a spreadsheet
+it's ten minutes.
+
+**Products**, **Categories** and **Coupons** each have **Export .xlsx** and
+**Import** buttons at the top of their screen. They work identically.
+
+## How it works
+
+<Steps>
+  <Step title="Export .xlsx">
+    Downloads everything currently in that section as an Excel file. Open it in
+    Excel, Numbers, or Google Sheets.
+  </Step>
+
+  <Step title="Edit the sheet">
+    Change what you like. Add new rows at the bottom for new items — **leave
+    their ID column empty** and the console knows to create them.
+
+    <Warning>Never edit or delete the **ID** column on an existing row. That's how the console recognises which product you're changing. Change an ID and you'll create a duplicate or an error.</Warning>
+  </Step>
+
+  <Step title="Import">
+    Press **Import** and choose your file. Nothing has changed yet.
+  </Step>
+
+  <Step title="Read the preview, then confirm">
+    A summary appears: how many rows will be **created**, how many **updated**,
+    how many are **unchanged**, and any **errors**.
+
+    If there are errors, the button reads **Fix the sheet first** and won't let
+    you proceed. It names the row and column so you can find the problem.
+
+    No errors? The button reads **Import N changes**. Press it.
+  </Step>
+</Steps>
+
+<Note>
+  **The preview is a dry run.** Nothing is written to your store until you
+  confirm. Import a file, read the numbers, and press Cancel if they look wrong
+  — no harm done.
+</Note>
+
+## What's in each sheet
+
+<AccordionGroup>
+  <Accordion title="Products">
+    ID, Name, SKU, Category, Price (₹), Sale price (₹), Stock, Status, Badge,
+    Blurb, Description, Material, Plating options, Details — Plating, Details —
+    Stones, Details — Care, Shipping note, Featured, Fresh.
+
+    Read-only columns at the end: Slug, Primary image URL, Image count. Edit
+    those and the import ignores you.
+
+    <Note>Photos can't be uploaded through the spreadsheet. Add products in bulk here, then add their images in [Products](/catalogue/products).</Note>
+  </Accordion>
+
+  <Accordion title="Categories">
+    ID, Name, Description, Image URL. Slug, Sort order and Product count are
+    read-only.
+  </Accordion>
+
+  <Accordion title="Coupons">
+    ID, Code, Type, Value, Min order (₹), Max discount (₹), Usage limit,
+    Expires, Active. The Used count is read-only — you can't rewrite history.
+  </Accordion>
+</AccordionGroup>
+
+Columns like **Category**, **Status** and **Active** are dropdowns in the
+exported file. Use the dropdown rather than typing; a typo becomes an error at
+import.
+
+## What it can and can't do
+
+| Can | Can't |
+| --- | --- |
+| Change many prices, stock levels or descriptions at once | Upload photos |
+| Create new rows (leave ID blank) | Delete anything |
+| Fix inconsistent wording across the catalogue | Touch orders, customers or returns |
+
+<Warning>
+  **Deleting a row from the sheet does not delete the product.** The import only
+  creates and updates. To remove something, set it to **Draft** in
+  [Products](/catalogue/products).
+</Warning>
+
+## Good habits
+
+<CardGroup cols={2}>
+  <Card title="Export first, always" icon="download">
+    Even when you only want to add rows. Working on a fresh export means your
+    IDs and columns are guaranteed correct.
+  </Card>
+  <Card title="Keep the exported copy" icon="floppy-disk">
+    Save the untouched download before you edit. It's your before-picture if an
+    import goes wrong.
+  </Card>
+  <Card title="Test with two rows" icon="flask">
+    First time doing this? Change two rows, import, check the storefront. Then
+    do the other forty-eight.
+  </Card>
+  <Card title="Don't reorder columns" icon="table-columns">
+    The import reads columns by their headings. Renaming or removing a heading
+    breaks it.
+  </Card>
+</CardGroup>
