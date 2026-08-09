@@ -169,8 +169,12 @@ export const config = {
    */
   matcher: [
     {
+      // `docs`, `mintlify-assets` and `_mintlify` are the rewritten Mintlify
+      // handbook (see next.config.ts): a foreign app on our origin. Our nonce
+      // CSP would block its scripts, and it needs no session or admin gate —
+      // so skip all three entirely.
       source:
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?)$).*)",
+        "/((?!_next/static|_next/image|docs|mintlify-assets|_mintlify|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?)$).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

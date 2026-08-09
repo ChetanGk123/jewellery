@@ -1,0 +1,105 @@
+---
+title: "Coupons & Offers"
+description: "Discount codes — creating them, limiting them, ending them."
+---
+
+A coupon is a code a customer types at checkout to get money off. Festival
+offers, a first-order welcome, an apology to someone you kept waiting.
+
+## Creating one
+
+Press **Create coupon**.
+
+| Field | What it does |
+| --- | --- |
+| **Code** | What the customer types, e.g. `DIWALI25`. Short, upper case, no confusing characters. |
+| **Type** | **Percent off**, **Fixed amount**, or **Free shipping**. |
+| **Value** | The number — `25` for 25% off, or `500` for ₹500 off. Ignored for free shipping. |
+| **Min order (₹)** | Basket must reach this to use the code. Leave blank for none. |
+| **Max discount (₹)** | Caps a percentage discount. Blank means **No cap**. |
+| **Usage limit** | How many times it can be used in total. Blank means **Unlimited**. |
+| **Expires** | The last day it works. |
+| **Active** | Off means it stops working immediately, without deleting it. |
+
+<Warning>
+  **Always cap a percentage coupon.** "30% off" on a ₹15,000 bridal set is
+  ₹4,500 gone. Set **Max discount** to a number you can live with, or the one
+  customer who buys your most expensive piece pays for the whole campaign.
+</Warning>
+
+## Watching it
+
+The list shows each coupon's code, discount, minimum order, expiry, **usage**,
+and whether it's active. Search by code at the top.
+
+Usage tells you two things: whether anyone found the code, and whether a code
+you meant for a few people has escaped into the wild.
+
+## Ending a campaign
+
+<Steps>
+  <Step title="Press Deactivate">
+    Stops the code working straight away. It stays in your list with its usage
+    history intact.
+  </Step>
+  <Step title="Or let it expire">
+    If you set an expiry date, it stops by itself.
+  </Step>
+</Steps>
+
+Reactivating is one click for next year. **Delete** only for a code created by
+mistake — deleting throws away the record of how it performed.
+
+## Sensible setups
+
+<CardGroup cols={2}>
+  <Card title="Festival campaign" icon="sparkles">
+    `DIWALI25` · 25% off · min order ₹2,000 · **max discount ₹1,500** · expires
+    the day after the festival.
+  </Card>
+  <Card title="First-order welcome" icon="hand-wave">
+    `WELCOME10` · 10% off · min order ₹1,500 · max discount ₹500 · no expiry.
+  </Card>
+  <Card title="Free shipping push" icon="truck">
+    `FREESHIP` · free shipping · min order ₹999 · limited run.
+  </Card>
+  <Card title="Apology to one customer" icon="heart">
+    Fixed amount · **usage limit 1** · expires in 30 days. Give the code to
+    them personally.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Set a **usage limit of 1** for any code meant for one person. Otherwise it
+  ends up screenshotted into a WhatsApp group and used two hundred times.
+</Tip>
+
+## Free shipping vs your shipping settings
+
+Your store already gives free shipping above a threshold — set in
+[Settings](/setup/settings#shipping-and-payments). A free-shipping coupon is for
+customers *under* that threshold. Check the two don't overlap pointlessly.
+
+## Common situations
+
+<AccordionGroup>
+  <Accordion title="A customer says the code isn't working">
+    Check four things: is it **Active**, has it **expired**, has it hit its
+    **usage limit**, and does their basket meet the **minimum order**? One of
+    those four is nearly always the answer.
+  </Accordion>
+
+  <Accordion title="Can I make a coupon for one product only?">
+    Not currently — coupons apply to the basket. For a single-piece markdown,
+    use the **Sale price** field on the [product](/catalogue/products) instead.
+  </Accordion>
+
+  <Accordion title="Can I change a coupon after people have used it?">
+    Yes, but don't. Someone who saw "25% off" and comes back to find 10% will be
+    annoyed, fairly. Deactivate the old code and publish a new one.
+  </Accordion>
+
+  <Accordion title="Setting up many codes at once">
+    [Spreadsheet editing](/catalogue/bulk-editing) handles coupons too.
+  </Accordion>
+</AccordionGroup>

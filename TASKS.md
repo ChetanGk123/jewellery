@@ -662,6 +662,76 @@ detail modelled on the prototype's `isAnalyticsList → isAnalyticsDetail` drill
 export, an email-this-customer action, lifetime-value forecasting, and any write path (the console
 stays read-only on customers; edits belong to the customer's own account page).*
 
+## Phase 12 — Operator handbook (Mintlify docs site) (user request 2026-08-08)
+
+The console is finished; the person who will run it is not technical and has no manual. This phase
+adds a **[Mintlify](https://mintlify.com) site in `handbook/`** — task-first documentation of every
+admin screen, written for the shop owner, not for a developer. Kept separate from `docs/` (which is
+deployment/developer material) so the two never get confused for each other.
+
+**Scope decision (operator, 2026-08-08): every admin section**, not just the daily six. 20 pages —
+orientation (sign-in, daily routine, glossary), the four attention queues (Orders, Returns,
+Messages, Reviews), catalogue (Products, Categories, Coupons, spreadsheet bulk-editing), insight
+(Dashboard, Analytics, Customers, Subscribers), setup (Settings, Emails, Team), and troubleshooting.
+
+- ✅ **12.1 — Scaffold + navigation.** `handbook/docs.json` (mint theme, brand maroon/gold, favicon
+  from `public/icon.svg`), six nav groups, `bun run handbook` script, `handbook/README.md` for
+  whoever maintains it. **DONE.**
+- ✅ **12.2 — Write all 20 pages.** Content derived from the actual components, not from the plan —
+  real button labels (`Mark as Shipped`, `Record UPI refund…`, `Fix the sheet first`), real
+  thresholds (low stock ≤5, repeat customer ≥3 orders, default 2-day order window), real field
+  lists per Settings section, the 15 email templates and their triggers. **DONE.**
+- ✅ **12.3 — Verify it renders.** `npx mint broken-links` clean; all 20 routes 200 under
+  `mint dev`; rendered HTML confirms Card/Steps/Accordion/Warning components compiled (no MDX
+  errors). **DONE.** *Browser screenshot verification unavailable this session — both Chrome MCP
+  paths were unreachable; verification was HTTP + rendered-markup inspection instead.*
+- ✅ **12.5 — Serve it at `/docs` on the app's own origin** (user request 2026-08-09). `rewrites()`
+  in `next.config.ts`, object form, split deliberately across two phases; `proxy.ts`'s matcher skips
+  `docs`, `mintlify-assets`, `_mintlify`. **Three collisions, all measured, not assumed:**
+  1. **Our nonce CSP** (`default-src 'self'`) would blank a proxied docs page — Mintlify's bundle
+     isn't nonce'd. Fixed by the matcher exclusion. Verified: no CSP header on `/docs`, CSP intact
+     on `/shop`.
+  2. **`/docs` vs the storefront `[category]` catch-all**, which answers any single-segment path —
+     `/docs` rendered "Category not found". Fixed by putting those rewrites in **`beforeFiles`**
+     (ahead of dynamic routing).
+  3. **`/_next/*` vs `/_next/*`** — **Mintlify is itself a Next app**, so its chunks share our asset
+     namespace. A naive rewrite served the HTML then 404'd every script (chunk 404 on :3000, 200 on
+     :3333). Fixed with a **`fallback`** rewrite, which fires only when this app has no such route:
+     real app chunks stay with the app, only Mintlify's unresolved ones proxy. **A blanket
+     `/_next/*` rewrite would break the app — don't flatten the two lists.**
+
+  4. **Root-relative links vs the base path — the one that actually bit.** Proxying `mint dev` under
+     `/docs` renders the page, but its links are emitted from root (`/glossary`,
+     `/selling/orders`), so every sidebar click escaped into the storefront catch-all. `mint dev`
+     has **no base-path option** (checked `--help`), and no proxy can retrofit the prefix — it lives
+     in Mintlify's client bundle, not just its HTML. Only Mintlify's hosted **"Host at"** mode makes
+     it emit `/docs/...` itself. **So dev `/docs` is a 307 redirect to :3333, not a proxy**
+     (`redirects()`, dev-only); the in-place proxy is production-only.
+
+  Verified: `/docs` + `/docs/selling/orders` redirect and land on the right handbook pages;
+  storefront routes + `/admin` gate unchanged; tsc clean; build green. Production
+  (`HANDBOOK_ORIGIN` + "Host at", 12.4) is **untested — no deployment exists yet.**
+
+  *Process note: the first two attempts were verified by fetching URLs I constructed myself, which
+  proved reachability and missed navigation entirely. Check the links the page emits, not the ones
+  you can think of.*
+- ⬜ **12.4 — Publish.** Three routes, full runbook in `handbook/README.md` — all blocked on the
+  domain the deploy phase needs, and **none of them tested (no deployment exists)**:
+  **(1) Mintlify hosted on `docs.<domain>`** — GitHub app + custom domain, *nothing changes in this
+  app*; least work, recommended. **(2) Same + "Host at" + `HANDBOOK_ORIGIN`** — puts it at
+  `<domain>/docs` via 12.5's proxy. **(3) Self-hosted static export** — `bun run handbook:export`,
+  serve the unzipped folder at a hostname root (e.g. an `nginx:alpine` Dokploy service behind
+  Traefik); no Mintlify hosting or plan, but the export is manual and goes stale.
+  Also replace the `YOUR-STORE-DOMAIN` placeholder in `docs.json` (navbar "Open the console").
+
+  **Root cause behind all three:** Mintlify emits **root-absolute links** in both `mint dev` and
+  `mint export`, with no base-path flag anywhere in the CLI (checked `--help` on both). So the
+  handbook is only trouble-free at a **hostname root**; a subpath requires Mintlify's hosted
+  "Host at" mode. Static export verified locally: served at a root, all 20 pages + assets resolve.
+
+*Maintenance rule: the pages name real buttons, so a console wording/flow change updates its page in
+the same commit.*
+
 ## Cross-cutting (ongoing, not a phase) **DONE.** 16 tests across `lib/admin/customers.test.ts` (sort parsing, chip precedence, cancellation rate, AOV, `tallyHistory`) and `lib/admin/resolve-reviews.test.ts` (the earliest-order review rule, incl. the repurchase case). **370 total; tsc clean; build green (`/admin/customers` `ƒ`); lint at the pre-existing baseline.**
 - ✅ **Store info config (single source of truth).** New `lib/store-info.ts` — one typed `STORE_INFO` const holding the business's identity + contact details: `name`/`wordmark`/`descriptor`/`tagline`, `phone`/`whatsapp`/`email` (each with a display form **and** a derived `tel:`/`mailto:`/`wa.me` link built from one raw handle so they can't drift), `address`, `hours` (short/long/note), `gstin` (null until issued), and `socials` (`SocialLink[]`). Consumed by `Footer` (wordmark, tagline, socials — now render as real links when a URL exists; WhatsApp badge is a live `wa.me` link; copyright name), `Header` (wordmark + descriptor), and `lib/help-content.ts` (`CONTACT_CHANNELS` phone/email/WhatsApp/address + `SUPPORT_HOURS`). Value-parity refactor (same strings) + tel/mailto/wa.me now derived. **Kept as `const`, not env** (identical across environments; YAGNI — env layering trivial to add later); **distinct from** DB-backed editable copy (banner/promo/`store_name` via `getStoreSettings`). Marketing prose/metadata that merely *mentions* the name left inline (editorial, not a maintained detail). Feeds **2.7** (WhatsApp enquiry builds from `STORE_INFO.whatsapp.number`). **tsc clean; build green (all 10 routes).**
 - ✅ **Testing** (0064c58, 0435e17, 8c76de5). **Unit (67 pass / 0 fail, `bun test`):** pure domain (cart, coupons, shipping, money, whatsapp, checkout schema/order mapping) plus `submitCheckout` — the authoritative write gate — with the Supabase server client mocked: honeypot drops bots before the RPC, invalid input never reaches the DB, the RPC payload provably carries no price, success/error/unexpected-shape all mapped. **E2E (Playwright, 2 pass):** `e2e/checkout.e2e.ts` runs the critical journey (shop → product → add to cart → cart → COD form → place order → confirmation with order number → cart cleared) against a **production build** on :3200, so the strict nonce CSP + per-request rendering are exercised as shipped. Config notes: system Chrome via `channel: "chrome"` (no browser download); `*.e2e.ts` naming so `bun test` ignores them; `bun run e2e`. **Data:** E2E writes a real order into live Supabase tagged `e2e-test@example.com` — clean with `delete from "order" where customer_email = 'e2e-test@example.com'` (+ `setval('order_no_seq', 1001, false)`); this run's order was cleaned. **Visual regression (16 pass):** `e2e/visual.e2e.ts` — full-page screenshots of home / shop / product / empty-cart at 320/768/1024/1440; baselines committed (`visual.e2e.ts-snapshots/`, ~7.8 MB); `toHaveScreenshot` defaults in config (animations disabled, 2% diff tolerance); verified stable across two fresh runs; regenerate with `bun run e2e -- --update-snapshots`. **Coverage (`bun test --coverage`):** 100% funcs / 99.78% lines across the tested domain + action layer (actions, cart, checkout order/schema, coupons, shipping, store-info, money, whatsapp) — exceeds the 80% target. Caveat: Bun reports only test-imported files; `lib/db` row-mappers, `stores/cart`, and components are exercised via E2E + visual regression instead (per web testing rules: visual regression > brittle markup assertions for visual components). **Deferred to deploy:** firefox/webkit projects (need `playwright install` browser downloads) and a staging/branch Supabase so E2E stops writing prod data.
