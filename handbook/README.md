@@ -50,8 +50,12 @@ redeploys. Links work because the site sits at a host root.
 Option 1, plus:
 
 3. Dashboard → Custom Domain → enable **Host at**, set `<your-domain>/docs`.
-4. Set `HANDBOOK_ORIGIN` to the Mintlify deployment origin in the app's
-   production env (Dokploy → Environment).
+4. Set `HANDBOOK_ORIGIN` to the Mintlify deployment origin — as a **build arg**,
+   not a runtime variable. `rewrites()` runs during `next build` and bakes the
+   origin into `.next/routes-manifest.json`, so a value supplied only at
+   `docker run` is silently ignored and `/docs` stays unrouted. Compose passes it
+   via `build.args`; on Dokploy, put it where build-time env is set and
+   **rebuild** — a restart won't pick it up.
 
 The app then reverse-proxies it — see `rewrites()` in `next.config.ts`. Step 3
 is not optional: it is what makes Mintlify emit `/docs/...` links and move its

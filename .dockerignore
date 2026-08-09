@@ -31,6 +31,11 @@ coverage
 refereces
 *.md
 
+# Operator handbook — a separate Mintlify site, built and hosted independently.
+# The app only ever proxies it by origin, so none of it belongs in the image.
+handbook
+handbook-static.zip
+
 # Captured UI screenshots — ~49 MB, i.e. most of the build context, and read by
 # nothing in the build.
 screenshots

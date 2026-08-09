@@ -38,9 +38,15 @@ ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 # other NEXT_PUBLIC_* var, so passing it only at `docker run` is too late —
 # sitemap.xml / robots.txt / metadataBase would bake in the localhost fallback.
 ARG NEXT_PUBLIC_SITE_URL
+# Also build-time, and not obviously so: `rewrites()` in next.config.ts is
+# evaluated by `next build` and baked into .next/routes-manifest.json, origin and
+# all. Passing this at `docker run` is silently too late — the manifest already
+# says what it says, and /docs stays unrouted. Unset simply means no /docs route.
+ARG HANDBOOK_ORIGIN
 ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY} \
     NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL} \
+    HANDBOOK_ORIGIN=${HANDBOOK_ORIGIN} \
     NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production
 

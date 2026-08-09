@@ -98,6 +98,7 @@ bun run lint      # ESLint
 bun run format    # Prettier (repo style: no semicolons, 100 cols)
 bun run build     # production build
 bun run e2e       # Playwright (needs E2E_USER_EMAIL/PASSWORD in .env.local)
+bun run handbook  # operator handbook preview on :3333 (see below)
 ```
 
 Conventions worth knowing before contributing:
@@ -114,6 +115,27 @@ Conventions worth knowing before contributing:
   them, and `ARCHITECTURE_PLAN.md` for the domain model and roadmap; `TASKS.md`
   is the build tracker.
 
+## Operator handbook
+
+[`handbook/`](handbook/) is a separate [Mintlify](https://mintlify.com) site: the
+store owner's manual for the admin console, written for a non-technical reader.
+20 pages covering every admin screen, organised by task rather than by sidebar
+order. Distinct from [`docs/`](docs/), which stays developer/deployment material.
+
+```bash
+bun run handbook          # preview on :3333
+bun run handbook:export   # static export → handbook-static.zip
+```
+
+Pinned to 3333 so it runs alongside `bun run dev`. In dev, `/docs` on the app
+307-redirects there — Mintlify emits root-absolute links and has no base-path
+flag, so locally it can be linked to but not proxied under a subpath.
+
+In production, set `HANDBOOK_ORIGIN` (a **build arg**, see [Docker](#docker)) and
+enable Mintlify's "Host at" mode to serve it in place at `/docs`; or host it at
+its own subdomain and leave the variable unset. Full runbook, and the three
+routing collisions behind the setup, in [`handbook/README.md`](handbook/README.md).
+
 ## Docker
 
 A production image is defined by the [`Dockerfile`](Dockerfile) (multi-stage,
@@ -122,6 +144,11 @@ Bun + Next.js `output: "standalone"`, non-root runtime, ~360 MB).
 The two `NEXT_PUBLIC_*` Supabase values are inlined into the browser bundle at
 **build** time, so they must be passed as build args; server-only secrets are
 passed at **run** time.
+
+`HANDBOOK_ORIGIN` (optional, [handbook](#operator-handbook)) is **also a build
+arg** even though it isn't `NEXT_PUBLIC_*`: `rewrites()` runs during `next build`
+and bakes the origin into the routes manifest, so passing it at `docker run` does
+nothing.
 
 ```bash
 # Build + run in one step (reads .env.local; set the two NEXT_PUBLIC_* vars in
@@ -134,6 +161,7 @@ docker build \
   --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
   --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
   --build-arg NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
+  --build-arg HANDBOOK_ORIGIN="$HANDBOOK_ORIGIN" \
   -t jr-jewellers:latest .
 docker run --rm -p 3000:3000 --env-file .env.local jr-jewellers:latest
 ```
