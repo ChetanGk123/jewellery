@@ -681,13 +681,19 @@ Messages, Reviews), catalogue (Products, Categories, Coupons, spreadsheet bulk-e
   real button labels (`Mark as Shipped`, `Record UPI refund…`, `Fix the sheet first`), real
   thresholds (low stock ≤5, repeat customer ≥3 orders, default 2-day order window), real field
   lists per Settings section, the 15 email templates and their triggers. **DONE.**
-- ✅ **12.3 — Verify it renders.** `npx mint broken-links` clean; all 20 routes 200 under
-  `mint dev`; rendered HTML confirms Card/Steps/Accordion/Warning components compiled (no MDX
-  errors). **DONE.** *Browser screenshot verification unavailable this session — both Chrome MCP
-  paths were unreachable; verification was HTTP + rendered-markup inspection instead.*
+- ✅ **12.3 — Verify it renders.** `mint broken-links` clean; all 20 routes 200 under `mint dev`;
+  rendered HTML confirms Card/Steps/Accordion/Warning components compiled (no MDX errors). Later
+  hardened before publishing with `mint validate` (strict) and `mint a11y` — both pass. **`mint
+  a11y` caught a real defect:** `colors.dark` in `docs.json` is the *dark-mode* primary, and the
+  brand's near-black maroon `#2A0A12` scored **1.06:1** on a dark background — effectively
+  invisible. The checker grades that colour against **both** backgrounds, so the replacement has to
+  be mid-tone: brand gold **`#A87A1E`** (3.84:1 light / 5.06:1 dark), picked by computing candidates
+  rather than guessing. **DONE.** *Browser screenshot verification unavailable this session — both
+  Chrome MCP paths were unreachable; verification was HTTP + rendered-markup inspection throughout,
+  so the pages have never actually been looked at.*
 - ✅ **12.5 — Serve it at `/docs` on the app's own origin** (user request 2026-08-09). `rewrites()`
   in `next.config.ts`, object form, split deliberately across two phases; `proxy.ts`'s matcher skips
-  `docs`, `mintlify-assets`, `_mintlify`. **Three collisions, all measured, not assumed:**
+  `docs`, `mintlify-assets`, `_mintlify`. **Four collisions, all measured, not assumed:**
   1. **Our nonce CSP** (`default-src 'self'`) would blank a proxied docs page — Mintlify's bundle
      isn't nonce'd. Fixed by the matcher exclusion. Verified: no CSP header on `/docs`, CSP intact
      on `/shop`.
@@ -699,7 +705,6 @@ Messages, Reviews), catalogue (Products, Categories, Coupons, spreadsheet bulk-e
      :3333). Fixed with a **`fallback`** rewrite, which fires only when this app has no such route:
      real app chunks stay with the app, only Mintlify's unresolved ones proxy. **A blanket
      `/_next/*` rewrite would break the app — don't flatten the two lists.**
-
   4. **Root-relative links vs the base path — the one that actually bit.** Proxying `mint dev` under
      `/docs` renders the page, but its links are emitted from root (`/glossary`,
      `/selling/orders`), so every sidebar click escaped into the storefront catch-all. `mint dev`
@@ -715,6 +720,33 @@ Messages, Reviews), catalogue (Products, Categories, Coupons, spreadsheet bulk-e
   *Process note: the first two attempts were verified by fetching URLs I constructed myself, which
   proved reachability and missed navigation entirely. Check the links the page emits, not the ones
   you can think of.*
+- ✅ **12.6 — Deployment plumbing: `HANDBOOK_ORIGIN` is a BUILD arg** (b5381c7, f08a429). Caught
+  while wiring Docker, and it invalidated what 12.5 had just documented: **`rewrites()` is evaluated
+  by `next build` and baked into `.next/routes-manifest.json`, origin and all** — verified by
+  inspecting the manifest (5 rewrites baked with it set, 0 without). So a value supplied only at
+  `docker run` / in Dokploy's runtime panel is **silently ignored**: the variable reads as correctly
+  set while `/docs` stays unrouted. Same class of trap the Dockerfile already documents for
+  `NEXT_PUBLIC_SITE_URL`, but without the `NEXT_PUBLIC_` prefix to warn you.
+  - **`Dockerfile`** — `ARG HANDBOOK_ORIGIN` + `ENV` in the builder stage.
+  - **`docker-compose.yml`** — added to `build.args`, **deliberately not to `environment:`**;
+    listing it there would look functional and do nothing.
+  - **`.dockerignore`** — excludes `handbook/` + `handbook-static.zip`. A separate Mintlify site the
+    app only ever proxies by origin; none of it belongs in the image. (Note `*.md` only matches the
+    context root, so `handbook/` was otherwise being copied in.)
+  - **`.env.example`** — entry added, *and its opening rule corrected*: it claimed every
+    non-`NEXT_PUBLIC_*` value is a runtime variable, which this breaks. Cross-checked all 17
+    `process.env.*` references across `app/`, `lib/`, `next.config.ts`, `proxy.ts`, `e2e/` against
+    the template — nothing else undocumented.
+  - **`docs/DEPLOY_DOKPLOY.md`** — added to §4.1 (build-time table), *not* §4.2 (runtime).
+  - **`README.md`** — new "Operator handbook" section, `bun run handbook` in the dev commands, the
+    build-arg caveat under Docker, and `--build-arg HANDBOOK_ORIGIN` in the plain-`docker build`
+    example.
+  - **`bun run handbook:export`** — static export (`mint export`) for the self-hosted option.
+
+  Verified: compose resolves the build arg; a default build bakes 0 rewrites and 0 `/docs` redirects
+  (the redirect is correctly dev-only, gated on `NODE_ENV`); tsc clean; 370 tests pass.
+  **On Dokploy this needs a rebuild, not a restart** — and it must reach the *build* step, the same
+  caveat §4.1 already flags for the public vars.
 - ⬜ **12.4 — Publish.** Three routes, full runbook in `handbook/README.md` — all blocked on the
   domain the deploy phase needs, and **none of them tested (no deployment exists)**:
   **(1) Mintlify hosted on `docs.<domain>`** — GitHub app + custom domain, *nothing changes in this
